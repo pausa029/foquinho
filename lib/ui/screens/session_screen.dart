@@ -169,9 +169,9 @@ class _SessionScreenState extends State<SessionScreen> {
               ChoiceChip(label: const Text('50 / 10'), selected: focusMin == 50 && breakMin == 10, onSelected: (_) => setState(() { focusMin = 50; breakMin = 10; })),
             ],
           ),
-          _stepper('Foco', '$focusMin min', () => setState(() => focusMin = (focusMin - 5).clamp(5, 120)), () => setState(() => focusMin = (focusMin + 5).clamp(5, 120))),
-          _stepper('Intervalo', '$breakMin min', () => setState(() => breakMin = (breakMin - 1).clamp(1, 30)), () => setState(() => breakMin = (breakMin + 1).clamp(1, 30))),
-          _stepper('Ciclos', '$cycles', () => setState(() => cycles = (cycles - 1).clamp(1, 8)), () => setState(() => cycles = (cycles + 1).clamp(1, 8))),
+          _stepper('Foco', '$focusMin min', () => setState(() => focusMin = (focusMin - 5).clamp(5, 120).toInt()), () => setState(() => focusMin = (focusMin + 5).clamp(5, 120).toInt())),
+          _stepper('Intervalo', '$breakMin min', () => setState(() => breakMin = (breakMin - 1).clamp(1, 30).toInt()), () => setState(() => breakMin = (breakMin + 1).clamp(1, 30).toInt())),
+          _stepper('Ciclos', '$cycles', () => setState(() => cycles = (cycles - 1).clamp(1, 8).toInt()), () => setState(() => cycles = (cycles + 1).clamp(1, 8).toInt())),
           Text(
             '$cycles ciclos de $focusMin min com $breakMin min de intervalo: ${fmtMin(cycles * focusMin)} de estudo, ${fmtMin(cycles * focusMin + (cycles - 1) * breakMin)} no total.',
             style: TextStyle(color: cs.onSurfaceVariant),
@@ -246,7 +246,7 @@ class _SessionScreenState extends State<SessionScreen> {
     final cs = Theme.of(context).colorScheme;
     final isStudy = a.kind == SessionKind.estudo;
     final rem = state.remainingMs();
-    final frac = a.phaseMs == 0 ? 0.0 : (1 - rem / a.phaseMs).clamp(0.0, 1.0);
+    final frac = a.phaseMs == 0 ? 0.0 : (1 - rem / a.phaseMs).clamp(0.0, 1.0).toDouble();
     final color = a.phase == Phase.intervalo ? cs.secondary : (isStudy ? cs.primary : cs.tertiary);
     final phaseLabel = a.paused
         ? 'Pausado'
@@ -362,7 +362,7 @@ class _SessionScreenState extends State<SessionScreen> {
               children: [
                 Text('Quer registrar ${isStudy ? 'o estudo' : 'a atividade'}?', style: Theme.of(context).textTheme.titleMedium),
                 const SizedBox(height: 8),
-                _stepper('Minutos feitos', fmtMin(doneMinutes), () => setState(() => doneMinutes = (doneMinutes - 1).clamp(0, 600)), () => setState(() => doneMinutes = (doneMinutes + 1).clamp(0, 600))),
+                _stepper('Minutos feitos', fmtMin(doneMinutes), () => setState(() => doneMinutes = (doneMinutes - 1).clamp(0, 600).toInt()), () => setState(() => doneMinutes = (doneMinutes + 1).clamp(0, 600).toInt())),
                 const SizedBox(height: 8),
                 TextField(
                   controller: note,

@@ -123,7 +123,7 @@ class GoalProgress extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final pct = goal <= 0 ? 0.0 : (done / goal).clamp(0.0, 1.0);
+    final pct = goal <= 0 ? 0.0 : (done / goal).clamp(0.0, 1.0).toDouble();
     final reached = goal > 0 && done >= goal;
     final text = '$label: ${fmtMin(done)} de ${fmtMin(goal)}${reached ? ' — meta alcançada' : ''}';
     return Semantics(

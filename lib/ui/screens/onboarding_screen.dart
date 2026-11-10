@@ -271,8 +271,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _title('Quanto tempo por dia você quer dedicar?', 'Comece pequeno. Você ajusta quando quiser.'),
-            _stepRow('Estudo por dia', fmtMin(studyGoal), () => setState(() => studyGoal = (studyGoal - 15).clamp(15, 600)), () => setState(() => studyGoal = (studyGoal + 15).clamp(15, 600))),
-            _stepRow('Atividade física por dia', fmtMin(moveGoal), () => setState(() => moveGoal = (moveGoal - 10).clamp(10, 300)), () => setState(() => moveGoal = (moveGoal + 10).clamp(10, 300))),
+            _stepRow('Estudo por dia', fmtMin(studyGoal), () => setState(() => studyGoal = (studyGoal - 15).clamp(15, 600).toInt()), () => setState(() => studyGoal = (studyGoal + 15).clamp(15, 600).toInt())),
+            _stepRow('Atividade física por dia', fmtMin(moveGoal), () => setState(() => moveGoal = (moveGoal - 10).clamp(10, 300).toInt()), () => setState(() => moveGoal = (moveGoal + 10).clamp(10, 300).toInt())),
             const SizedBox(height: 12),
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
@@ -282,7 +282,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               onChanged: (v) => setState(() => screenGoal = v ? 240 : null),
             ),
             if (screenGoal != null)
-              _stepRow('Tempo de tela por dia', fmtMin(screenGoal!), () => setState(() => screenGoal = (screenGoal! - 15).clamp(15, 1440)), () => setState(() => screenGoal = (screenGoal! + 15).clamp(15, 1440))),
+              _stepRow('Tempo de tela por dia', fmtMin(screenGoal!), () => setState(() => screenGoal = (screenGoal! - 15).clamp(15, 1440).toInt()), () => setState(() => screenGoal = (screenGoal! + 15).clamp(15, 1440).toInt())),
             const SizedBox(height: 12),
             const InfoNote('Metas são objetivos, não obrigações. Passar delas não gera bronca nem punição.'),
           ],

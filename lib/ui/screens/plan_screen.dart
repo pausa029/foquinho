@@ -125,9 +125,9 @@ class _TasksTab extends StatelessWidget {
               Row(
                 children: [
                   const Expanded(child: Text('Duração')),
-                  IconButton(onPressed: () => setSt(() => minutes = (minutes - 5).clamp(5, 480)), icon: const Icon(Icons.remove_circle_outline), tooltip: 'Diminuir duração'),
+                  IconButton(onPressed: () => setSt(() => minutes = (minutes - 5).clamp(5, 480).toInt()), icon: const Icon(Icons.remove_circle_outline), tooltip: 'Diminuir duração'),
                   SizedBox(width: 64, child: Text(fmtMin(minutes), textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.w700))),
-                  IconButton(onPressed: () => setSt(() => minutes = (minutes + 5).clamp(5, 480)), icon: const Icon(Icons.add_circle_outline), tooltip: 'Aumentar duração'),
+                  IconButton(onPressed: () => setSt(() => minutes = (minutes + 5).clamp(5, 480).toInt()), icon: const Icon(Icons.add_circle_outline), tooltip: 'Aumentar duração'),
                 ],
               ),
               ListTile(
@@ -240,7 +240,7 @@ class _TaskCard extends StatelessWidget {
                     builder: (_) => SessionScreen(
                       kind: SessionKind.estudo,
                       presetTitle: '${d.subjectName(task.subjectId)}: ${task.topic}',
-                      presetMinutes: task.minutes.clamp(1, 180),
+                      presetMinutes: task.minutes.clamp(1, 180).toInt(),
                       presetSubjectId: task.subjectId,
                       presetTopic: task.topic,
                       presetTaskId: task.id,

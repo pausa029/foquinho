@@ -222,7 +222,7 @@ class AppState extends ChangeNotifier {
     if (minutes == null) {
       data.screenLog.remove(day);
     } else {
-      data.screenLog[day] = minutes.clamp(0, 1440);
+      data.screenLog[day] = minutes.clamp(0, 1440).toInt();
     }
     await save();
   }
@@ -398,7 +398,7 @@ class AppState extends ChangeNotifier {
         title: a.title,
         subjectId: a.subjectId,
         topic: a.topic,
-        minutes: minutes.clamp(1, 1440),
+        minutes: minutes.clamp(1, 1440).toInt(),
         startedAt: a.startedAt,
         note: note.trim(),
       );

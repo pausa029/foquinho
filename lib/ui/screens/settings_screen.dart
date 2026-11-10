@@ -77,8 +77,8 @@ class SettingsScreen extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               child: Column(
                 children: [
-                  _stepRow(context, 'Estudo', fmtMin(p.studyGoalMin), () => saveP((x) => x.studyGoalMin = (x.studyGoalMin - 15).clamp(15, 600)), () => saveP((x) => x.studyGoalMin = (x.studyGoalMin + 15).clamp(15, 600))),
-                  _stepRow(context, 'Atividade física', fmtMin(p.moveGoalMin), () => saveP((x) => x.moveGoalMin = (x.moveGoalMin - 10).clamp(10, 300)), () => saveP((x) => x.moveGoalMin = (x.moveGoalMin + 10).clamp(10, 300))),
+                  _stepRow(context, 'Estudo', fmtMin(p.studyGoalMin), () => saveP((x) => x.studyGoalMin = (x.studyGoalMin - 15).clamp(15, 600).toInt()), () => saveP((x) => x.studyGoalMin = (x.studyGoalMin + 15).clamp(15, 600).toInt())),
+                  _stepRow(context, 'Atividade física', fmtMin(p.moveGoalMin), () => saveP((x) => x.moveGoalMin = (x.moveGoalMin - 10).clamp(10, 300).toInt()), () => saveP((x) => x.moveGoalMin = (x.moveGoalMin + 10).clamp(10, 300).toInt())),
                   SwitchListTile(
                     contentPadding: EdgeInsets.zero,
                     title: const Text('Meta de tempo de tela'),
@@ -87,7 +87,7 @@ class SettingsScreen extends StatelessWidget {
                     onChanged: (v) => saveP((x) => x.screenGoalMin = v ? 240 : null),
                   ),
                   if (p.screenGoalMin != null)
-                    _stepRow(context, 'Tempo de tela', fmtMin(p.screenGoalMin!), () => saveP((x) => x.screenGoalMin = (x.screenGoalMin! - 15).clamp(15, 1440)), () => saveP((x) => x.screenGoalMin = (x.screenGoalMin! + 15).clamp(15, 1440))),
+                    _stepRow(context, 'Tempo de tela', fmtMin(p.screenGoalMin!), () => saveP((x) => x.screenGoalMin = (x.screenGoalMin! - 15).clamp(15, 1440).toInt()), () => saveP((x) => x.screenGoalMin = (x.screenGoalMin! + 15).clamp(15, 1440).toInt())),
                 ],
               ),
             ),

@@ -208,7 +208,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
   }
 
   Widget _bar(int v, int max, Color color) {
-    final f = max <= 0 ? 0.0 : (v / max).clamp(0.0, 1.0);
+    final f = max <= 0 ? 0.0 : (v / max).clamp(0.0, 1.0).toDouble();
     return FractionallySizedBox(
       heightFactor: v == 0 ? 0.02 : f,
       alignment: Alignment.bottomCenter,

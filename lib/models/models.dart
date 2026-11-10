@@ -598,7 +598,7 @@ class AppData {
     if (rawLog is Map) {
       rawLog.forEach((k, v) {
         if (k is String && parseDayKey(k) != null && v is num && v.isFinite) {
-          log[k] = v.round().clamp(0, 1440);
+          log[k] = v.round().clamp(0, 1440).toInt();
         }
       });
     }

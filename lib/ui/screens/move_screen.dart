@@ -223,9 +223,9 @@ class _MoveScreenState extends State<MoveScreen> {
               Row(
                 children: [
                   const Expanded(child: Text('Duração')),
-                  IconButton(onPressed: () => setSt(() => minutes = (minutes - 5).clamp(5, 240)), icon: const Icon(Icons.remove_circle_outline), tooltip: 'Diminuir duração'),
+                  IconButton(onPressed: () => setSt(() => minutes = (minutes - 5).clamp(5, 240).toInt()), icon: const Icon(Icons.remove_circle_outline), tooltip: 'Diminuir duração'),
                   SizedBox(width: 64, child: Text('$minutes min', textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.w700))),
-                  IconButton(onPressed: () => setSt(() => minutes = (minutes + 5).clamp(5, 240)), icon: const Icon(Icons.add_circle_outline), tooltip: 'Aumentar duração'),
+                  IconButton(onPressed: () => setSt(() => minutes = (minutes + 5).clamp(5, 240).toInt()), icon: const Icon(Icons.add_circle_outline), tooltip: 'Aumentar duração'),
                 ],
               ),
               const SizedBox(height: 8),

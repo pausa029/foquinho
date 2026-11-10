@@ -1,4 +1,4 @@
-// Modelos de dados do TelaTchau.
+// Modelos de dados do Foquinho.
 // Tudo aqui é serializado em JSON e guardado localmente no aparelho.
 
 import 'dart:math';

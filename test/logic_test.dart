@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:telatchau/logic/stats.dart';
-import 'package:telatchau/logic/suggestions.dart';
-import 'package:telatchau/models/models.dart';
+import 'package:foquinho/logic/stats.dart';
+import 'package:foquinho/logic/suggestions.dart';
+import 'package:foquinho/models/models.dart';
 
 AppData sample() {
   final d = AppData(profile: Profile(nickname: 'Bia', sports: ['Futebol']), onboarded: true);

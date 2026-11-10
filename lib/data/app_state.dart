@@ -10,7 +10,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/models.dart';
 
-const String kStorageKey = 'telatchau.v1';
+const String kStorageKey = 'foquinho.v1';
 
 /// Como o estado foi carregado — a interface mostra isso quando necessário.
 enum LoadStatus { carregando, ok, erroLeitura, erroEscrita }

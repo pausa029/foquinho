@@ -116,7 +116,7 @@ class HomeScreen extends StatelessWidget {
                     ],
                   ],
                   const SizedBox(height: 10),
-                  const InfoNote('O TelaTchau não mede o tempo de tela sozinho. Copie o valor que o celular mostra em Bem-estar digital (Android) ou Tempo de Uso (iPhone).'),
+                  const InfoNote('O Foquinho não mede o tempo de tela sozinho. Copie o valor que o celular mostra em Bem-estar digital (Android) ou Tempo de Uso (iPhone).'),
                   const SizedBox(height: 10),
                   Align(
                     alignment: Alignment.centerLeft,

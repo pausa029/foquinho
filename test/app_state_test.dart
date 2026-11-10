@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:telatchau/data/app_state.dart';
-import 'package:telatchau/models/models.dart';
+import 'package:foquinho/data/app_state.dart';
+import 'package:foquinho/models/models.dart';
 
 /// Armazenamento em memória para os testes (sem shared_preferences).
 class MemStore {

@@ -3,8 +3,8 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:telatchau/data/app_state.dart';
-import 'package:telatchau/main.dart';
+import 'package:foquinho/data/app_state.dart';
+import 'package:foquinho/main.dart';
 
 void main() {
   testWidgets('abre a configuração inicial e chega ao painel', (tester) async {
@@ -22,7 +22,7 @@ void main() {
     );
     await state.load();
 
-    await tester.pumpWidget(TelaTchauApp(state: state));
+    await tester.pumpWidget(FoquinhoApp(state: state));
     await tester.pumpAndSettle();
 
     expect(find.text('Menos tela. Mais estudo e movimento.'), findsOneWidget);

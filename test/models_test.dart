@@ -1,7 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:telatchau/models/models.dart';
+import 'package:foquinho/models/models.dart';
 
 void main() {
   group('dayKey e parseDayKey', () {

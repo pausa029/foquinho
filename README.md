@@ -1,10 +1,10 @@
-# TelaTchau
+# Foquinho
 
 **Menos tela. Mais estudo e movimento.**
 
 Aplicativo escolar, em português do Brasil, para ajudar estudantes a trocar parte do tempo de celular por estudo e atividade física. Feito em **Flutter** (Android, iOS e web com o mesmo código), com tom positivo, sem culpa, sem broncas e sem competição.
 
-> Este repositório também publica, na raiz do site, o **Pausa+** (versão web em HTML, pasta `web_site/`). O TelaTchau em Flutter fica em `/app/` no site e gera o APK.
+> Este repositório também publica, na raiz do site, a **página de apresentação** e a **versão web** do Foquinho (HTML, pasta `web_site/`, em `/web/`). O app Flutter fica em `/app/` no site e gera o APK.
 
 ## O que o app faz
 
@@ -39,7 +39,7 @@ lib/
   ui/screens/               onboarding, início, plano, movimento, histórico, ajustes, sessão
   ui/widgets/common.dart    componentes compartilhados
 test/                       testes unitários e de widget
-web_site/index.html         Pausa+ (versão web) publicada na raiz do site
+web_site/                   página de apresentação (raiz) e versão web do app (/web/)
 .github/workflows/build.yml compilação automática (APK, AAB, site)
 ```
 
@@ -47,18 +47,18 @@ As pastas `android/`, `ios/` e `web/` são geradas por `flutter create .` (o Git
 
 ## Compilar na nuvem (sem instalar nada) — recomendado
 
-1. Envie o código para a branch `main` (ou abra **Actions → Build TelaTchau → Run workflow**).
+1. Envie o código para a branch `main` (ou abra **Actions → Build Foquinho → Run workflow**).
 2. Ao terminar, em **Actions → última execução → Artifacts** baixe:
-   - `telatchau-apk-debug` → `app-debug.apk` (instala direto no Android)
-   - `telatchau-aab-release` → `app-release.aab` (para a Play, depois de assinar; veja abaixo)
-3. O site é publicado automaticamente no GitHub Pages: `https://<usuario>.github.io/telatchau/` (Pausa+) e `https://<usuario>.github.io/telatchau/app/` (TelaTchau web).
+   - `foquinho-apk-debug` → `app-debug.apk` (instala direto no Android)
+   - `foquinho-aab-release` → `app-release.aab` (para a Play, depois de assinar; veja abaixo)
+3. O site é publicado automaticamente no GitHub Pages: `https://<usuario>.github.io/foquinho/` (página de apresentação) e `https://<usuario>.github.io/foquinho/app/` (Foquinho web).
 
 ## Compilar no computador
 
 Requisitos: Flutter 3.22 ou mais novo (o build na nuvem usa **3.27.4**), Android Studio com SDK e Java 17.
 
 ```bash
-flutter create --org com.pausa029 --project-name telatchau --platforms android,ios,web .
+flutter create --org com.pausa029 --project-name foquinho --platforms android,ios,web .
 flutter pub get
 flutter test
 flutter run                         # com um celular ligado por USB (depuração USB ativa) ou emulador
@@ -67,13 +67,13 @@ flutter build appbundle --release   # build/app/outputs/bundle/release/app-relea
 flutter build web --release         # build/web/
 ```
 
-Depois do `flutter create`, ajuste em `android/app/build.gradle` (ou `.kts`): `minSdk = 21` e, em `android/app/src/main/AndroidManifest.xml`, `android:label="TelaTchau"`.
+Depois do `flutter create`, ajuste em `android/app/build.gradle` (ou `.kts`): `minSdk = 21` e, em `android/app/src/main/AndroidManifest.xml`, `android:label="Foquinho"`.
 
 ## Instalar o APK no Android
 
 1. Baixe `app-debug.apk` no celular.
 2. Abra o arquivo. O Android pede para permitir *instalar apps de fontes desconhecidas* para o navegador ou gerenciador de arquivos: permita só desta vez.
-3. Toque em **Instalar**. O ícone *TelaTchau* aparece na lista de apps.
+3. Toque em **Instalar**. O ícone *Foquinho* aparece na lista de apps.
 
 APK de depuração serve para testar e distribuir diretamente; não serve para a Play Store.
 
@@ -86,10 +86,10 @@ APK de depuração serve para testar e distribuir diretamente; não serve para a
 O AAB gerado pelo robô usa a chave de **depuração**, que a Play rejeita. Para publicar:
 
 ```bash
-keytool -genkey -v -keystore telatchau-upload.jks -keyalg RSA -keysize 2048 -validity 10000 -alias upload
+keytool -genkey -v -keystore foquinho-upload.jks -keyalg RSA -keysize 2048 -validity 10000 -alias upload
 ```
 
-Crie `android/key.properties` (não entra no Git) com `storePassword`, `keyPassword`, `keyAlias=upload`, `storeFile=../telatchau-upload.jks`, configure `signingConfigs.release` no `android/app/build.gradle` conforme a [documentação do Flutter](https://docs.flutter.dev/deployment/android#signing-the-app) e rode `flutter build appbundle --release`. Guarde a chave: sem ela não há como atualizar o app na loja.
+Crie `android/key.properties` (não entra no Git) com `storePassword`, `keyPassword`, `keyAlias=upload`, `storeFile=../foquinho-upload.jks`, configure `signingConfigs.release` no `android/app/build.gradle` conforme a [documentação do Flutter](https://docs.flutter.dev/deployment/android#signing-the-app) e rode `flutter build appbundle --release`. Guarde a chave: sem ela não há como atualizar o app na loja.
 
 Conta Google Play: US$ 25 (uma vez). Contas pessoais novas precisam de teste fechado com testadores antes da publicação.
 

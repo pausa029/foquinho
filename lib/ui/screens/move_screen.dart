@@ -97,7 +97,7 @@ class _MoveScreenState extends State<MoveScreen> {
           if (!showAll && d.activities.length > 6)
             TextButton(onPressed: () => setState(() => showAll = true), child: const Text('Mostrar todas as atividades')),
           const SizedBox(height: 8),
-          const InfoNote('Respeite seus limites e pare se sentir dor ou mal-estar. O TelaTchau não faz diagnóstico nem promete resultados de saúde.'),
+          const InfoNote('Respeite seus limites e pare se sentir dor ou mal-estar. O Foquinho não faz diagnóstico nem promete resultados de saúde.'),
         ],
       ),
     );

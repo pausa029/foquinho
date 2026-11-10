@@ -156,7 +156,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   child: Icon(Icons.waving_hand_outlined, color: Theme.of(context).colorScheme.onPrimary),
                 ),
                 const SizedBox(width: 10),
-                Text('TelaTchau', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700)),
+                Text('Foquinho', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700)),
               ],
             ),
             const SizedBox(height: 16),

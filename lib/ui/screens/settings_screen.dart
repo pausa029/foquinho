@@ -206,7 +206,7 @@ class SettingsScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 12),
-          Center(child: Text('TelaTchau 1.0 · Menos tela. Mais estudo e movimento.', style: TextStyle(color: cs.onSurfaceVariant, fontSize: 12))),
+          Center(child: Text('Foquinho 1.0 · Menos tela. Mais estudo e movimento.', style: TextStyle(color: cs.onSurfaceVariant, fontSize: 12))),
         ],
       ),
     );

@@ -204,7 +204,7 @@ class _SessionScreenState extends State<SessionScreen> {
           style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(56), backgroundColor: isStudy ? cs.primary : cs.tertiary),
         ),
         const SizedBox(height: 12),
-        if (!isStudy) const InfoNote('Respeite seus limites. Se sentir dor, tontura ou mal-estar, pare. O TelaTchau não dá orientação médica.'),
+        if (!isStudy) const InfoNote('Respeite seus limites. Se sentir dor, tontura ou mal-estar, pare. O Foquinho não dá orientação médica.'),
         if (isStudy) const InfoNote('Você pode sair desta tela: o tempo continua contando pelo relógio do aparelho.'),
       ],
     );

@@ -15,12 +15,12 @@ void main() {
   WidgetsFlutterBinding.ensureInitialized();
   final state = AppState();
   state.load();
-  runApp(TelaTchauApp(state: state));
+  runApp(FoquinhoApp(state: state));
 }
 
-class TelaTchauApp extends StatelessWidget {
+class FoquinhoApp extends StatelessWidget {
   final AppState state;
-  const TelaTchauApp({super.key, required this.state});
+  const FoquinhoApp({super.key, required this.state});
 
   @override
   Widget build(BuildContext context) {
@@ -35,7 +35,7 @@ class TelaTchauApp extends StatelessWidget {
             ThemeChoice.escuro => ThemeMode.dark,
           };
           return MaterialApp(
-            title: 'TelaTchau',
+            title: 'Foquinho',
             debugShowCheckedModeBanner: false,
             themeMode: mode,
             theme: buildTheme(Brightness.light),
@@ -89,7 +89,7 @@ class RootScreen extends StatelessWidget {
             children: [
               CircularProgressIndicator(semanticsLabel: 'Carregando'),
               SizedBox(height: 16),
-              Text('Abrindo o TelaTchau…'),
+              Text('Abrindo o Foquinho…'),
             ],
           ),
         ),

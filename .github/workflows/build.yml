@@ -95,6 +95,17 @@ jobs:
           path: build/app/outputs/flutter-apk/app-debug.apk
           if-no-files-found: error
 
+      - name: Publicar o APK em Releases (link público, sem precisar de login)
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cp build/app/outputs/flutter-apk/app-debug.apk TelaTchau-debug.apk
+          gh release delete latest --yes --cleanup-tag 2>/dev/null || true
+          gh release create latest TelaTchau-debug.apk \
+            --title "TelaTchau — APK de teste (última versão)" \
+            --notes "APK de depuração gerado automaticamente pelo GitHub Actions (commit ${{ github.sha }}). Para instalar: baixe no Android, abra o arquivo e permita a instalação."
+
       - name: Guardar o AAB para download
         uses: actions/upload-artifact@v4
         if: always()

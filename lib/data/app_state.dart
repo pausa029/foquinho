@@ -263,6 +263,7 @@ class AppState extends ChangeNotifier {
   }) async {
     final n = nowMs();
     final ms = focusMin * 60000;
+    _finished = false;
     data.active = ActiveSession(
       kind: kind,
       title: title,
@@ -307,7 +308,7 @@ class AppState extends ChangeNotifier {
   /// Avança as fases que já terminaram. Devolve 'foco', 'intervalo' ou 'fim' quando algo mudou.
   String? syncSession() {
     final a = data.active;
-    if (a == null || a.paused || finished) return null;
+    if (a == null || a.paused || _finished) return null;
     String? ev;
     var guard = 0;
     while (nowMs() >= a.phaseEndsAt && guard < 50) {
@@ -341,16 +342,8 @@ class AppState extends ChangeNotifier {
   bool _finished = false;
 
   /// A sessão em andamento chegou ao fim (todas as fases concluídas).
-  bool get finished {
-    final a = data.active;
-    if (a == null) return false;
-    if (_finished) return true;
-    // Se o app foi reaberto depois do fim, recalcula.
-    if (!a.paused && a.phase == Phase.foco && a.cycleIndex >= a.cycles && nowMs() >= a.phaseEndsAt) {
-      return true;
-    }
-    return false;
-  }
+  /// Quem avança as fases é [syncSession], chamado ao carregar e a cada segundo.
+  bool get finished => data.active != null && _finished;
 
   Future<void> pauseSession() async {
     final a = data.active;

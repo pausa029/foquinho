@@ -1,7 +1,7 @@
 name: foquinho
 description: "Foquinho — Menos tela. Mais estudo e movimento. App escolar para trocar tempo de celular por estudo e atividade física."
 publish_to: "none"
-version: 1.0.0+1
+version: 1.1.0+2
 
 environment:
   sdk: ">=3.4.0 <4.0.0"
@@ -12,8 +12,11 @@ dependencies:
     sdk: flutter
   flutter_localizations:
     sdk: flutter
-  # Único plugin: guarda os dados do app em JSON, localmente, sem conta e sem internet.
+  # Guarda os dados do app em JSON, localmente, sem conta e sem internet.
   shared_preferences: ^2.3.0
+  # Notificações e alarme agendados no próprio aparelho (sem servidor).
+  flutter_local_notifications: 17.2.4
+  timezone: ^0.9.4
 
 dev_dependencies:
   flutter_test:

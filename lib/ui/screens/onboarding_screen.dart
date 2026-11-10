@@ -291,7 +291,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _title('Quando você aceita lembretes?', 'Nesta versão os lembretes aparecem dentro do app, quando ele está aberto.'),
+            _title('Quando você aceita lembretes?', 'Os lembretes aparecem dentro do app. No Android, dá para ligar também as notificações do sistema.'),
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
               title: const Text('Mostrar lembretes de estudo e movimento'),
@@ -306,7 +306,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               _timeRow('até as', quietTo, (v) => setState(() => quietTo = v)),
             ],
             const SizedBox(height: 12),
-            const InfoNote('Notificações com o app fechado não fazem parte desta versão, para não pedir permissões que não usamos.'),
+            const InfoNote('No app Android, você pode ligar depois as notificações do sistema em Ajustes → Lembretes, para ser avisado mesmo com o app fechado.'),
           ],
         );
     }

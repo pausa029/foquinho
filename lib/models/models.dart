@@ -110,6 +110,13 @@ class Profile {
   String remindTo;
   String quietFrom; // "HH:mm" — período em que não quer ser incomodado
   String quietTo;
+  bool notifyOn; // notificações do sistema ligadas (a pessoa permitiu)
+  bool studyRemindOn;
+  String studyRemindAt; // "HH:mm"
+  bool moveRemindOn;
+  String moveRemindAt; // "HH:mm"
+  bool nudgeOn; // avisos para fazer uma pausa de tela
+  int nudgeEveryMin;
 
   Profile({
     required this.nickname,
@@ -123,6 +130,13 @@ class Profile {
     this.remindTo = '21:00',
     this.quietFrom = '22:00',
     this.quietTo = '07:00',
+    this.notifyOn = false,
+    this.studyRemindOn = true,
+    this.studyRemindAt = '19:00',
+    this.moveRemindOn = true,
+    this.moveRemindAt = '17:00',
+    this.nudgeOn = true,
+    this.nudgeEveryMin = 120,
   }) : sports = sports ?? <String>[];
 
   Map<String, dynamic> toJson() => {
@@ -137,6 +151,13 @@ class Profile {
         'remindTo': remindTo,
         'quietFrom': quietFrom,
         'quietTo': quietTo,
+        'notifyOn': notifyOn,
+        'studyRemindOn': studyRemindOn,
+        'studyRemindAt': studyRemindAt,
+        'moveRemindOn': moveRemindOn,
+        'moveRemindAt': moveRemindAt,
+        'nudgeOn': nudgeOn,
+        'nudgeEveryMin': nudgeEveryMin,
       };
 
   static Profile fromJson(Map<String, dynamic> m) {
@@ -158,6 +179,13 @@ class Profile {
       remindTo: validHm(readStr(m, 'remindTo')) ?? '21:00',
       quietFrom: validHm(readStr(m, 'quietFrom')) ?? '22:00',
       quietTo: validHm(readStr(m, 'quietTo')) ?? '07:00',
+      notifyOn: readBool(m, 'notifyOn', false),
+      studyRemindOn: readBool(m, 'studyRemindOn', true),
+      studyRemindAt: validHm(readStr(m, 'studyRemindAt')) ?? '19:00',
+      moveRemindOn: readBool(m, 'moveRemindOn', true),
+      moveRemindAt: validHm(readStr(m, 'moveRemindAt')) ?? '17:00',
+      nudgeOn: readBool(m, 'nudgeOn', true),
+      nudgeEveryMin: readInt(m, 'nudgeEveryMin', 120, min: 30, max: 480),
     );
   }
 }

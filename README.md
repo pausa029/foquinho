@@ -24,7 +24,7 @@ Aplicativo escolar, em português do Brasil, para ajudar estudantes a trocar par
 
 - **Não lê o tempo de tela automaticamente.** No Android isso exige a permissão especial *Acesso a dados de uso* (`PACKAGE_USAGE_STATS`), ativada manualmente nas configurações; no iOS exige as APIs de *Screen Time* da Apple, com entitlement e aprovação especiais. Nenhuma das duas foi implementada, então o app **não afirma** monitorar nada: o tempo é informado pelo estudante e marcado como manual.
 - **Não bloqueia nem limita outros apps.** Orienta a usar *Bem-estar digital* (Android) e *Tempo de Uso* (iPhone).
-- **Não envia notificações com o app fechado.** Os lembretes aparecem dentro do app, na janela de horário escolhida. Assim o app não pede nenhuma permissão do sistema.
+- **Notificações e alarme (app Android):** opcionais, ligadas em *Ajustes → Notificações e alarme* depois de uma explicação. Alarme no fim de cada fase do temporizador, lembretes diários de estudo e movimento, avisos de pausa de tela, tarefas com prazo e provas. Tudo agendado no aparelho (plugin `flutter_local_notifications`), sem servidor, para 7 dias, renovado ao abrir o app. Na versão web não há notificações com o app fechado. A permissão `USE_EXACT_ALARM` é usada para o alarme; na Play Store ela exige declarar o app como alarme/temporizador.
 - **Não tem login nem nuvem.** Logo, não há senha para armazenar nem sincronização para fingir.
 
 ## Estrutura

@@ -2,13 +2,16 @@
 // Os dados ficam em um único JSON no armazenamento do app (shared_preferences),
 // só neste aparelho. Não há servidor, conta online nem sincronização.
 
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../logic/reminders.dart';
 import '../models/models.dart';
+import '../services/notifier.dart';
 
 const String kStorageKey = 'foquinho.v1';
 
@@ -25,10 +28,15 @@ class AppState extends ChangeNotifier {
   final Future<bool> Function(String) _write;
   final Future<bool> Function() _clear;
 
+  /// Serviço de notificações do sistema. Nulo nos testes e onde não há suporte.
+  final Notifier? notifier;
+  Timer? _resyncTimer;
+
   AppState({
     Future<String?> Function()? read,
     Future<bool> Function(String)? write,
     Future<bool> Function()? clear,
+    this.notifier,
   })  : _read = read ?? _prefsRead,
         _write = write ?? _prefsWrite,
         _clear = clear ?? _prefsClear;
@@ -72,11 +80,70 @@ class AppState extends ChangeNotifier {
     }
     syncSession();
     notifyListeners();
+    _scheduleResync();
+  }
+
+  // ---------- notificações do sistema ----------
+
+  bool get notificationsSupported => notifier != null && notifier!.supported;
+
+  /// Lista do que deve estar agendado agora (vazia se a pessoa não ligou as notificações).
+  List<PlannedNotice> plannedNotices([DateTime? now]) {
+    final p = data.profile;
+    if (p == null || !p.notifyOn) return const [];
+    final n = now ?? DateTime.now();
+    return [
+      if (!_finished) ...planTimerNotices(data.active, n.millisecondsSinceEpoch),
+      ...planReminderNotices(data, n),
+    ];
+  }
+
+  /// Reagenda tudo pouco depois da última alteração (evita reagendar a cada toque).
+  void _scheduleResync() {
+    if (!notificationsSupported) return;
+    _resyncTimer?.cancel();
+    _resyncTimer = Timer(const Duration(milliseconds: 700), () {
+      // ignore: discarded_futures
+      resyncNotifications();
+    });
+  }
+
+  Future<void> resyncNotifications() async {
+    final n = notifier;
+    if (n == null || !n.supported) return;
+    try {
+      await n.replaceAll(plannedNotices());
+    } catch (_) {
+      // Notificação é um extra: uma falha aqui nunca deve travar o app.
+    }
+  }
+
+  /// Pede a permissão ao sistema e liga as notificações. Devolve false se a pessoa negou.
+  Future<bool> enableNotifications() async {
+    final n = notifier;
+    if (n == null || !n.supported) return false;
+    final ok = await n.requestPermission();
+    final p = data.profile ??= Profile(nickname: 'Estudante');
+    p.notifyOn = ok;
+    await save();
+    return ok;
+  }
+
+  Future<void> disableNotifications() async {
+    data.profile?.notifyOn = false;
+    await save();
+  }
+
+  @override
+  void dispose() {
+    _resyncTimer?.cancel();
+    super.dispose();
   }
 
   /// Grava e avisa a interface. Nunca lança exceção: um erro de gravação vira aviso.
   Future<void> save() async {
     notifyListeners();
+    _scheduleResync();
     try {
       final ok = await _write(jsonEncode(data.toJson()));
       if (!ok) {

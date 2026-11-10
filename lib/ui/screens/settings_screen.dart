@@ -98,8 +98,8 @@ class SettingsScreen extends StatelessWidget {
             child: Column(
               children: [
                 SwitchListTile(
-                  title: const Text('Lembretes dentro do app'),
-                  subtitle: const Text('Aparecem no painel inicial quando o app está aberto.'),
+                  title: const Text('Lembretes'),
+                  subtitle: const Text('Chave geral: vale para os lembretes dentro do app e para as notificações.'),
                   value: p.remindersOn,
                   onChanged: (v) => saveP((x) => x.remindersOn = v),
                 ),
@@ -109,10 +109,78 @@ class SettingsScreen extends StatelessWidget {
                   _timeTile(context, 'Não me incomodar das', p.quietFrom, (v) => saveP((x) => x.quietFrom = v)),
                   _timeTile(context, 'até as', p.quietTo, (v) => saveP((x) => x.quietTo = v)),
                 ],
-                const Padding(
-                  padding: EdgeInsets.fromLTRB(16, 0, 16, 12),
-                  child: InfoNote('Notificações com o app fechado não existem nesta versão: assim o app não pede nenhuma permissão do sistema.'),
-                ),
+              ],
+            ),
+          ),
+
+          const SectionTitle('Notificações e alarme'),
+          Card(
+            child: Column(
+              children: [
+                if (!state.notificationsSupported)
+                  const Padding(
+                    padding: EdgeInsets.all(16),
+                    child: InfoNote('Notificações do sistema só existem no aplicativo instalado (Android). Nesta versão, os lembretes aparecem dentro do app e o temporizador avisa na tela.'),
+                  )
+                else ...[
+                  SwitchListTile(
+                    secondary: const Icon(Icons.notifications_active_outlined),
+                    title: const Text('Notificações do sistema'),
+                    subtitle: Text(p.notifyOn ? 'Ligadas: o Foquinho avisa mesmo com o app fechado.' : 'Desligadas.'),
+                    value: p.notifyOn,
+                    onChanged: (v) => _toggleNotifications(context, state, v),
+                  ),
+                  if (p.notifyOn) ...[
+                    const ListTile(
+                      leading: Icon(Icons.alarm),
+                      title: Text('Alarme do temporizador'),
+                      subtitle: Text('Toca quando o foco, o intervalo ou o exercício termina, mesmo com a tela apagada.'),
+                    ),
+                    SwitchListTile(
+                      title: const Text('Lembrete para estudar'),
+                      value: p.studyRemindOn,
+                      onChanged: (v) => saveP((x) => x.studyRemindOn = v),
+                    ),
+                    if (p.studyRemindOn) _timeTile(context, 'Todos os dias às', p.studyRemindAt, (v) => saveP((x) => x.studyRemindAt = v)),
+                    SwitchListTile(
+                      title: const Text('Lembrete para se movimentar'),
+                      value: p.moveRemindOn,
+                      onChanged: (v) => saveP((x) => x.moveRemindOn = v),
+                    ),
+                    if (p.moveRemindOn) _timeTile(context, 'Todos os dias às', p.moveRemindAt, (v) => saveP((x) => x.moveRemindAt = v)),
+                    SwitchListTile(
+                      title: const Text('Avisos para sair da tela'),
+                      subtitle: const Text('Sugestões de pausa ao longo do dia, dentro do horário em que você aceita lembretes.'),
+                      value: p.nudgeOn,
+                      onChanged: (v) => saveP((x) => x.nudgeOn = v),
+                    ),
+                    if (p.nudgeOn)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: _stepRow(context, 'A cada', fmtMin(p.nudgeEveryMin), () => saveP((x) => x.nudgeEveryMin = (x.nudgeEveryMin - 30).clamp(30, 480).toInt()), () => saveP((x) => x.nudgeEveryMin = (x.nudgeEveryMin + 30).clamp(30, 480).toInt())),
+                      ),
+                    const ListTile(
+                      leading: Icon(Icons.event_note_outlined),
+                      title: Text('Tarefas e provas'),
+                      subtitle: Text('Aviso na véspera e no dia do prazo das tarefas; 3 dias antes, na véspera e no dia das provas.'),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: OutlinedButton.icon(
+                          onPressed: () => state.notifier?.showTest(),
+                          icon: const Icon(Icons.notifications_none),
+                          label: const Text('Enviar notificação de teste'),
+                        ),
+                      ),
+                    ),
+                  ],
+                  const Padding(
+                    padding: EdgeInsets.fromLTRB(16, 0, 16, 12),
+                    child: InfoNote('Os avisos são agendados no próprio aparelho, sem internet, para os próximos 7 dias, e renovados cada vez que você abre o app. O Foquinho não sabe se você está no celular: os avisos de pausa chegam no horário, e você decide. O período "não me incomodar" é respeitado.'),
+                  ),
+                ],
               ],
             ),
           ),
@@ -166,7 +234,7 @@ class SettingsScreen extends StatelessWidget {
                   _bullet(context, Icons.check, 'Metas, temporizadores, sugestões e histórico funcionam sem nenhuma permissão.'),
                   _bullet(context, Icons.close, 'Não lê o tempo de tela sozinho. No Android isso exige a permissão especial "Acesso a dados de uso"; no iPhone, as APIs de Tempo de Uso da Apple, que exigem autorização e aprovação especiais. Nenhuma das duas foi implementada.'),
                   _bullet(context, Icons.close, 'Não bloqueia nem limita outros apps. Para isso, use Bem-estar digital (Android) ou Tempo de Uso (iPhone).'),
-                  _bullet(context, Icons.close, 'Não envia notificações com o app fechado.'),
+                  _bullet(context, state.notificationsSupported ? Icons.check : Icons.close, state.notificationsSupported ? 'Notificações e alarme do temporizador com o app fechado, se você ligar em "Notificações e alarme". É a única permissão que o app pede.' : 'Nesta versão (navegador) não há notificações com o app fechado; elas existem no aplicativo Android.'),
                 ],
               ),
             ),
@@ -210,6 +278,24 @@ class SettingsScreen extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  Future<void> _toggleNotifications(BuildContext context, AppState state, bool on) async {
+    if (!on) {
+      await state.disableNotifications();
+      return;
+    }
+    // Explica antes de pedir a permissão ao sistema.
+    final go = await confirmDialog(
+      context,
+      title: 'Ligar notificações?',
+      text: 'O Foquinho usa notificações para: tocar o alarme quando o temporizador termina, lembrar a hora de estudar e de se mexer, sugerir pausas de tela e avisar de tarefas e provas. Nada é enviado para a internet. Em seguida o celular vai pedir a sua permissão.',
+      yes: 'Continuar',
+    );
+    if (!go) return;
+    final ok = await state.enableNotifications();
+    if (!context.mounted) return;
+    showSnack(context, ok ? 'Notificações ligadas.' : 'Permissão negada. Para ligar depois, libere as notificações do Foquinho nas configurações do celular.');
   }
 
   Widget _stepRow(BuildContext context, String label, String value, VoidCallback minus, VoidCallback plus) {

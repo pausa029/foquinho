@@ -3,6 +3,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'data/app_state.dart';
 import 'models/models.dart';
+import 'services/notifier.dart';
 import 'ui/screens/home_screen.dart';
 import 'ui/screens/history_screen.dart';
 import 'ui/screens/move_screen.dart';
@@ -13,7 +14,7 @@ import 'ui/widgets/common.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  final state = AppState();
+  final state = AppState(notifier: LocalNotifier());
   state.load();
   runApp(FoquinhoApp(state: state));
 }

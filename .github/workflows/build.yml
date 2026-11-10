@@ -82,7 +82,7 @@ jobs:
 
       - name: Compilar versão web
         continue-on-error: true
-        run: flutter build web --release --base-href "/${{ github.event.repository.name }}/app/"
+        run: flutter build web --release --base-href "/app/"
 
       - name: Montar o site (apresentação na raiz, app web em /web/, versão Flutter em /app/)
         run: |

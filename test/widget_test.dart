@@ -1,0 +1,43 @@
+// Teste de fumaça da interface: o app abre na configuração inicial
+// e, depois de concluída, mostra o painel.
+
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:telatchau/data/app_state.dart';
+import 'package:telatchau/main.dart';
+
+void main() {
+  testWidgets('abre a configuração inicial e chega ao painel', (tester) async {
+    String? stored;
+    final state = AppState(
+      read: () async => stored,
+      write: (s) async {
+        stored = s;
+        return true;
+      },
+      clear: () async {
+        stored = null;
+        return true;
+      },
+    );
+    await state.load();
+
+    await tester.pumpWidget(TelaTchauApp(state: state));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Menos tela. Mais estudo e movimento.'), findsOneWidget);
+    expect(find.text('Pular tudo'), findsOneWidget);
+
+    await tester.enterText(find.byType(TextField).first, 'Rafa');
+    await tester.tap(find.text('Pular tudo'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Oi, Rafa'), findsOneWidget);
+    expect(find.text('Estudar agora'), findsOneWidget);
+    expect(find.text('Pausa ativa'), findsOneWidget);
+    expect(find.text('Ver plano'), findsOneWidget);
+
+    // Desmonta a árvore para encerrar os temporizadores da interface.
+    await tester.pumpWidget(const SizedBox());
+  });
+}

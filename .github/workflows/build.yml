@@ -1,0 +1,136 @@
+# Compila o TelaTchau na nuvem do GitHub (de graça):
+#  - APK de depuração (instala direto no Android)
+#  - AAB de publicação (assinatura de teste; veja README para assinar de verdade)
+#  - Versão web, publicada no GitHub Pages (para iPhone e qualquer navegador)
+#
+# Para rodar: basta enviar código para a branch main, ou usar "Run workflow" na aba Actions.
+
+name: Build TelaTchau
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Compilar Android e Web
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Baixar o código
+        uses: actions/checkout@v4
+
+      - name: Instalar Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Instalar Flutter (versão fixa, para o build ser reproduzível)
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: "3.27.4"
+          cache: true
+
+      - name: Gerar as pastas android/, ios/ e web/ (o código do app fica em lib/)
+        run: |
+          flutter create --org com.pausa029 --project-name telatchau --platforms android,ios,web .
+          # Nome visível do app e versão mínima do Android.
+          sed -i 's/android:label="telatchau"/android:label="TelaTchau"/' android/app/src/main/AndroidManifest.xml
+          for f in android/app/build.gradle android/app/build.gradle.kts; do
+            if [ -f "$f" ]; then
+              sed -i 's/flutter\.minSdkVersion/21/' "$f"
+            fi
+          done
+          # Nome do app na versão web (aba do navegador e "Adicionar à tela de início").
+          sed -i 's/<title>telatchau<\/title>/<title>TelaTchau<\/title>/' web/index.html || true
+          sed -i 's/"name": "telatchau"/"name": "TelaTchau"/; s/"short_name": "telatchau"/"short_name": "TelaTchau"/' web/manifest.json || true
+          sed -i 's/"description": "A new Flutter project."/"description": "Menos tela. Mais estudo e movimento."/' web/manifest.json || true
+
+      - name: Baixar dependências
+        run: flutter pub get
+
+      - name: Analisar o código (não bloqueia o build)
+        continue-on-error: true
+        run: flutter analyze --no-fatal-infos --no-fatal-warnings
+
+      - name: Rodar os testes (não bloqueia o build; veja o log)
+        continue-on-error: true
+        run: flutter test
+
+      - name: Compilar APK de depuração
+        run: flutter build apk --debug
+
+      - name: Compilar AAB (assinado com chave de teste)
+        continue-on-error: true
+        run: flutter build appbundle --release
+
+      - name: Compilar versão web
+        continue-on-error: true
+        run: flutter build web --release --base-href "/${{ github.event.repository.name }}/app/"
+
+      - name: Montar o site (Pausa+ na raiz e TelaTchau web em /app/)
+        run: |
+          mkdir -p site/app
+          cp web_site/index.html site/index.html
+          if [ -d build/web ]; then cp -r build/web/. site/app/; fi
+          touch site/.nojekyll
+          if [ -f web_site/CNAME ]; then cp web_site/CNAME site/CNAME; fi
+
+      - name: Guardar o APK para download
+        uses: actions/upload-artifact@v4
+        with:
+          name: telatchau-apk-debug
+          path: build/app/outputs/flutter-apk/app-debug.apk
+          if-no-files-found: error
+
+      - name: Guardar o AAB para download
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: telatchau-aab-release
+          path: build/app/outputs/bundle/release/app-release.aab
+          if-no-files-found: warn
+
+      - name: Enviar as pastas geradas (android/, ios/, web/) de volta ao repositório
+        continue-on-error: true
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add android ios web .metadata 2>/dev/null || true
+          if ! git diff --cached --quiet; then
+            git commit -m "chore: pastas de plataforma geradas pelo Flutter 3.27.4"
+            git push
+          fi
+
+      - name: Preparar o site para o GitHub Pages
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  deploy-web:
+    name: Publicar site (GitHub Pages)
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Ativar o GitHub Pages do repositório (se ainda não estiver)
+        uses: actions/configure-pages@v5
+        with:
+          enablement: true
+      - name: Publicar
+        id: deployment
+        uses: actions/deploy-pages@v4

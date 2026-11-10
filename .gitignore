@@ -1,0 +1,19 @@
+# Flutter / Dart
+.dart_tool/
+.packages
+.pub-cache/
+.pub/
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
+*.iml
+.idea/
+.vscode/
+
+# Pastas android/, ios/ e web/ são geradas pelo "flutter create ." no primeiro
+# build do GitHub Actions e enviadas de volta para o repositório.
+
+# Chaves e segredos nunca vão para o repositório
+*.jks
+*.keystore
+key.properties

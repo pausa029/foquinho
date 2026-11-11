@@ -16,7 +16,7 @@ const fails = []; const check = (n, ok, x) => { console.log((ok ? 'OK   ' : 'FAI
   for (let i = 0; i < 6 && !(await page.$('#tab-more')); i++) await click('#b-obNext');
   if (!(await page.$('#tab-more'))) { console.log((await page.textContent('#root')).slice(0, 300)); }
   await click('#tab-more');
-  await page.click('text=Planejamento de estudos'); await page.waitForTimeout(100);
+  await page.click('text=Mural de estudos'); await page.waitForTimeout(100);
   check('pede disponibilidade', await has('Quando você pode estudar?'));
   await click('#b-ag-avail');
   for (const i of [0, 1, 2, 3, 4]) { await page.click('#sw-pd' + i).catch(async () => { await page.click('[id*="pd' + i + '"]'); }); await page.waitForTimeout(60); }
@@ -60,4 +60,21 @@ const fails = []; const check = (n, ok, x) => { console.log((ok ? 'OK   ' : 'FAI
   check('persistiu', await page.evaluate(() => S.data && S.data.planSessions.length >= 4 && S.data.splan.configured));
   check('sem erros JS', !errors.length, errors.join(' | '));
   console.log(fails.length ? 'FALHAS: ' + fails.length : 'TUDO OK'); await b.close();
+})();
+(async () => {
+  const b = await chromium.launch(); const page = await (await b.newContext({ viewport: { width: 360, height: 740 }, isMobile: true })).newPage();
+  const errs = []; page.on('pageerror', e => errs.push(e.message));
+  await page.goto(url); const click = async s => { await page.click(s); await page.waitForTimeout(80); };
+  await click('#b-goSignup'); await click('#b-guest'); await click('#b-obNext'); await click('#c-subject-matematica');
+  for (let i = 0; i < 6 && !(await page.$('#tab-more')); i++) await click('#b-obNext');
+  await page.evaluate(() => { const d = S.data; d.splan.days.forEach((a, i) => { a.on = true; a.from = '06:00'; a.to = '22:00'; }); d.splan.configured = true; d.prefs.exams.push({ id: 'x1', subject: 'Matemática', topic: 'Frações', date: addDays(dayKey(), 3) }); save(); go('agenda'); render(); });
+  await page.waitForTimeout(100);
+  const t = await page.textContent('#root');
+  console.log((t.includes('Chegando') && t.includes('em 3 dias') && t.includes('0 de 3') ? 'OK   ' : 'FAIL ') + 'mural mostra prova chegando');
+  await click('#b-board-0');
+  const n = await page.evaluate(() => S.data.planSessions.filter(p => p.subject === 'Matemática' && p.topic === 'Frações').length);
+  console.log((n === 1 && (await page.textContent('#root')).includes('1 de 3') ? 'OK   ' : 'FAIL ') + 'reservar sessão pela sugestão');
+  console.log((await page.textContent('#root')).includes('Prova ou trabalho neste dia') ? 'OK   prova aparece no dia' : 'FAIL prova aparece no dia');
+  console.log(errs.length ? 'FAIL erros ' + errs.join('|') : 'OK   sem erros JS');
+  await page.screenshot({ path: 'test/shot-mural.png' }); await b.close();
 })();

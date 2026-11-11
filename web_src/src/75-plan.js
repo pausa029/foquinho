@@ -1,5 +1,5 @@
 /* ---------- planejamento de estudos: telas e ações ---------- */
-ROUTES.agenda = { tab: 'more', title: 'Planejamento de estudos', sub: true };
+ROUTES.agenda = { tab: 'more', title: 'Mural de estudos', sub: true };
 ROUTES.avail = { tab: 'more', title: 'Quando posso estudar', sub: true };
 
 function monthStart(k) { return k.slice(0, 8) + '01'; }
@@ -29,7 +29,41 @@ function dayBlock(d, key, list) {
   var head = WD_SHORT[wdIndex(key)] + ' ' + fmtDay(key) + (key === today ? ' · hoje' : '');
   var info = act.length ? plural(act.length, 'sessão', 'sessões') + ' · ' + fmtMin(mins) : (planDayAvailable(d.splan, key) ? 'sem sessões' : (d.splan.blocked.indexOf(key) >= 0 ? 'data bloqueada' : 'descanso'));
   return '<section class="card flush dayblock' + (key === today ? ' today' : '') + '"><h3 class="day-h"><span>' + esc(head) + '</span><span class="day-i">' + esc(info) + '</span></h3>' +
+    d.prefs.exams.filter(function (e) { return e.date === key; }).map(function (e) {
+      return '<p class="status near dayitem">' + ic('info', 'sm') + '<span>Prova ou trabalho neste dia: ' + esc(e.subject + (e.topic ? ' · ' + e.topic : '')) + '</span></p>';
+    }).join('') +
     (list.length ? '<ul class="list pslist">' + list.map(psRow).join('') + '</ul>' : '') + '</section>';
+}
+/* Provas dos próximos 14 dias e sugestão de sessão antes de cada uma. */
+function boardSuggestions(d) {
+  var today = dayKey(), out = [];
+  d.prefs.exams.slice().sort(function (a, b) { return a.date < b.date ? -1 : 1; }).forEach(function (e) {
+    if (!isDayKey(e.date)) return;
+    var left = diffDays(e.date, today);
+    if (left < 0 || left > 14) return;
+    var lastK = addDays(e.date, -1), wanted = Math.min(3, left);
+    var planned = d.planSessions.filter(function (p) { return p.subject === e.subject && (p.state === 'planejada' || p.state === 'concluida') && p.day >= today && p.day <= lastK; }).length;
+    var slot = null;
+    if (planned < wanted && d.splan.configured) {
+      var o = planSuggestSlots(d, today, d.splan.sessionMin, new Date(), null, 14)[0];
+      if (o && o.day <= lastK) slot = o;
+    }
+    out.push({ exam: e, left: left, planned: planned, wanted: wanted, slot: slot });
+  });
+  return out;
+}
+function comingCard(d) {
+  var list = boardSuggestions(d);
+  if (!list.length) return '';
+  var h = '<section class="card" aria-labelledby="cm-t"><h2 id="cm-t">' + ic('info') + 'Chegando</h2><p class="muted">Provas e trabalhos que você cadastrou, nos próximos 14 dias.</p><ul class="list">';
+  list.slice(0, 5).forEach(function (x, i) {
+    var e = x.exam, quando = x.left === 0 ? 'hoje' : (x.left === 1 ? 'amanhã' : 'em ' + x.left + ' dias');
+    h += '<li class="li"><div class="li-main"><p class="li-t">' + esc(e.subject + (e.topic ? ' · ' + e.topic : '')) + '</p><p class="li-d">' + quando + ' (' + WD_SHORT[wdIndex(e.date)] + ' ' + fmtDay(e.date) + ')' +
+      (x.wanted ? ' · ' + x.planned + ' de ' + x.wanted + ' sessões sugeridas no mural' : '') + '</p>' +
+      (x.planned < x.wanted ? '<div class="act-btns">' + (x.slot ? btn('Reservar ' + d.splan.sessionMin + ' min ' + WD_SHORT[wdIndex(x.slot.day)] + ' ' + fmtDay(x.slot.day) + ' às ' + hmFromMin(x.slot.startMin), 'boardAdd', { v: e.id, id: 'b-board-' + i, cls: 'small', icon: 'plus' })
+        : '<span class="muted">Sem horário livre antes da data.</span>' + btn('Ver horários', 'nav', { v: 'avail', id: 'b-board-av-' + i, cls: 'small ghost' })) + '</div>' : '') + '</div></li>';
+  });
+  return h + '</ul></section>';
 }
 function planHomeCard(d) {
   if (!d.splan.configured || d.splan.paused) return '';
@@ -62,6 +96,7 @@ SCREENS.agenda = function () {
     (pg.total ? '<p class="wk-l">Neste período: <strong>' + pg.done + ' de ' + pg.total + ' sessões concluídas</strong> (' + fmtMin(pg.doneMin) + ' de ' + fmtMin(pg.plannedMin) + ')</p>' +
       progress(pg.done * 100 / pg.total, pg.done + ' de ' + pg.total + ' sessões concluídas', 'estudo') : '') + '</section>';
 
+  h += comingCard(d);
   if (d.splan.paused) h += '<p class="status near">' + ic('info', 'sm') + '<span>Plano pausado: as sessões continuam aqui, mas não aparecem no Início nem geram avisos.</span></p>';
 
   var missed = planMissed(d);
@@ -387,3 +422,10 @@ FORMS.pBlock = function () {
 };
 A.pUnblock = function (el) { var d = S.data, k = dv(el); d.splan.blocked = d.splan.blocked.filter(function (x) { return x !== k; }); save(); };
 A.alertPsStart = function () { var a = S.modal && S.modal.a, p = a ? planById(S.data, a.planId) : null; closeModal(); psStartTimer(p); };
+A.boardAdd = function (el) {
+  var d = S.data, id = dv(el), x = boardSuggestions(d).filter(function (y) { return y.exam.id === id; })[0];
+  if (!x || !x.slot) return;
+  d.planSessions.push({ id: 'm' + uid(), subject: x.exam.subject, topic: x.exam.topic || null, day: x.slot.day, start: hmFromMin(x.slot.startMin), minutes: d.splan.sessionMin, state: 'planejada', pinned: false, manual: true, moved: false });
+  save();
+  toast('Sessão reservada no mural.');
+};

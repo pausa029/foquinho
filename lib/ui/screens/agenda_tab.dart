@@ -491,6 +491,7 @@ class _AgendaTabState extends State<AgendaTab> {
           ),
         ),
 
+        ..._comingCards(state, d, now),
         if (missed.isNotEmpty) _missedCard(state, d, now, missed),
         if (leftovers.isNotEmpty) _leftoverCard(d, leftovers),
 
@@ -590,6 +591,7 @@ class _AgendaTabState extends State<AgendaTab> {
       final k = dayKey(day);
       final list = inRange.where((p) => p.day == k).toList();
       out.add(_dayHeader(d, now, day, list));
+      out.addAll(_dayItems(state, d, now, k));
       out.addAll(list.map((p) => _sessionTile(state, d, now, p)));
     }
     return out;
@@ -629,6 +631,7 @@ class _AgendaTabState extends State<AgendaTab> {
       count[p.day] = (count[p.day] ?? 0) + 1;
       if (p.state == PlanState.concluida) doneCount[p.day] = (doneCount[p.day] ?? 0) + 1;
     }
+    final itemDays = boardItems(d).map((i) => i.day).toSet();
     final todayK = dayKey(now);
     final sel = selDay != null && selDay!.compareTo(dayKey(from)) >= 0 && selDay!.compareTo(dayKey(to)) <= 0
         ? selDay!
@@ -646,7 +649,7 @@ class _AgendaTabState extends State<AgendaTab> {
         button: true,
         selected: isSel,
         onTap: () => setState(() => selDay = k),
-        label: '${fmtDay(k)}: ${n == 0 ? 'sem sessões' : '$n ${n == 1 ? 'sessão' : 'sessões'}, $dn ${dn == 1 ? 'concluída' : 'concluídas'}'}',
+        label: '${fmtDay(k)}: ${n == 0 ? 'sem sessões' : '$n ${n == 1 ? 'sessão' : 'sessões'}, $dn ${dn == 1 ? 'concluída' : 'concluídas'}'}${itemDays.contains(k) ? ', tem prova ou atividade' : ''}',
         child: ExcludeSemantics(
           child: InkWell(
             borderRadius: BorderRadius.circular(10),
@@ -663,7 +666,7 @@ class _AgendaTabState extends State<AgendaTab> {
                 children: [
                   Text('${day.day}', style: TextStyle(fontWeight: FontWeight.w600, color: isSel ? cs.onPrimaryContainer : cs.onSurface)),
                   Text(
-                    n == 0 ? (dayAvailable(d.plan, day) ? '' : '–') : (dn == n ? '$n ✓' : '$n'),
+                    '${n == 0 ? (dayAvailable(d.plan, day) ? '' : '–') : (dn == n ? '$n ✓' : '$n')}${itemDays.contains(k) ? ' !' : ''}',
                     style: TextStyle(fontSize: 11, color: isSel ? cs.onPrimaryContainer : cs.onSurfaceVariant),
                   ),
                 ],
@@ -690,11 +693,134 @@ class _AgendaTabState extends State<AgendaTab> {
       ),
       Padding(
         padding: const EdgeInsets.only(top: 4),
-        child: Text('Número = sessões do dia · ✓ = todas concluídas · – = descanso', style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant)),
+        child: Text('Número = sessões do dia · ✓ = todas concluídas · – = descanso · ! = prova ou atividade', style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant)),
       ),
       _dayHeader(d, now, parseDayKey(sel)!, list),
+      ..._dayItems(state, d, now, sel),
       if (list.isEmpty) Text('Nenhuma sessão neste dia.', style: TextStyle(color: cs.onSurfaceVariant)),
       ...list.map((p) => _sessionTile(state, d, now, p)),
+    ];
+  }
+
+  IconData _itemIcon(BoardKind k) => k == BoardKind.prova ? Icons.school_outlined : (k == BoardKind.trabalho ? Icons.work_outline : Icons.assignment_outlined);
+
+  String _itemName(AppData d, BoardItem it) => '${it.kindLabel} · ${d.subjectName(it.subjectId)}${it.title.isEmpty ? '' : ': ${it.title}'}';
+
+  Widget? _doneButton(AppState state, BoardItem it) {
+    if (it.kind != BoardKind.atividade) return null;
+    return IconButton(
+      tooltip: 'Marcar atividade como feita',
+      icon: const Icon(Icons.check_circle_outline),
+      onPressed: () async {
+        await state.setTaskStatus(it.id, TaskStatus.done);
+        if (mounted) showSnack(context, 'Atividade concluída.');
+      },
+    );
+  }
+
+  /// Provas, trabalhos e atividades do dia [k], mostrados no próprio dia do mural.
+  List<Widget> _dayItems(AppState state, AppData d, DateTime now, String k) {
+    final cs = Theme.of(context).colorScheme;
+    return [
+      for (final it in boardItems(d).where((i) => i.day == k))
+        Card(
+          color: cs.tertiaryContainer,
+          child: ListTile(
+            dense: true,
+            leading: Icon(_itemIcon(it.kind), color: cs.onTertiaryContainer),
+            title: Text(_itemName(d, it), style: TextStyle(color: cs.onTertiaryContainer, fontWeight: FontWeight.w600)),
+            subtitle: Text(it.kind == BoardKind.atividade ? 'Prazo neste dia' : 'Marcado para este dia', style: TextStyle(color: cs.onTertiaryContainer)),
+            trailing: _doneButton(state, it),
+          ),
+        ),
+    ];
+  }
+
+  /// "Chegando": o que vence nos próximos 14 dias (e atividades atrasadas) e
+  /// sugestões de sessão para encaixar no mural antes da data.
+  List<Widget> _comingCards(AppState state, AppData d, DateTime now) {
+    final cs = Theme.of(context).colorScheme;
+    final today = dayOnly(now);
+    final todayK = dayKey(today);
+    final limitK = dayKey(addDaysTo(today, 14));
+    final items = boardItems(d).where((i) => i.day.compareTo(limitK) <= 0 && (i.day.compareTo(todayK) >= 0 || i.kind == BoardKind.atividade)).toList();
+    if (items.isEmpty) return const [];
+    final sugs = boardSuggestions(d, now);
+    String whenOf(BoardItem it) {
+      final left = dayOnly(parseDayKey(it.day)!).difference(today).inDays;
+      return left < 0 ? 'atrasada, prazo ${fmtDay(it.day)}' : '${relativeDays(left)} (${_dayLabel(it.day, now).replaceAll(' · hoje', '')})';
+    }
+
+    return [
+      Card(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 16, 8, 8),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Semantics(header: true, child: Text('Chegando', style: Theme.of(context).textTheme.titleMedium)),
+              Text('Provas, trabalhos e atividades que você cadastrou.', style: TextStyle(color: cs.onSurfaceVariant)),
+              for (final it in items.take(6))
+                ListTile(
+                  dense: true,
+                  contentPadding: EdgeInsets.zero,
+                  leading: Icon(_itemIcon(it.kind), color: it.day.compareTo(todayK) <= 0 ? cs.error : cs.primary),
+                  title: Text(_itemName(d, it)),
+                  subtitle: Text(whenOf(it)),
+                  trailing: _doneButton(state, it),
+                ),
+              if (items.length > 6) Padding(padding: const EdgeInsets.only(bottom: 8), child: Text('e mais ${items.length - 6}.', style: TextStyle(color: cs.onSurfaceVariant))),
+            ],
+          ),
+        ),
+      ),
+      if (sugs.isNotEmpty)
+        Card(
+          color: cs.secondaryContainer,
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Semantics(header: true, child: Text('Sugestões para o mural', style: Theme.of(context).textTheme.titleMedium?.copyWith(color: cs.onSecondaryContainer))),
+                for (final s in sugs) ...[
+                  const SizedBox(height: 10),
+                  Text(
+                    '${_itemName(d, s.item)} ${s.daysLeft < 0 ? 'está atrasada' : 'é ${relativeDays(s.daysLeft)}'}. '
+                    '${s.planned == 0 ? 'Ainda não há sessão reservada.' : 'Há ${s.planned} de ${s.wanted} sessões sugeridas.'}',
+                    style: TextStyle(color: cs.onSecondaryContainer),
+                  ),
+                  const SizedBox(height: 4),
+                  if (s.slot != null)
+                    FilledButton.tonalIcon(
+                      icon: const Icon(Icons.add),
+                      label: Text('Reservar ${s.minutes} min ${_dayLabel(s.slot!.day, now)} às ${hmFromMinutes(s.slot!.startMin)}'),
+                      onPressed: () async {
+                        final o = s.slot!;
+                        await state.upsertPlanSession(PlanSession(
+                          id: newId(),
+                          subjectId: s.item.subjectId,
+                          topic: s.item.title.isEmpty ? null : s.item.title,
+                          day: o.day,
+                          start: hmFromMinutes(o.startMin),
+                          minutes: s.minutes,
+                          manual: true,
+                        ));
+                        if (mounted) showSnack(context, 'Sessão reservada no mural.');
+                      },
+                    )
+                  else
+                    Row(
+                      children: [
+                        Expanded(child: Text('Não há horário livre antes da data.', style: TextStyle(color: cs.onSecondaryContainer))),
+                        TextButton(onPressed: _openAvailability, child: const Text('Ver horários')),
+                      ],
+                    ),
+                ],
+              ],
+            ),
+          ),
+        ),
     ];
   }
 

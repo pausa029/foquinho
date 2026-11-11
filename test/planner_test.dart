@@ -294,4 +294,32 @@ void main() {
     d.plan.paused = true;
     expect(planReminderNotices(d, now).any((x) => x.title == 'Sessão de estudo em 10 minutos'), isFalse);
   });
+
+  test('mural: mostra provas e atividades e sugere sessão antes da data', () {
+    final d = sample();
+    d.exams.add(Exam(id: 'e', subjectId: 'mat', title: 'Frações', date: '2026-06-11')); // quinta
+    d.tasks.add(StudyTask(id: 't', subjectId: 'his', topic: 'Resumo cap. 2', deadline: '2026-06-09'));
+    d.tasks.add(StudyTask(id: 'f', subjectId: 'ing', topic: 'Feita', deadline: '2026-06-09', status: TaskStatus.done));
+    final items = boardItems(d);
+    expect(items.map((i) => i.id).toList(), ['t', 'e']);
+    expect(items.last.kind, BoardKind.prova);
+
+    var sugs = boardSuggestions(d, now);
+    expect(sugs.length, 2);
+    expect(sugs.first.item.id, 't'); // o que vence antes vem primeiro
+    final task = sugs.first, exam = sugs.last;
+    expect(task.wanted, 1);
+    expect(task.slot, isNotNull);
+    expect(task.slot!.day.compareTo('2026-06-09') <= 0, isTrue);
+    expect(exam.wanted, 3);
+    expect(exam.slot!.day.compareTo('2026-06-11') < 0, isTrue);
+
+    // Reservou a sessão da atividade: a sugestão dela some.
+    d.planSessions.add(PlanSession(id: 'x', subjectId: 'his', topic: 'Resumo cap. 2', day: task.slot!.day, start: hmFromMinutes(task.slot!.startMin), minutes: 25, manual: true));
+    sugs = boardSuggestions(d, now);
+    expect(sugs.any((s) => s.item.id == 't'), isFalse);
+    // O horário reservado não é oferecido de novo.
+    final again = sugs.single.slot!;
+    expect(again.day == task.slot!.day && again.startMin == task.slot!.startMin, isFalse);
+  });
 }

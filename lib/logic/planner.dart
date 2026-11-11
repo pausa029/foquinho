@@ -429,3 +429,87 @@ List<PlanSession> missedSessions(AppData d, DateTime now) {
   final todayK = dayKey(now);
   return d.planSessions.where((p) => p.state == PlanState.planejada && p.day.compareTo(todayK) < 0).toList();
 }
+
+// ---------- mural: compromissos (provas, trabalhos, atividades) e sugestões ----------
+
+enum BoardKind { prova, trabalho, atividade }
+
+/// Um compromisso já cadastrado que aparece no mural, no dia dele.
+class BoardItem {
+  final BoardKind kind;
+  final String id;
+  final String subjectId;
+  final String title;
+  final String day; // AAAA-MM-DD
+  final int minutes; // tempo estimado (só atividades)
+  const BoardItem({required this.kind, required this.id, required this.subjectId, required this.title, required this.day, this.minutes = 25});
+
+  String get kindLabel => kind == BoardKind.prova ? 'Prova' : (kind == BoardKind.trabalho ? 'Trabalho' : 'Atividade');
+}
+
+/// Provas e trabalhos com data, e atividades com prazo que ainda não foram concluídas.
+List<BoardItem> boardItems(AppData d) {
+  final out = <BoardItem>[];
+  for (final e in d.exams) {
+    final date = e.date;
+    if (date == null || parseDayKey(date) == null) continue;
+    out.add(BoardItem(kind: e.kind == ExamKind.trabalho ? BoardKind.trabalho : BoardKind.prova, id: e.id, subjectId: e.subjectId, title: e.title, day: date));
+  }
+  for (final t in d.tasks) {
+    final dl = t.deadline;
+    if (t.status == TaskStatus.done || dl == null || parseDayKey(dl) == null) continue;
+    out.add(BoardItem(kind: BoardKind.atividade, id: t.id, subjectId: t.subjectId, title: t.topic, day: dl, minutes: t.minutes));
+  }
+  out.sort((a, b) => a.day.compareTo(b.day));
+  return out;
+}
+
+/// Sugestão de sessão para preparar um compromisso que está chegando.
+class BoardSuggestion {
+  final BoardItem item;
+  final int daysLeft; // negativo = atrasada
+  final int planned; // sessões já no mural para ele
+  final int wanted; // quantas seriam boas
+  final int minutes;
+  final SlotOption? slot; // null = não há horário livre antes da data
+  const BoardSuggestion({required this.item, required this.daysLeft, required this.planned, required this.wanted, required this.minutes, this.slot});
+}
+
+/// Para cada prova, trabalho ou atividade dos próximos [horizon] dias que ainda
+/// tem pouca (ou nenhuma) sessão no mural, sugere um horário livre antes da data.
+List<BoardSuggestion> boardSuggestions(AppData d, DateTime now, {int horizon = 14, int max = 4}) {
+  final today = dayOnly(now);
+  final todayK = dayKey(today);
+  final out = <BoardSuggestion>[];
+  for (final it in boardItems(d)) {
+    final dt = parseDayKey(it.day);
+    if (dt == null) continue;
+    final left = dayOnly(dt).difference(today).inDays;
+    if (left > horizon) continue;
+    final isTask = it.kind == BoardKind.atividade;
+    if (!isTask && left <= 0) continue; // prova de hoje ou que já passou: nada a planejar
+    // Último dia útil para estudar: véspera da prova; o próprio dia do prazo da atividade.
+    final String? lastK = isTask ? (left < 0 ? null : it.day) : dayKey(addDaysTo(dt, -1));
+    final planned = d.planSessions.where((p) {
+      if (p.subjectId != it.subjectId) return false;
+      if (p.state != PlanState.planejada && p.state != PlanState.concluida) return false;
+      if (p.day.compareTo(todayK) < 0) return false;
+      if (lastK != null && p.day.compareTo(lastK) > 0) return false;
+      return !isTask || p.topic == it.title;
+    }).length;
+    final wanted = isTask ? 1 : (it.kind == BoardKind.prova ? (left < 3 ? left : 3) : (left < 2 ? left : 2));
+    if (planned >= wanted) continue;
+    final minutes = isTask ? (it.minutes < 10 ? 10 : (it.minutes > 120 ? 120 : it.minutes)) : d.plan.sessionMin;
+    SlotOption? slot;
+    if (d.plan.configured) {
+      for (final o in suggestSlots(d, today, minutes, now, count: 14)) {
+        if (lastK != null && o.day.compareTo(lastK) > 0) break;
+        slot = o;
+        break;
+      }
+    }
+    out.add(BoardSuggestion(item: it, daysLeft: left, planned: planned, wanted: wanted, minutes: minutes, slot: slot));
+  }
+  out.sort((a, b) => a.daysLeft.compareTo(b.daysLeft));
+  return out.length > max ? out.sublist(0, max) : out;
+}

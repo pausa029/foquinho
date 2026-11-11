@@ -325,3 +325,4 @@ a.btn { text-decoration: none; }
 .mnum { font-size: .9em; font-weight: 600; }
 .mcnt { font-size: .7em; min-height: 1em; color: var(--study); }
 .mcell.sel .mcnt { color: inherit; }
+.dayitem { padding: 0 16px 8px; }

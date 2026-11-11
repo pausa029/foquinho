@@ -12,7 +12,7 @@ SCREENS.more = function () {
     '<h2 class="sec">Sua rotina</h2><ul class="nav card flush">' +
     navRow('book', 'Esportes, matérias e provas', 'O que personaliza as sugestões', 'prefs') +
     navRow('target', 'Metas e horários', 'Meta de tela, lembretes e período sem avisos', 'goals') +
-    navRow('cal', 'Planejamento de estudos', 'Quadro da semana e do mês com suas matérias', 'agenda') +
+    navRow('cal', 'Mural de estudos', 'Quadro da semana e do mês, com provas chegando', 'agenda') +
     navRow('bulb', 'Plano para a vontade', 'O que fazer ao pegar o celular por hábito', 'plan') +
     navRow('flag', 'Desafios pessoais', 'Privados, opcionais e sem ranking', 'challenges') + '</ul>' +
     '<h2 class="sec">Aplicativo</h2><ul class="nav card flush">' +

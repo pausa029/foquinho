@@ -33,7 +33,7 @@ class _PlanScreenState extends State<PlanScreen> with SingleTickerProviderStateM
         title: const Text('Plano de estudo'),
         bottom: TabBar(
           controller: tabs,
-          tabs: const [Tab(text: 'Agenda'), Tab(text: 'Tarefas'), Tab(text: 'Matérias'), Tab(text: 'Provas')],
+          tabs: const [Tab(text: 'Mural'), Tab(text: 'Tarefas'), Tab(text: 'Matérias'), Tab(text: 'Provas')],
         ),
       ),
       body: TabBarView(

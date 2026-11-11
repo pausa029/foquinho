@@ -4,6 +4,7 @@
 
 import '../models/models.dart';
 import 'stats.dart';
+import 'streak.dart';
 import 'suggestions.dart';
 
 class PlannedNotice {
@@ -173,6 +174,13 @@ List<PlannedNotice> planReminderNotices(AppData d, DateTime now, {int days = 7, 
     add(_at(DateTime(dt.year, dt.month, dt.day - 3), evening), '$kind em 3 dias', '$name. Revise 10 minutos hoje.');
     add(_at(DateTime(dt.year, dt.month, dt.day - 1), evening), '$kind amanhã', '$name. Uma revisão curta e depois descanso.');
     add(_at(DateTime(dt.year, dt.month, dt.day), winFrom + 2), '$kind hoje', '$name. Vai dar certo!');
+  }
+
+  // Sequência: um aviso à noite, só hoje e só se ainda falta a sessão do dia.
+  final streak = computeStreak(d, now);
+  if (streak.count >= 2 && !streak.todayDone) {
+    final at = inQuietHours(p, 20 * 60) ? winTo - 30 : 20 * 60;
+    add(_at(today, at), 'Sua sequência de ${streak.count} dias', 'Uma sessão hoje, mesmo de 5 minutos, mantém o foguinho aceso.');
   }
 
   final horizon = now.add(Duration(days: days));

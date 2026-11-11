@@ -16,6 +16,7 @@ Aplicativo escolar, em português do Brasil, para ajudar estudantes a trocar par
 | Sessões | Temporizador de estudo simples ou com intervalos (25/5, 50/10, personalizado); iniciar, pausar, retomar, cancelar, concluir; registro com minutos ajustáveis e observação; tarefa pode ser marcada como concluída. O tempo é contado pelo relógio do aparelho e sobrevive ao fechar o app. |
 | Movimento | Lista editável de atividades (caminhada, alongamento, corrida, dança, bicicleta, futebol, exercício em casa e outras) com filtros de tempo e local; sugestões priorizam os esportes do estudante; temporizador e registro. |
 | Sugestões | Só a partir do que foi cadastrado: prova próxima → matéria difícil → tarefa pendente → assuntos anotados. Sem dados inventados. |
+| Sequência | Foguinho de dias seguidos com pelo menos uma sessão registrada. Um dia de folga por semana não quebra; sem punição ao recomeçar; mostra o recorde. |
 | Histórico | Resumo semanal, gráfico por dia, dia sem registro aparece como *sem dados*, lista de sessões (com exclusão) e botão *Apagar histórico*. |
 | Acessibilidade | Tema claro/escuro, segue o tamanho de fonte do sistema, rótulos para leitor de tela, progresso nunca só por cor, botões grandes. |
 | Privacidade | Tudo fica no aparelho (`shared_preferences`, JSON). Sem servidor, sem conta, sem rastreadores. Botão para apagar perfil e dados. |

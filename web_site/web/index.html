@@ -299,6 +299,21 @@ a.btn { text-decoration: none; }
 .toast { position: fixed; left: 50%; bottom: calc(96px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); max-width: min(92vw, 520px); background: var(--fg); color: var(--bg); padding: 10px 16px; border-radius: 12px; font-weight: 500; z-index: 30; box-shadow: var(--shadow); text-align: center; }
 @media (prefers-reduced-motion: reduce) { .tk-run, .switch .knob, .switch .knob::after { transition: none; } }
 @media (max-width: 360px) { .quick, .tiles { grid-template-columns: 1fr 1fr; } .quick .qa:last-child, .tiles .tile:last-child { grid-column: span 2; } .two { grid-template-columns: 1fr; } }
+
+/* sequência de dias (foguinho) */
+.sk-top { display: flex; align-items: center; gap: 12px; }
+.sk-fire { display: grid; place-items: center; width: 52px; height: 52px; border-radius: 50%; background: var(--surface-2); color: var(--muted); flex: none; }
+.sk-fire .ic { width: 1.9em; height: 1.9em; }
+.streak.lit .sk-fire { background: var(--move-soft); color: var(--move); }
+.sk-txt { flex: 1; min-width: 0; }
+.sk-txt h2 { font-size: 1.3em; }
+.sk-week { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+.sk-day { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.sk-dot { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; border: 2px solid var(--line); color: var(--muted); }
+.sk-day.ativo .sk-dot { background: var(--move); border-color: var(--move); color: var(--surface); }
+.sk-l { font-size: .72em; color: var(--muted); }
+.sk-day.today .sk-l { color: var(--accent); font-weight: 700; }
+.sk-note { font-size: .78em; color: var(--muted); }
 </style>
 <div id="root"><div class="pad col page"><p class="muted">Abrindo o Foquinho…</p></div></div>
 <div id="toast" class="toast" role="status" hidden></div>
@@ -1339,6 +1354,41 @@ function weekSummary(d, start) {
   else tip = 'Repita o que funcionou e deixe uma sessão curta já combinada para amanhã.';
   return { good: good, tip: tip, w: w, prev: prev };
 }
+/* ---------- sequência de dias (foguinho): gentil, com um dia de folga por semana ---------- */
+function streakWalk(active, start) {
+  var d = start, count = 0, sinceRest = 7, rests = {}, guard = 0;
+  while (guard++ < 4000) {
+    if (active[d]) count++;
+    else if (sinceRest >= 7 && active[addDays(d, -1)]) { rests[d] = 1; sinceRest = -1; }
+    else break;
+    sinceRest++;
+    d = addDays(d, -1);
+  }
+  return { count: count, rests: rests };
+}
+function streakInfo(d) {
+  var active = {}, today = dayKey(), yesterday = addDays(today, -1);
+  d.sessions.forEach(function (s) { active[s.day] = 1; });
+  var todayDone = !!active[today], cur = streakWalk(active, todayDone ? today : yesterday), best = cur.count, week = [];
+  Object.keys(active).forEach(function (k) { var c = streakWalk(active, k).count; if (c > best) best = c; });
+  for (var i = 6; i >= 0; i--) { var k = addDays(today, -i); week.push({ key: k, st: active[k] ? 'ativo' : (cur.rests[k] ? 'folga' : 'vazio') }); }
+  var marks = [3, 7, 14, 30, 60, 100], next = (Math.floor(cur.count / 100) + 1) * 100;
+  for (var m = 0; m < marks.length; m++) if (cur.count < marks[m]) { next = marks[m]; break; }
+  return {
+    count: cur.count, todayDone: todayDone, restedYesterday: !todayDone && !!cur.rests[yesterday], best: best, week: week, next: next,
+    milestone: [3, 7, 14, 30, 60].indexOf(cur.count) >= 0 || (cur.count >= 100 && cur.count % 100 === 0)
+  };
+}
+function streakMessage(s) {
+  if (s.count === 0) return s.best > 0 ? 'Recomeçar faz parte. Uma sessão hoje e a sequência volta para o dia 1.' : 'Registre uma sessão de estudo, exercício ou pausa hoje para acender o foguinho.';
+  if (s.todayDone) {
+    if (s.milestone) return 'Marca de ' + s.count + ' dias alcançada. Bonito de ver.';
+    var left = s.next - s.count;
+    return 'Hoje já contou. ' + (left === 1 ? 'Falta 1 dia' : 'Faltam ' + left + ' dias') + ' para a marca de ' + s.next + '.';
+  }
+  if (s.restedYesterday) return 'Ontem foi seu dia de folga. Uma sessão hoje mantém a sequência.';
+  return 'Uma sessão hoje, mesmo de 5 minutos, mantém a sequência.';
+}
 function homeMessage(d) {
   var s = dayStats(d, dayKey());
   if (s.study > 0 && s.move > 0) return 'Hoje já teve estudo e movimento. Belo equilíbrio.';
@@ -1413,6 +1463,8 @@ var ICONS = {
   sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2.5V5M12 19v2.5M2.5 12H5M19 12h2.5M5.3 5.3l1.8 1.8M16.9 16.9l1.8 1.8M18.7 5.3l-1.8 1.8M7.1 16.9l-1.8 1.8"/>',
   down: '<path d="M12 4v11M7.5 11l4.5 4.5 4.5-4.5M5 19.5h14"/>',
   cal: '<rect x="4" y="5.5" width="16" height="15" rx="2"/><path d="M4 10h16M8.5 3.5v4M15.5 3.5v4"/>',
+  fire: '<path d="M12 2.5c.6 3.2-1.2 4.8-2.7 6.6C8 10.7 7 12.3 7 14.4a5 5 0 0 0 10 0c0-1.6-.6-2.9-1.4-4-.4 1-1 1.7-1.9 2 .5-3.6-.3-7.5-1.7-9.9z"/><path d="M12 19.4a2.3 2.3 0 0 1-2.3-2.3c0-1.3 1-2.1 2.3-3.6 1.3 1.5 2.3 2.3 2.3 3.6a2.3 2.3 0 0 1-2.3 2.3z"/>',
+  moon: '<path d="M19.5 14.5A8 8 0 0 1 9.5 4.5a8 8 0 1 0 10 10z"/>',
   bulb: '<path d="M9.5 17.5h5M10.5 20.5h3M12 3.5a6 6 0 0 0-3.6 10.8c.7.6 1.1 1.4 1.1 2.2h5c0-.8.4-1.6 1.1-2.2A6 6 0 0 0 12 3.5z"/>',
   demo: '<rect x="3.5" y="4.5" width="17" height="11.5" rx="1.5"/><path d="M12 16v4M8.5 20.5h7"/>',
   clock: '<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>',
@@ -1973,8 +2025,22 @@ function useCard(d) {
   }
   return h + notice('O Foquinho não enxerga o que você faz em outros apps. O aviso aparece quando ele estiver aberto ou quando você voltar para ele.') + '</section>';
 }
+function streakCard(d) {
+  var s = streakInfo(d), lit = s.count > 0;
+  var title = s.count === 0 ? 'Sequência: comece hoje' : plural(s.count, 'dia seguido', 'dias seguidos');
+  var days = s.week.map(function (w, i) {
+    var label = w.st === 'ativo' ? 'feito' : (w.st === 'folga' ? 'folga' : 'sem sessão');
+    return '<li class="sk-day ' + w.st + (i === 6 ? ' today' : '') + '"><span class="sk-dot" aria-hidden="true">' + (w.st === 'ativo' ? ic('check', 'sm') : (w.st === 'folga' ? ic('moon', 'sm') : '')) +
+      '</span><span class="sk-l">' + WD_SHORT[wdIndex(w.key)] + '</span><span class="sr">: ' + label + '</span></li>';
+  }).join('');
+  return '<section class="card streak' + (lit ? ' lit' : '') + '" aria-labelledby="sk-t"><div class="sk-top"><span class="sk-fire" aria-hidden="true">' + ic('fire') + '</span>' +
+    '<div class="sk-txt"><h2 id="sk-t">' + esc(title) + '</h2><p class="muted">' + esc(streakMessage(s)) + '</p></div>' + demoTag() + '</div>' +
+    '<ul class="sk-week" aria-label="Últimos 7 dias">' + days + '</ul>' +
+    '<p class="sk-note">Um dia de folga por semana não quebra a sequência.' + (s.best > s.count ? ' Seu recorde: ' + plural(s.best, 'dia', 'dias') + '.' : '') + '</p></section>';
+}
 SCREENS.home = function () {
   var d = S.data, today = dayKey(), h = '<p class="hello">' + esc(homeMessage(d)) + '</p>';
+  h += streakCard(d);
   h += screenCard(d);
   h += '<section aria-labelledby="qa-t"><h2 class="sec" id="qa-t">Começar agora</h2><div class="quick">' +
     '<button type="button" class="qa" id="qa-pause" data-act="quickPause">' + ic('pause') + '<span>Pausa de 5 min</span></button>' +

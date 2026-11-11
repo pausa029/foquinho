@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../../data/app_state.dart';
 import '../../logic/stats.dart';
+import '../../logic/streak.dart';
 import '../../logic/suggestions.dart';
 import '../../models/models.dart';
 import '../widgets/common.dart';
@@ -36,6 +37,8 @@ class HomeScreen extends StatelessWidget {
             homeMessage(studyMin: st.studyMin, moveMin: st.moveMin, studyGoal: p.studyGoalMin, moveGoal: p.moveGoalMin),
             style: Theme.of(context).textTheme.titleMedium?.copyWith(color: cs.onSurfaceVariant),
           ),
+          const SizedBox(height: 12),
+          StreakCard(info: computeStreak(d, now)),
           const SizedBox(height: 12),
 
           // Ações rápidas
@@ -341,6 +344,98 @@ class SuggestionCard extends StatelessWidget {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Cartão da sequência de dias (foguinho). Mostra número, frase e os últimos 7 dias.
+class StreakCard extends StatelessWidget {
+  final StreakInfo info;
+  const StreakCard({super.key, required this.info});
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    const flame = Color(0xFFF28C3C);
+    final lit = info.count > 0;
+    final now = DateTime.now();
+    final title = info.count == 0
+        ? 'Sequência: comece hoje'
+        : '${info.count} ${info.count == 1 ? 'dia seguido' : 'dias seguidos'}';
+    final weekText = [
+      for (var i = 0; i < 7; i++)
+        '${kWeekdayShort[DateTime(now.year, now.month, now.day - (6 - i)).weekday - 1]}: ${info.week[i] == 'ativo' ? 'feito' : info.week[i] == 'folga' ? 'folga' : 'sem sessão'}',
+    ].join(', ');
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Semantics(
+          label: '$title. ${streakMessage(info)} Últimos 7 dias: $weekText.${info.best > info.count ? ' Seu recorde: ${info.best} dias.' : ''}',
+          child: ExcludeSemantics(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 52,
+                      height: 52,
+                      decoration: BoxDecoration(color: lit ? flame.withAlpha(46) : cs.surfaceContainerHighest, shape: BoxShape.circle),
+                      child: Icon(Icons.local_fire_department, size: 32, color: lit ? flame : cs.onSurfaceVariant),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(title, style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700)),
+                          Text(streakMessage(info), style: TextStyle(color: cs.onSurfaceVariant)),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    for (var i = 0; i < 7; i++)
+                      Expanded(
+                        child: Column(
+                          children: [
+                            Container(
+                              width: 30,
+                              height: 30,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: info.week[i] == 'ativo' ? flame : Colors.transparent,
+                                border: Border.all(color: info.week[i] == 'ativo' ? flame : cs.outlineVariant, width: 2),
+                              ),
+                              child: info.week[i] == 'ativo'
+                                  ? const Icon(Icons.check, size: 18, color: Colors.white)
+                                  : info.week[i] == 'folga'
+                                      ? Icon(Icons.bedtime_outlined, size: 16, color: cs.onSurfaceVariant)
+                                      : null,
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              kWeekdayShort[DateTime(now.year, now.month, now.day - (6 - i)).weekday - 1],
+                              style: TextStyle(fontSize: 11, color: i == 6 ? cs.primary : cs.onSurfaceVariant, fontWeight: i == 6 ? FontWeight.w700 : FontWeight.w400),
+                            ),
+                          ],
+                        ),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Um dia de folga por semana não quebra a sequência.${info.best > info.count ? ' Seu recorde: ${info.best} ${info.best == 1 ? 'dia' : 'dias'}.' : ''}',
+                  style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );

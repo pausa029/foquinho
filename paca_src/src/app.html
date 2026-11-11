@@ -1,0 +1,654 @@
+<title>PACA</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@500;700;800;900&display=swap">
+<style>
+:root {
+  --bg: #fbf1de; --surface: #ffffff; --ink: #1c2a2e; --muted: #4d5d61; --line: #e3d5ba;
+  --teal: #17707a; --teal-d: #0f545c; --on-teal: #ffffff;
+  --orange: #f6a531; --turq: #2cc0b3; --lilac: #be9be0; --pink: #f6909a; --purple: #8f35c9;
+  --tile-ink: #16262a; --danger: #b3261e; --ok: #1b6e3c; --focus: #0b3aa8;
+  --fs: 17px; color-scheme: light;
+}
+:root.fs1 { --fs: 20px; } :root.fs2 { --fs: 23px; }
+:root.hc {
+  --bg: #000000; --surface: #000000; --ink: #ffffff; --muted: #ffffff; --line: #ffffff;
+  --teal: #ffd600; --teal-d: #ffd600; --on-teal: #000000;
+  --orange: #000000; --turq: #000000; --lilac: #000000; --pink: #000000; --purple: #ffd600;
+  --tile-ink: #ffd600; --danger: #ff8a80; --ok: #9cff9c; --focus: #ffffff; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font: 600 var(--fs)/1.45 Nunito, "Segoe UI", system-ui, sans-serif; }
+#app { max-width: 520px; margin: 0 auto; min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; }
+main { flex: 1; padding-block: 16px 24px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+h1, h2, h3, p, ul { margin: 0; } ul { padding: 0; list-style: none; }
+h1 { font-size: 1.5em; font-weight: 900; line-height: 1.2; text-wrap: balance; }
+h2 { font-size: 1.15em; font-weight: 800; }
+h1:focus { outline: none; }
+.muted { color: var(--muted); font-size: .92em; }
+.center { text-align: center; }
+:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; border-radius: 8px; }
+svg { width: 1.3em; height: 1.3em; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+/* topo */
+.top { display: flex; align-items: center; gap: 8px; padding-block: 10px; padding-left: max(12px, env(safe-area-inset-left, 0px)); padding-right: max(12px, env(safe-area-inset-right, 0px)); background: var(--bg); border-bottom: 2px solid var(--line); position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; }
+.top h1 { flex: 1; font-size: 1.2em; min-width: 0; }
+.ib { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-width: 48px; min-height: 48px; padding: 0 10px; border: 2px solid var(--teal); border-radius: 14px; background: var(--surface); color: var(--teal-d); font: inherit; font-weight: 800; font-size: .85em; cursor: pointer; }
+.ib.on { background: var(--teal); color: var(--on-teal); }
+
+/* botões */
+.btn { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; min-height: 56px; padding: 10px 18px; border: 2px solid transparent; border-radius: 999px; font: inherit; font-weight: 800; font-size: 1.05em; cursor: pointer; text-align: center; }
+.btn.teal { background: var(--teal); color: var(--on-teal); }
+.btn.orange { background: var(--orange); color: var(--tile-ink); border-color: var(--tile-ink); }
+.btn.purple { background: var(--purple); color: #fff; } .hc .btn.purple { color: #000; }
+.btn.ghost { background: var(--surface); color: var(--teal-d); border-color: var(--teal); }
+.btn.danger { background: var(--surface); color: var(--danger); border-color: var(--danger); }
+.btn.small { min-height: 48px; width: auto; font-size: .92em; padding: 6px 16px; }
+.row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.row > .btn { flex: 1 1 140px; }
+
+/* capa */
+.cover { background: #17616b; color: #fff; flex: 1; display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 28px 20px 0; text-align: center; }
+.hc .cover { background: #000; }
+.cover h1 { font-size: 2.5em; color: #ffc24a; letter-spacing: .01em; line-height: 1.05; }
+.cover .lead { font-size: 1.1em; font-weight: 800; max-width: 17em; }
+.cover .btn { max-width: 330px; font-size: 1.2em; }
+.cover img { width: 100%; max-width: 420px; margin-top: auto; border-radius: 28px 28px 0 0; display: block; }
+.cover .mini { background: none; border: 0; color: #fff; text-decoration: underline; font: inherit; min-height: 48px; cursor: pointer; }
+
+/* início */
+.hero { display: flex; flex-direction: column; align-items: center; gap: 2px; text-align: center; }
+.hero img { width: 150px; border-radius: 16px; mix-blend-mode: multiply; } .hc .hero img { mix-blend-mode: normal; }
+.brand { font-size: 2.2em; font-weight: 900; color: var(--teal); letter-spacing: .04em; line-height: 1; }
+.tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.tile { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; min-height: 150px; padding: 14px 10px; border: 3px solid transparent; border-radius: 22px; color: var(--tile-ink); font: inherit; font-weight: 900; font-size: 1.08em; line-height: 1.2; text-align: center; cursor: pointer; box-shadow: 0 3px 0 rgba(0,0,0,.12); }
+.tile svg { width: 56px; height: 56px; stroke-width: 1.7; }
+.t1 { background: var(--orange); } .t2 { background: var(--turq); } .t3 { background: var(--lilac); } .t4 { background: var(--pink); }
+.hc .tile { border-color: #ffd600; box-shadow: none; }
+.voicebar { display: flex; flex-wrap: wrap; gap: 10px; }
+.voicebar .btn { flex: 1 1 150px; }
+.tile, .tiles, .btn, h1, .brand { min-width: 0; overflow-wrap: anywhere; }
+
+.fs2 .tile { font-size: .88em; padding-inline: 6px; }
+@media (max-width: 360px) { .fs2 .tiles { grid-template-columns: 1fr; } .fs2 .tile { min-height: 110px; } }
+
+/* navegação */
+nav.tabs { display: grid; grid-template-columns: repeat(4, 1fr); background: var(--surface); border-top: 2px solid var(--line); position: sticky; bottom: 0; padding-bottom: env(safe-area-inset-bottom, 0px); z-index: 5; }
+nav.tabs button { display: flex; flex-direction: column; align-items: center; gap: 2px; min-height: 62px; padding: 8px 2px; border: 0; border-top: 4px solid transparent; background: none; color: var(--ink); font: inherit; font-size: .8em; font-weight: 800; cursor: pointer; }
+nav.tabs button[aria-current="page"] { color: var(--teal-d); border-top-color: var(--teal); }
+
+/* cartões e listas */
+.card { background: var(--surface); border: 2px solid var(--line); border-radius: 20px; padding: 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.card.tint { background: #fff6e2; } .hc .card.tint { background: #000; }
+.card h3 { font-size: 1.05em; font-weight: 800; overflow-wrap: anywhere; }
+.card p { overflow-wrap: anywhere; }
+.tag { display: inline-block; align-self: flex-start; padding: 2px 10px; border-radius: 999px; border: 2px solid var(--teal); color: var(--teal-d); font-size: .78em; font-weight: 800; }
+.tag.ex { border-color: var(--muted); color: var(--muted); }
+.list { display: flex; flex-direction: column; gap: 12px; }
+.tel { font-size: 1.5em; font-weight: 900; color: var(--teal-d); }
+.telrow { display: flex; align-items: center; gap: 12px; } .telrow > div { flex: 1; min-width: 0; }
+.note { border-left: 6px solid var(--teal); padding: 8px 12px; background: var(--surface); border-radius: 10px; font-size: .9em; }
+.msg { font-weight: 800; padding: 12px 14px; border-radius: 14px; border: 2px solid var(--ok); color: var(--ok); background: var(--surface); }
+.msg.err { border-color: var(--danger); color: var(--danger); }
+
+/* formulários */
+form { display: flex; flex-direction: column; gap: 14px; }
+.f { display: flex; flex-direction: column; gap: 6px; }
+.f label, .lg { font-weight: 800; }
+.inwrap { display: flex; border: 2px solid var(--muted); border-radius: 14px; background: var(--surface); overflow: hidden; }
+.inwrap:focus-within { outline: 3px solid var(--focus); outline-offset: 2px; }
+.inwrap input, .inwrap textarea, .inwrap select { flex: 1; min-width: 0; min-height: 54px; padding: 10px 12px; border: 0; background: transparent; color: var(--ink); font: inherit; outline: none; }
+.inwrap textarea { min-height: 120px; resize: vertical; }
+.mic { flex: none; width: 56px; min-height: 54px; border: 0; background: var(--orange); color: var(--tile-ink); cursor: pointer; display: flex; align-items: center; justify-content: center; }
+.hc .mic { background: #ffd600; color: #000; }
+.mic.rec { background: var(--danger); color: #fff; }
+.sw { display: flex; align-items: center; gap: 12px; justify-content: space-between; width: 100%; min-height: 56px; padding: 8px 4px; border: 0; background: none; color: var(--ink); font: inherit; font-weight: 800; text-align: left; cursor: pointer; }
+.sw i { flex: none; width: 58px; height: 32px; border-radius: 999px; background: #9aa5a8; position: relative; border: 2px solid var(--ink); }
+.sw i::after { content: ""; position: absolute; top: 2px; left: 2px; width: 24px; height: 24px; border-radius: 50%; background: #fff; transition: left .15s; }
+.sw[aria-checked="true"] i, .sw[aria-pressed="true"] i { background: var(--teal); } .sw[aria-checked="true"] i::after, .sw[aria-pressed="true"] i::after { left: 28px; }
+.hc .sw i::after { background: #000; } .hc .sw i { background: #555; } .hc .sw[aria-checked="true"] i, .hc .sw[aria-pressed="true"] i { background: #ffd600; }
+.prog { height: 12px; border-radius: 999px; border: 2px solid var(--ink); overflow: hidden; background: var(--surface); } .prog i { display: block; height: 100%; background: var(--teal); }
+.opts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.opt { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 12px 6px; min-height: 120px; border: 3px solid var(--line); border-radius: 16px; background: var(--surface); color: var(--ink); font: inherit; font-size: .85em; font-weight: 800; text-align: center; cursor: pointer; }
+.opt svg { width: 40px; height: 40px; }
+.opt[aria-checked="true"] { border-color: var(--teal); background: #e0f4f1; } .hc .opt[aria-checked="true"] { background: #000; border-color: #ffd600; color: #ffd600; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { min-height: 48px; padding: 6px 14px; border: 2px solid var(--teal); border-radius: 999px; background: var(--surface); color: var(--teal-d); font: inherit; font-weight: 800; cursor: pointer; }
+.chip[aria-pressed="true"] { background: var(--teal); color: var(--on-teal); }
+
+/* tocador */
+.player { position: sticky; bottom: 70px; background: var(--teal-d); color: var(--on-teal); border-radius: 18px; padding: 12px 14px; display: flex; align-items: center; gap: 10px; z-index: 4; }
+.hc .player { border: 3px solid #ffd600; background: #000; color: #ffd600; }
+.player p { flex: 1; min-width: 0; font-size: .9em; }
+.player button { flex: none; min-width: 48px; min-height: 48px; border: 2px solid currentColor; border-radius: 12px; background: none; color: inherit; cursor: pointer; font: inherit; font-weight: 800; }
+.qr { align-self: center; background: #fff; padding: 12px; border-radius: 12px; border: 2px solid var(--line); line-height: 0; }
+.qr svg { width: 200px; height: 200px; stroke: none; }
+.code { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 1.2em; font-weight: 800; letter-spacing: .08em; text-align: center; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+@media (max-width: 340px) { .opts { grid-template-columns: 1fr; } .opt { min-height: 0; flex-direction: row; justify-content: flex-start; text-align: left; } }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+<div id="app"></div>
+<div id="live" class="sr" aria-live="assertive"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+<script>
+(function () {
+'use strict';
+var LOGO = '{{LOGO}}', COVER = '{{COVER}}';
+
+/* ---------- utilidades ---------- */
+function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+function $(id) { return document.getElementById(id); }
+function when(ts) { var d = new Date(ts); return ('0' + d.getDate()).slice(-2) + '/' + ('0' + (d.getMonth() + 1)).slice(-2) + ' às ' + ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2); }
+function I(n) {
+  var P = {
+    back: '<path d="M15 5l-7 7 7 7"/>', home: '<path d="M3 11l9-8 9 8v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>',
+    msg: '<path d="M4 5h16v11H9l-5 4z"/>', user: '<circle cx="12" cy="8" r="4"/><path d="M4 21c1-5 15-5 16 0"/>',
+    mic: '<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/>',
+    play: '<path d="M7 4l13 8-13 8z"/>', stop: '<rect x="6" y="6" width="12" height="12" rx="1"/>', next: '<path d="M5 4l10 8-10 8zM19 5v14"/>',
+    ear: '<path d="M4 9v6h4l5 4V5L8 9zM16 9a4 4 0 0 1 0 6M18.5 6.5a8 8 0 0 1 0 11"/>',
+    plus: '<path d="M12 5v14M5 12h14"/>', check: '<path d="M4 12l5 5L20 6"/>', heart: '<path d="M12 20s-8-5-8-11a4.5 4.5 0 0 1 8-2.5A4.5 4.5 0 0 1 20 9c0 6-8 11-8 11z"/>',
+    trash: '<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/>', arrow: '<path d="M5 12h14M13 6l6 6-6 6"/>',
+    radio: '<path d="M12 12v9M8 21h8M9 21l3-9 3 9"/><circle cx="12" cy="9" r="1.6"/><path d="M8.5 12.5a5 5 0 0 1 0-7M15.5 5.5a5 5 0 0 1 0 7M6 15a8.5 8.5 0 0 1 0-12M18 3a8.5 8.5 0 0 1 0 12"/>',
+    serv: '<rect x="8" y="3" width="8" height="6" rx="1"/><path d="M12 3v6"/><path d="M2 14h4l4 2h4a1.5 1.5 0 0 1 0 3h-4"/><path d="M14 17.5l5-2.5a1.6 1.6 0 0 1 1.5 2.8L14 21H8l-2-1H2"/>',
+    cult: '<path d="M5 3h8v7a4 4 0 0 1-8 0z"/><path d="M7.5 6.5h.01M10.5 6.5h.01M7.5 10c1 .8 2 .8 3 0"/><path d="M17 4v11"/><ellipse cx="15.5" cy="17.5" rx="3" ry="3.5"/><path d="M17 4l3 1.5"/>',
+    fala: '<path d="M3 10v4h3l8 4V6l-8 4z"/><path d="M17 9a4 4 0 0 1 0 6M19.5 6.5a8 8 0 0 1 0 11"/><path d="M6 14l1 5h3l-1-4"/>',
+    card: '<rect x="3" y="6" width="18" height="12" rx="2"/><path d="M3 10h18M7 15h4"/>',
+    qr: '<rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3M21 14v7h-4M14 21v-1"/>',
+    pin: '<path d="M12 21s7-6.5 7-12a7 7 0 0 0-14 0c0 5.500 7 12 7 12z"/><circle cx="12" cy="9" r="2.5"/>',
+    eye: '<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>', phone: '<path d="M5 3h4l2 5-2.500 1.500a12 12 0 0 0 6 6L16 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 5a2 2 0 0 1 2-2z"/>'
+  };
+  return '<svg viewBox="0 0 24 24" aria-hidden="true">' + (P[n] || '') + '</svg>';
+}
+
+/* ---------- dados (ficam só neste aparelho) ---------- */
+var KEY = 'paca.v1', storeOk = true;
+function blank() { return { user: null, logged: false, acc: { hc: false, fs: 0, auto: false, rate: 1 }, avisos: [], servicos: [], cultura: [], falas: [], apoio: {} }; }
+function load() {
+  var d = blank();
+  try {
+    var x = JSON.parse(localStorage.getItem(KEY) || 'null');
+    if (x && typeof x === 'object') {
+      ['avisos', 'servicos', 'cultura', 'falas'].forEach(function (k) { if (Array.isArray(x[k])) d[k] = x[k].filter(function (i) { return i && typeof i === 'object' && i.id; }).slice(0, 300); });
+      if (x.user && typeof x.user === 'object' && x.user.nome) d.user = x.user;
+      d.logged = !!x.logged && !!d.user;
+      if (x.acc && typeof x.acc === 'object') { d.acc.hc = !!x.acc.hc; d.acc.fs = [0, 1, 2].indexOf(x.acc.fs) >= 0 ? x.acc.fs : 0; d.acc.auto = !!x.acc.auto; d.acc.rate = [0.8, 1, 1.2].indexOf(x.acc.rate) >= 0 ? x.acc.rate : 1; }
+      if (x.apoio && typeof x.apoio === 'object') d.apoio = x.apoio;
+    }
+  } catch (e) { storeOk = false; }
+  return d;
+}
+function save() { try { localStorage.setItem(KEY, JSON.stringify(D)); } catch (e) { storeOk = false; } }
+var D = load();
+var S = { scr: 'capa', back: [], tmp: {}, msg: null, play: null };
+
+/* exemplos: mostram como a tela fica; são marcados como exemplo e não são notícias reais */
+var EX_AVISOS = [
+  { id: 'ex1', titulo: 'Bem-vindo à Rádio Comunidade', texto: 'Aqui os avisos do bairro viram áudio. Toque em Ouvir para escutar cada aviso, ou em Tocar a rádio para ouvir todos em sequência.', autor: 'PACA', ex: true },
+  { id: 'ex2', titulo: 'Mutirão de limpeza da praça', texto: 'Exemplo de aviso: mutirão de limpeza da praça no sábado, às oito da manhã. Leve luvas e garrafa de água.', autor: 'Associação de moradores', ex: true },
+  { id: 'ex3', titulo: 'Vacinação no posto de saúde', texto: 'Exemplo de aviso: o posto de saúde atende para vacinação de segunda a sexta, das oito às dezesseis horas. Leve documento e cartão de vacina.', autor: 'Agente de saúde', ex: true }
+];
+var EX_CULT = [
+  { id: 'exc1', tipo: 'Evento', titulo: 'Roda de samba na praça', texto: 'Exemplo de sugestão: roda de samba aberta no último domingo do mês, no fim da tarde.', autor: 'Exemplo', ex: true },
+  { id: 'exc2', tipo: 'Saber e receita', titulo: 'Receita de cocada da vizinhança', texto: 'Exemplo de sugestão: gravar as receitas das moradoras mais antigas para não se perderem.', autor: 'Exemplo', ex: true },
+  { id: 'exc3', tipo: 'História do bairro', titulo: 'Como o bairro começou', texto: 'Exemplo de sugestão: reunir fotos antigas e depoimentos de quem viu o bairro nascer.', autor: 'Exemplo', ex: true }
+];
+var FONES = [
+  ['192', 'SAMU', 'Emergência de saúde'], ['193', 'Bombeiros', 'Incêndio, resgate e acidentes'], ['190', 'Polícia Militar', 'Emergência de segurança'],
+  ['199', 'Defesa Civil', 'Alagamento, deslizamento e risco em casas'], ['180', 'Central de Atendimento à Mulher', 'Orientação e denúncia de violência contra a mulher'],
+  ['100', 'Disque Direitos Humanos', 'Denúncia de violação de direitos'], ['188', 'CVV', 'Apoio emocional, 24 horas'], ['136', 'Disque Saúde', 'Informações do SUS'], ['135', 'INSS', 'Aposentadoria e benefícios']
+];
+var GUIAS = [
+  ['Saúde', 'Posto de saúde (UBS)', 'Consultas, vacinas, curativos e remédios do SUS. Leve documento com foto e cartão do SUS, se tiver.'],
+  ['Assistência social', 'CRAS', 'Cadastro Único, Bolsa Família e outros benefícios. O atendimento é gratuito, no CRAS mais perto da sua casa.'],
+  ['Educação', 'Matrícula e EJA', 'Matrícula de crianças e Educação de Jovens e Adultos para quem quer voltar a estudar. Procure a escola pública do bairro.'],
+  ['Documentos', 'Identidade e CPF', 'A primeira via da carteira de identidade é gratuita. Leve a certidão de nascimento ou de casamento.']
+];
+var CATS = ['Iluminação', 'Água e esgoto', 'Lixo', 'Rua e calçada', 'Transporte', 'Saúde', 'Segurança', 'Outro'];
+var TIPOS = ['Evento', 'Saber e receita', 'Música e arte', 'História do bairro'];
+
+/* ---------- voz: ler em voz alta ---------- */
+var synth = window.speechSynthesis || null, voice = null;
+function pickVoice() { if (!synth) return; var v = synth.getVoices() || []; voice = v.filter(function (x) { return /^pt[-_]BR/i.test(x.lang); })[0] || v.filter(function (x) { return /^pt/i.test(x.lang); })[0] || null; }
+if (synth) { pickVoice(); try { synth.onvoiceschanged = pickVoice; } catch (e) {} }
+function say(text, onend) {
+  if (!synth || !window.SpeechSynthesisUtterance) { flash('Este navegador não tem leitura em voz alta.', true); if (onend) onend(false); return false; }
+  try {
+    synth.cancel();
+    var u = new SpeechSynthesisUtterance(String(text).slice(0, 3000));
+    u.lang = 'pt-BR'; if (voice) u.voice = voice; u.rate = D.acc.rate;
+    u.onend = function () { if (onend) onend(true); };
+    u.onerror = function () { if (onend) onend(false); };
+    synth.speak(u);
+    return true;
+  } catch (e) { if (onend) onend(false); return false; }
+}
+function hush() { try { if (synth) synth.cancel(); } catch (e) {} }
+function screenText() {
+  var m = document.querySelector('#app'), out = [];
+  if (!m) return '';
+  [].forEach.call(m.querySelectorAll('[data-say]'), function (el) { var t = el.getAttribute('data-say') || el.textContent; t = t.replace(/\s+/g, ' ').trim(); if (t) out.push(t); });
+  return out.join('. ');
+}
+function announce(t) { var l = $('live'); if (l) { l.textContent = ''; setTimeout(function () { l.textContent = t; }, 30); } }
+function flash(t, err) { S.msg = { t: t, err: !!err }; announce(t); }
+
+/* ---------- voz: falar em vez de digitar ---------- */
+var SR = window.SpeechRecognition || window.webkitSpeechRecognition || null, rec = null;
+function listen(done) {
+  if (!SR) { flash('Este navegador não entende voz. Use o teclado: ele também tem um microfone para ditar.', true); render(); return; }
+  try { if (rec) rec.abort(); } catch (e) {}
+  hush();
+  try {
+    rec = new SR(); rec.lang = 'pt-BR'; rec.interimResults = false; rec.maxAlternatives = 1;
+    rec.onresult = function (ev) { var t = ev.results && ev.results[0] && ev.results[0][0] ? ev.results[0][0].transcript : ''; done(t); };
+    rec.onerror = function (ev) { S.rec = null; flash(ev && ev.error === 'not-allowed' ? 'O microfone não foi liberado. Libere o microfone nas permissões do navegador.' : 'Não consegui ouvir. Tente de novo.', true); render(); };
+    rec.onend = function () { if (S.rec) { S.rec = null; render(); } };
+    rec.start();
+    announce('Pode falar.');
+  } catch (e) { S.rec = null; flash('Não consegui abrir o microfone.', true); render(); }
+}
+var MESES = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
+function spokenDate(t) {
+  t = t.toLowerCase().replace('primeiro', '1');
+  var m = t.match(/(\d{1,2})\D+?(?:de\s+)?([a-zç]+)\D+?(\d{4})/);
+  if (m) { var i = MESES.indexOf(m[2]); if (i >= 0) return ('0' + m[1]).slice(-2) + '/' + ('0' + (i + 1)).slice(-2) + '/' + m[3]; }
+  var n = t.replace(/\D+/g, ' ').trim().split(' ');
+  if (n.length === 3) return ('0' + n[0]).slice(-2) + '/' + ('0' + n[1]).slice(-2) + '/' + n[2];
+  var d = t.replace(/\D/g, '');
+  if (d.length === 8) return d.slice(0, 2) + '/' + d.slice(2, 4) + '/' + d.slice(4);
+  return '';
+}
+function command(t) {
+  var s = t.toLowerCase();
+  if (/r[áa]dio|not[íi]cia|aviso/.test(s)) return go('radio');
+  if (/servi[çc]o|telefone|emerg/.test(s)) return go('servicos');
+  if (/fala|reclama|problema|den[úu]ncia/.test(s)) return go('fala');
+  if (/cultura|evento|sugest/.test(s)) return go('cultura');
+  if (/mensage/.test(s)) return go('mensagens');
+  if (/perfil|configura|acessibilidade/.test(s)) return go('perfil');
+  if (/in[íi]cio|come[çc]o|voltar/.test(s)) return go('home');
+  if (/ler|ouvir|escutar/.test(s)) { render(); say(screenText()); return; }
+  flash('Ouvi “' + t + '”. Diga: rádio, serviços, cultura, fala cidadão, mensagens ou perfil.', true); render(); say('Não entendi. Diga rádio, serviços, cultura, fala cidadão, mensagens ou perfil.');
+}
+
+/* ---------- chave de acesso: guarda só um embaralhado (hash), nunca a chave ---------- */
+function hashKey(key, salt) {
+  if (!window.crypto || !crypto.subtle || !window.TextEncoder) return Promise.resolve(null);
+  return crypto.subtle.digest('SHA-256', new TextEncoder().encode(salt + '|' + key.trim().toLowerCase())).then(function (b) {
+    return [].map.call(new Uint8Array(b), function (x) { return ('0' + x.toString(16)).slice(-2); }).join('');
+  }, function () { return null; });
+}
+
+/* ---------- navegação ---------- */
+var TABS = { home: 'home', radio: 'home', servicos: 'home', fala: 'home', mensagens: 'mensagens', cultura: 'cultura', perfil: 'perfil' };
+function go(scr, keep) {
+  hush(); stopRadio(true);
+  if (!keep && S.scr !== scr) S.back.push(S.scr);
+  if (S.back.length > 20) S.back.shift();
+  S.scr = scr; S.tmp = {}; S.focus = true;
+  render();
+}
+function applyAcc() { var r = document.documentElement; r.classList.toggle('hc', D.acc.hc); r.classList.toggle('fs1', D.acc.fs === 1); r.classList.toggle('fs2', D.acc.fs === 2); }
+
+/* ---------- peças de tela ---------- */
+function top(title, noBack) {
+  return '<header class="top">' + (noBack ? '' : '<button class="ib" data-a="back" aria-label="Voltar">' + I('back') + '</button>') +
+    '<h1 id="h" tabindex="-1" data-say>' + esc(title) + '</h1>' +
+    '<button class="ib" data-a="readScreen" aria-label="Ouvir esta tela em voz alta">' + I('ear') + '<span>Ouvir</span></button></header>';
+}
+function tabs() {
+  var cur = TABS[S.scr], t = [['home', 'Início', 'home'], ['mensagens', 'Mensagens', 'msg'], ['cultura', 'Cultura', 'cult'], ['perfil', 'Perfil', 'user']];
+  return '<nav class="tabs" aria-label="Menu principal">' + t.map(function (x) {
+    return '<button data-a="tab" data-v="' + x[0] + '"' + (cur === x[0] ? ' aria-current="page"' : '') + '>' + I(x[2]) + '<span>' + x[1] + '</span></button>';
+  }).join('') + '</nav>';
+}
+function msgBox() { if (!S.msg) return ''; var m = S.msg; S.msg = null; return '<p class="msg' + (m.err ? ' err' : '') + '" role="status" data-say>' + esc(m.t) + '</p>'; }
+function field(id, label, o) {
+  o = o || {};
+  var v = S.tmp[id] != null ? S.tmp[id] : (o.value || '');
+  var inp = o.area ? '<textarea id="' + id + '" maxlength="' + (o.max || 600) + '" placeholder="' + esc(o.ph || '') + '">' + esc(v) + '</textarea>'
+    : '<input id="' + id + '" type="' + (o.type || 'text') + '" maxlength="' + (o.max || 80) + '" placeholder="' + esc(o.ph || '') + '" value="' + esc(v) + '"' + (o.mode ? ' inputmode="' + o.mode + '"' : '') + (o.list ? ' list="' + o.list + '"' : '') + (o.ac ? ' autocomplete="' + o.ac + '"' : ' autocomplete="off"') + '>';
+  var mic = o.noMic ? '' : '<button type="button" class="mic' + (S.rec === id ? ' rec' : '') + '" data-a="mic" data-v="' + id + '" aria-label="' + (S.rec === id ? 'Ouvindo. Fale agora' : 'Falar em vez de digitar: ' + esc(label)) + '">' + I('mic') + '</button>';
+  return '<div class="f"><label for="' + id + '" data-say>' + esc(label) + '</label><div class="inwrap">' + inp + mic + '</div>' + (o.hint ? '<p class="muted">' + esc(o.hint) + '</p>' : '') + '</div>';
+}
+function sw(act, label, on, v) { return '<button type="button" class="sw" role="switch" aria-checked="' + (on ? 'true' : 'false') + '" data-a="' + act + '"' + (v != null ? ' data-v="' + esc(v) + '"' : '') + '><span data-say>' + esc(label) + '</span><i aria-hidden="true"></i></button>'; }
+function keep() { [].forEach.call(document.querySelectorAll('#app input, #app textarea, #app select'), function (el) { if (el.id) S.tmp[el.id] = el.value; }); }
+function val(id) { var el = $(id); return el ? el.value.trim() : (S.tmp[id] || '').trim(); }
+function listenBtn(id, text) { return '<button class="btn ghost small" data-a="sayItem" data-v="' + esc(id) + '">' + I('ear') + '<span>Ouvir</span></button>'; }
+
+/* ---------- telas ---------- */
+var V = {};
+V.capa = function () {
+  return '<section class="cover"><h1 id="h" tabindex="-1" data-say="Do scroll à ação!">DO SCROLL<br>À AÇÃO!</h1>' +
+    '<p class="lead" data-say>Tecnologia para quê? Para quem? Com quais consequências?</p>' +
+    '<button class="btn orange" data-a="enter">Acessar agora ' + I('arrow') + '</button>' +
+    '<button class="mini" data-a="readScreen">' + 'Ouvir esta tela em voz alta</button>' +
+    '<img src="' + COVER + '" alt="Ilustração: uma senhora vende frutas na feira, um senhor de chapéu toca pandeiro e um jovem usa o celular. Ao redor, as frases Uma tecnologia comunitária e Soberania de dados.">' +
+    '</section>';
+};
+V.cad1 = function () {
+  return top('Criação de cadastro') + '<main>' + sw('accQuick', 'Ativar modo de acessibilidade visual?', D.acc.hc) +
+    '<p class="muted" data-say>Passo 1 de 2. Você pode escrever ou tocar no microfone e falar.</p><div class="prog" aria-hidden="true"><i style="width:50%"></i></div>' + msgBox() +
+    '<form data-f="cad1" novalidate>' +
+    field('nome', 'Qual é o seu nome?', { ph: 'Escreva ou fale seu nome', ac: 'name' }) +
+    field('nasc', 'Sua data de nascimento? (opcional)', { ph: 'DD / MM / AAAA', mode: 'numeric', max: 10 }) +
+    field('bairro', 'Sua comunidade ou bairro?', { ph: 'Escreva ou fale', max: 60 }) +
+    '<button class="btn teal">Próximo passo ' + I('arrow') + '</button></form></main>';
+};
+V.cad2 = function () {
+  var m = S.tmp.metodo || 'qr';
+  function opt(v, ic, lb) { return '<button type="button" class="opt" role="radio" aria-checked="' + (m === v ? 'true' : 'false') + '" data-a="metodo" data-v="' + v + '">' + I(ic) + '<span data-say>' + lb + '</span></button>'; }
+  return top('Segurança e preferências') + '<main><p class="muted" data-say>Passo 2 de 2.</p><div class="prog" aria-hidden="true"><i style="width:100%"></i></div>' + msgBox() +
+    '<form data-f="cad2" novalidate>' +
+    field('chave', 'Sua chave de acesso', { ph: 'Crie uma senha ou frase', hint: 'Pode ser uma senha ou uma frase fácil de lembrar, com 4 letras ou mais. Se usar o microfone, fale longe de outras pessoas.', max: 80 }) +
+    '<p class="lg" id="lg-m" data-say>Escolha como quer ser identificado:</p><div class="opts" role="radiogroup" aria-labelledby="lg-m">' +
+    opt('rfid', 'card', 'Cartão RFID comunitário') + opt('qr', 'qr', 'Código QR pessoal') + opt('ponto', 'pin', 'Ponto de atendimento físico') + '</div>' +
+    '<div class="card tint center"><p data-say><strong>Respeitamos sua privacidade:</strong> não coletamos digital, rosto nem outros dados biométricos.</p><p class="muted" data-say>Governança de dados local e segura: seus dados ficam guardados só neste aparelho.</p></div>' +
+    '<button class="btn purple">Concluir cadastro ' + I('check') + '</button></form></main>';
+};
+V.login = function () {
+  return top('Entrar', true) + '<main><div class="hero"><img src="' + LOGO + '" alt=""><p class="brand">PACA</p></div>' +
+    '<p class="center" data-say>Olá, ' + esc(D.user.nome.split(' ')[0]) + '. Digite ou fale sua chave de acesso.</p>' + msgBox() +
+    '<form data-f="login" novalidate>' + field('chave', 'Sua chave de acesso', { max: 80 }) + '<button class="btn teal">Entrar ' + I('arrow') + '</button></form>' +
+    '<button class="btn danger" data-a="wipeAsk">Esqueci a chave: apagar os dados deste aparelho</button></main>';
+};
+V.home = function () {
+  var n = D.user ? D.user.nome.split(' ')[0] : '';
+  return '<main><div class="hero"><img src="' + LOGO + '" alt="Logo do PACA: uma paca desenhada com grafismos"><p class="brand" aria-hidden="true">PACA</p>' +
+    '<h1 id="h" tabindex="-1" data-say>Olá' + (n ? ', ' + esc(n) : '') + ', bem-vindo(a) à PACA!</h1><p data-say>Sua comunidade em suas mãos.</p></div>' + msgBox() +
+    '<div class="tiles">' +
+    '<button class="tile t1" data-a="go" data-v="radio">' + I('radio') + '<span data-say>Ouvir Rádio Comunidade</span></button>' +
+    '<button class="tile t2" data-a="go" data-v="servicos">' + I('serv') + '<span data-say>Acessar Serviços</span></button>' +
+    '<button class="tile t3" data-a="go" data-v="cultura">' + I('cult') + '<span data-say>Nossa Cultura</span></button>' +
+    '<button class="tile t4" data-a="go" data-v="fala">' + I('fala') + '<span data-say>Fala Cidadão</span></button></div>' +
+    '<div class="voicebar"><button class="btn ghost" data-a="readScreen">' + I('ear') + '<span>Ouvir a tela</span></button>' +
+    '<button class="btn teal" data-a="voiceCmd">' + I('mic') + '<span>' + (S.rec === 'cmd' ? 'Ouvindo…' : 'Falar comando') + '</span></button></div>' +
+    '<p class="muted center">Comandos de voz: “rádio”, “serviços”, “cultura”, “fala cidadão”, “mensagens”, “perfil”.</p></main>' + tabs();
+};
+function avisos() { return D.avisos.slice().reverse().concat(EX_AVISOS); }
+V.radio = function () {
+  var list = avisos(), p = S.play;
+  var h = top('Rádio Comunidade') + '<main><p data-say>Os avisos e notícias do bairro em áudio, para quem não lê ou enxerga pouco.</p>' + msgBox() +
+    '<button class="btn orange" data-a="radioPlay">' + I(p ? 'stop' : 'play') + '<span>' + (p ? 'Parar a rádio' : 'Tocar a rádio (' + list.length + (list.length === 1 ? ' aviso)' : ' avisos)')) + '</span></button>' +
+    '<div class="chips" role="group" aria-label="Velocidade da voz">' + [[0.8, 'Voz devagar'], [1, 'Voz normal'], [1.2, 'Voz rápida']].map(function (r) {
+      return '<button class="chip" aria-pressed="' + (D.acc.rate === r[0] ? 'true' : 'false') + '" data-a="rate" data-v="' + r[0] + '">' + r[1] + '</button>'; }).join('') + '</div>' +
+    '<button class="btn teal" data-a="go" data-v="novoAviso">' + I('plus') + '<span>Transformar texto em áudio</span></button><ul class="list">';
+  list.forEach(function (a, i) {
+    h += '<li class="card' + (p && p.i === i ? ' tint' : '') + '"><span class="tag' + (a.ex ? ' ex' : '') + '">' + (a.ex ? 'Exemplo' : 'Aviso da comunidade') + '</span><h3 data-say>' + esc(a.titulo) + '</h3><p data-say>' + esc(a.texto) + '</p>' +
+      '<p class="muted">' + esc(a.autor || '') + (a.ts ? ' · ' + when(a.ts) : '') + '</p><div class="row"><button class="btn ghost small" data-a="radioOne" data-v="' + i + '">' + I('ear') + '<span>Ouvir</span></button>' +
+      (a.ex ? '' : '<button class="btn danger small" data-a="delAviso" data-v="' + esc(a.id) + '" aria-label="Apagar o aviso ' + esc(a.titulo) + '">' + I('trash') + '<span>Apagar</span></button>') + '</div></li>';
+  });
+  h += '</ul>';
+  if (p) h += '<div class="player" role="status"><p>Tocando ' + (p.i + 1) + ' de ' + list.length + ': ' + esc(list[p.i].titulo) + '</p><button data-a="radioNext" aria-label="Próximo aviso">' + I('next') + '</button><button data-a="radioPlay" aria-label="Parar">' + I('stop') + '</button></div>';
+  return h + '</main>' + tabs();
+};
+V.novoAviso = function () {
+  return top('Texto em áudio') + '<main><p data-say>Escreva, cole ou fale o texto. O PACA lê em voz alta e, se você quiser, publica na Rádio Comunidade.</p>' + msgBox() +
+    '<form data-f="aviso" novalidate>' + field('av-t', 'Título do aviso', { max: 70 }) + field('av-x', 'Texto do aviso', { area: true, max: 800 }) +
+    '<button type="button" class="btn ghost" data-a="previewAviso">' + I('ear') + '<span>Ouvir como vai ficar</span></button>' +
+    '<button class="btn teal">' + I('plus') + '<span>Publicar na rádio</span></button></form>' +
+    '<p class="note" data-say>Nesta versão o aviso fica guardado neste aparelho. Para todos os moradores ouvirem ao mesmo tempo, a comunidade precisa ligar o servidor local do PACA.</p></main>' + tabs();
+};
+V.servicos = function () {
+  var h = top('Acessar Serviços') + '<main>' + msgBox() + '<h2 data-say>Telefones de emergência e utilidade</h2><p class="muted" data-say>Ligações gratuitas, em todo o Brasil.</p><ul class="list">';
+  FONES.forEach(function (f, i) {
+    h += '<li class="card"><div class="telrow"><div><p class="tel" data-say="' + esc(f[1] + ', ligue ' + f[0].split('').join(' ')) + '">' + f[0] + '</p><h3>' + esc(f[1]) + '</h3><p class="muted" data-say>' + esc(f[2]) + '</p></div>' +
+      '<a class="ib" href="tel:' + f[0] + '" aria-label="Ligar para ' + esc(f[1]) + ', ' + f[0] + '">' + I('phone') + '</a></div></li>';
+  });
+  h += '</ul><h2 data-say>Onde resolver</h2><ul class="list">';
+  GUIAS.forEach(function (g) { h += '<li class="card"><span class="tag">' + esc(g[0]) + '</span><h3 data-say>' + esc(g[1]) + '</h3><p data-say>' + esc(g[2]) + '</p></li>'; });
+  h += '</ul><h2 data-say>Serviços da comunidade</h2>';
+  h += D.servicos.length ? '<ul class="list">' + D.servicos.slice().reverse().map(function (s) {
+    return '<li class="card"><span class="tag">' + esc(s.cat || 'Serviço') + '</span><h3 data-say>' + esc(s.nome) + '</h3><p data-say>' + esc(s.desc) + '</p>' + (s.onde ? '<p class="muted" data-say>' + esc('Onde e quando: ' + s.onde) + '</p>' : '') +
+      '<div class="row"><button class="btn danger small" data-a="delServ" data-v="' + esc(s.id) + '" aria-label="Apagar ' + esc(s.nome) + '">' + I('trash') + '<span>Apagar</span></button></div></li>'; }).join('') + '</ul>'
+    : '<p class="muted" data-say>Ainda não há serviços cadastrados pelos moradores. Cadastre o primeiro: costureira, pedreiro, reforço escolar, horta, biblioteca.</p>';
+  h += '<button class="btn teal" data-a="go" data-v="novoServ">' + I('plus') + '<span>Cadastrar serviço do bairro</span></button></main>' + tabs();
+  return h;
+};
+V.novoServ = function () {
+  return top('Cadastrar serviço') + '<main>' + msgBox() + '<form data-f="serv" novalidate>' + field('sv-n', 'Nome do serviço', { max: 60, ph: 'Ex.: Reforço escolar da Dona Lúcia' }) +
+    field('sv-d', 'O que oferece?', { area: true, max: 300 }) + field('sv-o', 'Onde e em que horário? (opcional)', { max: 120 }) +
+    '<button class="btn teal">' + I('check') + '<span>Salvar serviço</span></button></form></main>' + tabs();
+};
+V.cultura = function () {
+  var list = D.cultura.slice().reverse().concat(EX_CULT);
+  var h = top('Nossa Cultura', S.back.length === 0) + '<main><p data-say>Sugestões da comunidade: eventos, saberes, música e a história do bairro. Apoie as ideias de que você gosta.</p>' + msgBox() +
+    '<button class="btn teal" data-a="go" data-v="novaCult">' + I('plus') + '<span>Dar uma sugestão</span></button><ul class="list">';
+  list.forEach(function (c) {
+    var on = !!D.apoio[c.id];
+    h += '<li class="card"><span class="tag' + (c.ex ? ' ex' : '') + '">' + esc(c.tipo) + (c.ex ? ' · exemplo' : '') + '</span><h3 data-say>' + esc(c.titulo) + '</h3><p data-say>' + esc(c.texto) + '</p>' +
+      '<div class="row"><button class="btn ghost small" data-a="sayText" data-v="' + esc(c.titulo + '. ' + c.texto) + '">' + I('ear') + '<span>Ouvir</span></button>' +
+      '<button class="btn ' + (on ? 'teal' : 'ghost') + ' small" aria-pressed="' + (on ? 'true' : 'false') + '" data-a="apoiar" data-v="' + esc(c.id) + '">' + I('heart') + '<span>' + (on ? 'Você apoia' : 'Apoiar') + '</span></button>' +
+      (c.ex ? '' : '<button class="btn danger small" data-a="delCult" data-v="' + esc(c.id) + '" aria-label="Apagar ' + esc(c.titulo) + '">' + I('trash') + '</button>') + '</div></li>';
+  });
+  return h + '</ul></main>' + tabs();
+};
+V.novaCult = function () {
+  var t = S.tmp.tipo || TIPOS[0];
+  return top('Sugestão de cultura') + '<main>' + msgBox() + '<form data-f="cult" novalidate><p class="lg" id="lg-t" data-say>Sobre o quê?</p><div class="chips" role="group" aria-labelledby="lg-t">' +
+    TIPOS.map(function (x) { return '<button type="button" class="chip" aria-pressed="' + (t === x ? 'true' : 'false') + '" data-a="tipo" data-v="' + esc(x) + '">' + esc(x) + '</button>'; }).join('') + '</div>' +
+    field('ct-t', 'Título da sugestão', { max: 70 }) + field('ct-x', 'Conte a sua ideia', { area: true, max: 500 }) +
+    '<button class="btn teal">' + I('check') + '<span>Enviar sugestão</span></button></form></main>' + tabs();
+};
+V.fala = function () {
+  var c = S.tmp.cat || '';
+  var h = top('Fala Cidadão') + '<main><p data-say>Reclame, denuncie um problema ou dê uma sugestão para o bairro. Você recebe um número de protocolo.</p>' + msgBox() +
+    '<form data-f="fala" novalidate><p class="lg" id="lg-c" data-say>Qual é o assunto?</p><div class="chips" role="group" aria-labelledby="lg-c">' +
+    CATS.map(function (x) { return '<button type="button" class="chip" aria-pressed="' + (c === x ? 'true' : 'false') + '" data-a="cat" data-v="' + esc(x) + '">' + esc(x) + '</button>'; }).join('') + '</div>' +
+    field('fl-o', 'Onde é o problema?', { max: 100, ph: 'Rua, ponto de referência' }) + field('fl-x', 'Conte o que está acontecendo', { area: true, max: 600 }) +
+    sw('anon', 'Enviar sem mostrar meu nome', !!S.tmp.anon) +
+    '<button class="btn teal">' + I('fala') + '<span>Registrar minha fala</span></button></form>';
+  h += '<h2 data-say>Minhas falas</h2>';
+  h += D.falas.length ? '<ul class="list">' + D.falas.slice().reverse().map(function (f) {
+    return '<li class="card"><span class="tag">' + esc(f.cat) + ' · ' + (f.ok ? 'Resolvido' : 'Registrada') + '</span><h3 data-say>' + esc('Protocolo ' + f.prot) + '</h3><p data-say>' + esc(f.texto) + '</p><p class="muted">' + esc(f.onde) + ' · ' + when(f.ts) + (f.anon ? ' · sem nome' : '') + '</p>' +
+      '<div class="row"><button class="btn ghost small" data-a="falaOk" data-v="' + esc(f.id) + '">' + I('check') + '<span>' + (f.ok ? 'Reabrir' : 'Marcar como resolvido') + '</span></button>' +
+      '<button class="btn danger small" data-a="delFala" data-v="' + esc(f.id) + '" aria-label="Apagar protocolo ' + esc(f.prot) + '">' + I('trash') + '</button></div></li>'; }).join('') + '</ul>'
+    : '<p class="muted" data-say>Você ainda não registrou nenhuma fala.</p>';
+  return h + '<p class="note" data-say>Nesta versão a fala fica guardada neste aparelho. O envio ao Conselho Popular acontece quando o servidor local da comunidade estiver ligado.</p></main>' + tabs();
+};
+V.mensagens = function () {
+  var list = [];
+  D.falas.forEach(function (f) { list.push({ ts: f.ts, t: 'Fala registrada', x: 'Sua fala sobre ' + f.cat.toLowerCase() + ' recebeu o protocolo ' + f.prot + '. Situação: ' + (f.ok ? 'resolvido' : 'registrada') + '.' }); });
+  D.avisos.forEach(function (a) { list.push({ ts: a.ts, t: 'Aviso publicado na rádio', x: a.titulo }); });
+  D.cultura.forEach(function (c) { list.push({ ts: c.ts, t: 'Sugestão de cultura enviada', x: c.titulo }); });
+  list.sort(function (a, b) { return b.ts - a.ts; });
+  if (D.user) list.push({ ts: D.user.ts, t: 'Bem-vindo(a) à PACA', x: 'Seu cadastro foi criado sem biometria. Seus dados ficam só neste aparelho.' });
+  return top('Mensagens', true) + '<main>' + msgBox() + (list.length ? '<ul class="list">' + list.map(function (m) {
+    return '<li class="card"><h3 data-say>' + esc(m.t) + '</h3><p data-say>' + esc(m.x) + '</p><p class="muted">' + when(m.ts) + '</p></li>'; }).join('') + '</ul>' : '<p data-say>Nenhuma mensagem por enquanto.</p>') + '</main>' + tabs();
+};
+function qrSvg(text) {
+  try {
+    if (!window.qrcode) return '';
+    var q = window.qrcode(0, 'M'); q.addData(text); q.make();
+    var n = q.getModuleCount(), p = '';
+    for (var r = 0; r < n; r++) for (var c = 0; c < n; c++) if (q.isDark(r, c)) p += 'M' + c + ' ' + r + 'h1v1h-1z';
+    return '<svg viewBox="-1 -1 ' + (n + 2) + ' ' + (n + 2) + '" role="img" aria-label="Código QR pessoal"><path d="' + p + '" fill="#000" stroke="none"/></svg>';
+  } catch (e) { return ''; }
+}
+V.perfil = function () {
+  var u = D.user, m = { rfid: 'Cartão RFID comunitário', qr: 'Código QR pessoal', ponto: 'Ponto de atendimento físico' };
+  var h = top('Perfil', true) + '<main>' + msgBox();
+  if (u) {
+    h += '<section class="card"><h2 data-say>' + esc(u.nome) + '</h2><p class="muted" data-say>' + esc((u.bairro ? 'Comunidade: ' + u.bairro + '. ' : '') + 'Identificação: ' + m[u.metodo] + '.') + '</p>';
+    if (u.metodo === 'qr') { var q = qrSvg(u.codigo); h += (q ? '<div class="qr">' + q + '</div>' : '') + '<p class="code" data-say="' + esc('Seu código: ' + u.codigo.split('').join(' ')) + '">' + esc(u.codigo) + '</p><p class="muted center">Mostre este código no atendimento. Ele não carrega seu nome nem outros dados.</p>'; }
+    else if (u.metodo === 'rfid') h += '<p class="code">' + esc(u.codigo) + '</p><p class="muted" data-say>Informe este código no ponto de atendimento da comunidade para retirar o seu cartão.</p>';
+    else h += '<p class="code">' + esc(u.codigo) + '</p><p class="muted" data-say>Informe este código no ponto de atendimento físico. Lá, uma pessoa da comunidade ajuda você a usar os serviços.</p>';
+    h += '</section>';
+  }
+  h += '<section class="card"><h2 data-say>Acessibilidade</h2>' + sw('hc', 'Alto contraste (fundo preto)', D.acc.hc) + sw('auto', 'Ler cada tela em voz alta ao abrir', D.acc.auto) +
+    '<p class="lg" id="lg-fs">Tamanho da letra</p><div class="chips" role="group" aria-labelledby="lg-fs">' + ['Normal', 'Grande', 'Muito grande'].map(function (x, i) {
+      return '<button class="chip" aria-pressed="' + (D.acc.fs === i ? 'true' : 'false') + '" data-a="fs" data-v="' + i + '">' + x + '</button>'; }).join('') + '</div>' +
+    '<p class="lg" id="lg-r">Velocidade da voz</p><div class="chips" role="group" aria-labelledby="lg-r">' + [[0.8, 'Devagar'], [1, 'Normal'], [1.2, 'Rápida']].map(function (r) {
+      return '<button class="chip" aria-pressed="' + (D.acc.rate === r[0] ? 'true' : 'false') + '" data-a="rate" data-v="' + r[0] + '">' + r[1] + '</button>'; }).join('') + '</div>' +
+    '<button class="btn ghost" data-a="testVoice">' + I('ear') + '<span>Testar a voz</span></button></section>';
+  h += '<section class="card"><h2 data-say>Sobre a PACA</h2><p data-say>PACA é a Plataforma Comunitária Aberta de Autoria: um aplicativo feito com a comunidade, que une comunicação, inclusão, cultura e governança.</p>' +
+    '<p data-say><strong>Para quê?</strong> Para dar voz e acesso a quem a tecnologia costuma deixar de fora.</p><p data-say><strong>Para quem?</strong> Para os moradores, inclusive quem não lê, enxerga pouco ou tem pouca internet.</p>' +
+    '<p data-say><strong>Com quais consequências?</strong> Coleta mínima de dados, sem biometria, com os dados sob controle da própria comunidade.</p></section>';
+  h += '<section class="card"><h2 data-say>Privacidade</h2><p class="muted" data-say>' + (storeOk ? 'Tudo fica guardado só neste aparelho. Nada é enviado para fora.' : 'Este navegador não deixou guardar os dados: eles somem ao fechar a página.') + '</p>' +
+    (u ? '<button class="btn ghost" data-a="logout">Sair</button>' : '') + '<button class="btn danger" data-a="wipeAsk">' + I('trash') + '<span>Apagar todos os meus dados</span></button></section>';
+  return h + '</main>' + tabs();
+};
+V.wipe = function () {
+  return top('Apagar os dados') + '<main><p data-say>Isso apaga o seu cadastro, os avisos, as sugestões e as falas guardados neste aparelho. Não dá para desfazer.</p>' +
+    '<button class="btn danger" data-a="wipeNow">' + I('trash') + '<span>Apagar tudo</span></button><button class="btn ghost" data-a="back">Cancelar</button></main>';
+};
+
+/* ---------- rádio ---------- */
+function stopRadio(silent) { if (S.play) { S.play = null; hush(); if (!silent) render(); } }
+function playAt(i, single) {
+  var list = avisos();
+  if (i >= list.length) { S.play = null; render(); say('Fim dos avisos da Rádio Comunidade.'); return; }
+  var token = {}; S.play = { i: i, token: token, single: !!single };
+  render();
+  var a = list[i], intro = single ? '' : (i === 0 ? 'Rádio Comunidade PACA. ' : 'Próximo aviso. ');
+  var ok = say(intro + a.titulo + '. ' + a.texto, function (done) {
+    if (!S.play || S.play.token !== token) return;
+    if (!done || single) { S.play = null; render(); return; }
+    playAt(i + 1);
+  });
+  if (!ok) { S.play = null; render(); }
+}
+
+/* ---------- ações ---------- */
+var A = {
+  go: function (v) { go(v); return false; },
+  tab: function (v) { S.back = []; go(v, true); return false; },
+  back: function () { hush(); stopRadio(true); S.scr = S.back.pop() || (D.logged ? 'home' : 'capa'); S.tmp = {}; S.focus = true; },
+  enter: function () { S.back = []; go(!D.user ? 'cad1' : (D.logged ? 'home' : 'login'), true); return false; },
+  readScreen: function () { var t = screenText(); if (synth && synth.speaking) { hush(); return false; } say(t); return false; },
+  sayText: function (v) { say(v); return false; },
+  testVoice: function () { say('Olá! Esta é a voz da PACA. Sua comunidade em suas mãos.'); return false; },
+  accQuick: function () { keep(); var on = !D.acc.hc; D.acc.hc = on; D.acc.fs = on ? 1 : 0; D.acc.auto = on; save(); applyAcc(); if (on) say('Modo de acessibilidade visual ativado: alto contraste, letra grande e leitura das telas em voz alta.'); },
+  hc: function () { D.acc.hc = !D.acc.hc; save(); applyAcc(); },
+  auto: function () { D.acc.auto = !D.acc.auto; save(); if (!D.acc.auto) hush(); },
+  fs: function (v) { D.acc.fs = +v; save(); applyAcc(); },
+  rate: function (v) { D.acc.rate = +v; save(); },
+  metodo: function (v) { keep(); S.tmp.metodo = v; },
+  tipo: function (v) { keep(); S.tmp.tipo = v; },
+  cat: function (v) { keep(); S.tmp.cat = v; },
+  anon: function () { keep(); S.tmp.anon = !S.tmp.anon; },
+  mic: function (id) {
+    keep(); S.rec = id; render();
+    listen(function (t) {
+      S.rec = null;
+      if (id === 'nasc') { var d = spokenDate(t); if (d) S.tmp.nasc = d; else flash('Não entendi a data. Diga, por exemplo: 12 de março de 1990.', true); }
+      else if (id === 'chave') S.tmp[id] = t.trim();
+      else { var cur = (S.tmp[id] || '').trim(), el = $(id), area = el && el.tagName === 'TEXTAREA'; t = t.charAt(0).toUpperCase() + t.slice(1); S.tmp[id] = area && cur ? cur + ' ' + t : t; }
+      S.focusId = id; render();
+    });
+    return false;
+  },
+  voiceCmd: function () { S.rec = 'cmd'; render(); listen(function (t) { S.rec = null; command(t); }); return false; },
+  radioPlay: function () { if (S.play) stopRadio(); else playAt(0); return false; },
+  radioOne: function (v) { playAt(+v, true); return false; },
+  radioNext: function () { if (S.play) playAt(S.play.i + 1); return false; },
+  previewAviso: function () { keep(); var t = [val('av-t'), val('av-x')].filter(Boolean).join('. '); if (!t) flash('Escreva ou fale o texto primeiro.', true); else { say(t); return false; } },
+  delAviso: function (v) { stopRadio(true); D.avisos = D.avisos.filter(function (x) { return x.id !== v; }); save(); flash('Aviso apagado.'); },
+  delServ: function (v) { D.servicos = D.servicos.filter(function (x) { return x.id !== v; }); save(); flash('Serviço apagado.'); },
+  delCult: function (v) { D.cultura = D.cultura.filter(function (x) { return x.id !== v; }); delete D.apoio[v]; save(); flash('Sugestão apagada.'); },
+  delFala: function (v) { D.falas = D.falas.filter(function (x) { return x.id !== v; }); save(); flash('Fala apagada.'); },
+  falaOk: function (v) { D.falas.forEach(function (x) { if (x.id === v) x.ok = !x.ok; }); save(); },
+  apoiar: function (v) { if (D.apoio[v]) delete D.apoio[v]; else D.apoio[v] = 1; save(); announce(D.apoio[v] ? 'Você apoia esta sugestão.' : 'Apoio retirado.'); },
+  logout: function () { D.logged = false; save(); S.back = []; S.scr = 'capa'; S.focus = true; },
+  wipeAsk: function () { go('wipe'); return false; },
+  wipeNow: function () { var acc = D.acc; D = blank(); D.acc = acc; save(); S.back = []; S.scr = 'capa'; S.focus = true; flash('Dados apagados.'); }
+};
+var F = {
+  cad1: function () {
+    var n = val('nome'), b = val('bairro'), d = val('nasc');
+    if (n.length < 2) return err('Diga ou escreva o seu nome.', 'nome');
+    if (d && !/^\d{2}\/\d{2}\/\d{4}$/.test(d)) return err('Escreva a data assim: dia, mês e ano. Exemplo: 12/03/1990. Ou deixe em branco.', 'nasc');
+    S.reg = { nome: n.slice(0, 80), bairro: b.slice(0, 60), nasc: d };
+    go('cad2');
+  },
+  cad2: function () {
+    var k = val('chave'), m = S.tmp.metodo || 'qr';
+    if (k.length < 4) return err('A chave de acesso precisa de 4 letras ou mais.', 'chave');
+    if (!S.reg) { go('cad1'); return; }
+    var salt = uid(), u = S.reg;
+    hashKey(k, salt).then(function (h) {
+      D.user = { nome: u.nome, bairro: u.bairro, nasc: u.nasc, metodo: m, codigo: 'PACA-' + Math.random().toString(36).slice(2, 6).toUpperCase() + '-' + Math.random().toString(36).slice(2, 6).toUpperCase(), salt: salt, hash: h, ts: Date.now() };
+      D.logged = true; S.reg = null; save(); S.back = []; flash('Cadastro concluído. Bem-vindo(a)!'); go('home', true);
+    });
+  },
+  login: function () {
+    var k = val('chave');
+    if (!D.user.hash) { D.logged = true; save(); go('home', true); return; }
+    hashKey(k, D.user.salt).then(function (h) {
+      if (h && h === D.user.hash) { D.logged = true; save(); S.back = []; go('home', true); }
+      else { S.tmp = {}; flash('A chave não confere. Tente de novo.', true); S.focusId = 'chave'; render(); }
+    });
+  },
+  aviso: function () {
+    var t = val('av-t'), x = val('av-x');
+    if (x.length < 5) return err('Escreva ou fale o texto do aviso.', 'av-x');
+    D.avisos.push({ id: uid(), titulo: (t || x.split(/[.!?]/)[0]).slice(0, 70), texto: x.slice(0, 800), autor: D.user ? D.user.nome.split(' ')[0] : 'Morador', ts: Date.now() });
+    save(); S.back.pop(); flash('Aviso publicado na rádio.'); go('radio', true);
+  },
+  serv: function () {
+    var n = val('sv-n'), d = val('sv-d');
+    if (n.length < 2) return err('Diga o nome do serviço.', 'sv-n');
+    if (d.length < 3) return err('Conte o que o serviço oferece.', 'sv-d');
+    D.servicos.push({ id: uid(), nome: n.slice(0, 60), desc: d.slice(0, 300), onde: val('sv-o').slice(0, 120), cat: 'Da comunidade', ts: Date.now() });
+    save(); S.back.pop(); flash('Serviço cadastrado.'); go('servicos', true);
+  },
+  cult: function () {
+    var t = val('ct-t'), x = val('ct-x'), tipo = S.tmp.tipo || TIPOS[0];
+    if (t.length < 2) return err('Dê um título para a sugestão.', 'ct-t');
+    if (x.length < 5) return err('Conte a sua ideia.', 'ct-x');
+    D.cultura.push({ id: uid(), tipo: tipo, titulo: t.slice(0, 70), texto: x.slice(0, 500), autor: D.user ? D.user.nome.split(' ')[0] : 'Morador', ts: Date.now() });
+    save(); S.back.pop(); flash('Sugestão enviada. Obrigado!'); go('cultura', true);
+  },
+  fala: function () {
+    var c = S.tmp.cat, o = val('fl-o'), x = val('fl-x'), anon = !!S.tmp.anon;
+    if (!c) return err('Escolha o assunto.');
+    if (x.length < 5) return err('Conte o que está acontecendo.', 'fl-x');
+    var prot = new Date().getFullYear() + '-' + ('000' + (D.falas.length + 1)).slice(-4) + '-' + Math.random().toString(36).slice(2, 5).toUpperCase();
+    D.falas.push({ id: uid(), cat: c, onde: o.slice(0, 100) || 'Local não informado', texto: x.slice(0, 600), anon: anon, prot: prot, ok: false, ts: Date.now() });
+    save(); S.tmp = {}; flash('Fala registrada. Protocolo ' + prot + '.'); S.focus = true; render();
+    say('Fala registrada. Seu protocolo é ' + prot.split('').join(' '));
+  }
+};
+function err(t, id) { keep(); flash(t, true); if (id) S.focusId = id; render(); if (D.acc.auto) say(t); }
+
+/* ---------- desenhar ---------- */
+function render() {
+  var guard = { cad2: !!S.reg, login: !!D.user && !D.logged };
+  var open = ['capa', 'cad1', 'cad2', 'login', 'wipe'];
+  if (open.indexOf(S.scr) < 0 && !D.logged) S.scr = 'capa';
+  if (S.scr in guard && !guard[S.scr]) S.scr = D.logged ? 'home' : 'capa';
+  var y = window.scrollY, app = $('app');
+  app.innerHTML = (V[S.scr] || V.capa)();
+  document.title = 'PACA';
+  if (S.focusId) { var f = $(S.focusId); S.focusId = null; if (f) f.focus(); }
+  else if (S.focus) { window.scrollTo(0, 0); var h = $('h'); if (h) h.focus({ preventScroll: true }); if (D.acc.auto) setTimeout(function () { if (!S.play) say(screenText()); }, 250); }
+  else window.scrollTo(0, y);
+  S.focus = false;
+}
+document.addEventListener('click', function (ev) {
+  var el = ev.target.closest ? ev.target.closest('[data-a]') : null;
+  if (!el) return;
+  var fn = A[el.getAttribute('data-a')];
+  if (!fn) return;
+  if (el.tagName !== 'A') ev.preventDefault();
+  var r = fn(el.getAttribute('data-v'));
+  if (r !== false) render();
+});
+document.addEventListener('submit', function (ev) {
+  var f = ev.target.closest ? ev.target.closest('form[data-f]') : null;
+  if (!f) return;
+  ev.preventDefault();
+  var fn = F[f.getAttribute('data-f')];
+  if (fn) fn();
+});
+document.addEventListener('input', function (ev) {
+  var el = ev.target;
+  if (el && el.id === 'nasc') { var d = el.value.replace(/\D/g, '').slice(0, 8); el.value = d.length > 4 ? d.slice(0, 2) + '/' + d.slice(2, 4) + '/' + d.slice(4) : (d.length > 2 ? d.slice(0, 2) + '/' + d.slice(2) : d); }
+});
+window.addEventListener('pagehide', hush);
+applyAcc();
+S.focus = false;
+render();
+})();
+</script>

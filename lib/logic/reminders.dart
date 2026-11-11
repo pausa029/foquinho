@@ -119,34 +119,66 @@ const List<String> kStretchTexts = [
   'Solte os punhos e as mãos. Olhe para longe por alguns segundos.',
 ];
 
-/// Rodízio de avisos do dia: água, estudo, alongar, compromisso, pausa de tela, movimento.
-/// Devolve [título, texto] para a posição [g] do rodízio, usando só o que foi cadastrado.
-List<String> rotatingTip(AppData d, DateTime now, int g, List<Suggestion> study, List<Suggestion> move) {
-  const cycle = ['agua', 'estudo', 'alongar', 'compromisso', 'tela', 'movimento'];
-  final round = g ~/ cycle.length;
-  var type = cycle[g % cycle.length];
-  if (type == 'compromisso') {
-    final items = <List<String>>[];
-    final exams = d.exams.where((e) {
-      final n = e.daysUntil(now);
-      return n != null && n >= 0 && n <= 14;
-    }).toList()
-      ..sort((a, b) => a.daysUntil(now)!.compareTo(b.daysUntil(now)!));
-    for (final e in exams) {
-      final kind = e.kind == ExamKind.trabalho ? 'Trabalho' : 'Prova';
-      final name = '${d.subjectName(e.subjectId)}${e.title.isEmpty ? '' : ': ${e.title}'}';
-      items.add(['$kind chegando', '$name, ${relativeDays(e.daysUntil(now)!)}. Dez minutos de revisão hoje ajudam.']);
+const kTipThemes = ['agua', 'estudo', 'alongar', 'compromisso', 'tela', 'movimento'];
+
+/// Ordem dos temas na rodada [round]. Muda a cada rodada (parece sorteio, mas é
+/// sempre igual para a mesma rodada) e nunca começa pelo tema que fechou a anterior:
+/// assim dois avisos seguidos nunca falam do mesmo assunto.
+List<String> themeOrder(int round, {bool withCommitments = true}) {
+  List<String> raw(int r) {
+    final l = kTipThemes.where((t) => withCommitments || t != 'compromisso').toList();
+    var x = (r * 131 + 17) % 65537;
+    for (var i = l.length - 1; i > 0; i--) {
+      x = (x * 75 + 74) % 65537;
+      final j = x % (i + 1);
+      final t = l[i];
+      l[i] = l[j];
+      l[j] = t;
     }
-    for (final t in d.tasks.where((t) => t.status != TaskStatus.done)) {
-      final dl = parseDayKey(t.deadline);
-      items.add(['Tarefa pendente', '${d.subjectName(t.subjectId)} · ${t.topic}${dl == null ? '' : ', prazo ${fmtDay(t.deadline!)}'}.']);
-    }
-    if (items.isEmpty) {
-      type = 'tela';
-    } else {
-      return items[round % items.length];
-    }
+    return l;
   }
+
+  final cur = raw(round);
+  if (round > 0 && raw(round - 1).last == cur.first) {
+    final t = cur[0];
+    cur[0] = cur[1];
+    cur[1] = t;
+  }
+  return cur;
+}
+
+/// Compromissos para o tema "compromisso" no dia [day]: primeiro o que é de hoje
+/// ("já fez?"), depois provas chegando e tarefas pendentes.
+List<List<String>> commitmentTips(AppData d, DateTime day) {
+  final key = dayKey(day);
+  final items = dueItems(d, day);
+  final exams = d.exams.where((e) {
+    final n = e.daysUntil(day);
+    return n != null && n >= 1 && n <= 14;
+  }).toList()
+    ..sort((a, b) => a.daysUntil(day)!.compareTo(b.daysUntil(day)!));
+  for (final e in exams) {
+    final kind = e.kind == ExamKind.trabalho ? 'Trabalho' : 'Prova';
+    final name = '${d.subjectName(e.subjectId)}${e.title.isEmpty ? '' : ': ${e.title}'}';
+    items.add(['$kind chegando', '$name, ${relativeDays(e.daysUntil(day)!)}. Dez minutos de revisão hoje ajudam.']);
+  }
+  for (final t in d.tasks.where((t) => t.status != TaskStatus.done)) {
+    final dl = parseDayKey(t.deadline);
+    if (dl != null && t.deadline!.compareTo(key) <= 0) continue; // já está em "para hoje" ou "atrasada"
+    items.add(['Tarefa pendente', '${d.subjectName(t.subjectId)} · ${t.topic}${dl == null ? '' : ', prazo ${fmtDay(t.deadline!)}'}.']);
+  }
+  return items;
+}
+
+/// Rodízio de avisos: água, estudo, alongar, compromisso, pausa de tela, movimento.
+/// Devolve [título, texto] para a posição [g], usando só o que foi cadastrado.
+/// Cada tema aparece uma vez por rodada; sem compromissos, esse tema fica de fora.
+List<String> rotatingTip(AppData d, DateTime now, int g, List<Suggestion> study, List<Suggestion> move, {DateTime? day}) {
+  final items = commitmentTips(d, day ?? now);
+  final n = items.isEmpty ? kTipThemes.length - 1 : kTipThemes.length;
+  final round = g ~/ n;
+  final type = themeOrder(round, withCommitments: items.isNotEmpty)[g % n];
+  if (type == 'compromisso') return items[round % items.length];
   switch (type) {
     case 'agua':
       return ['Beba água', kWaterTexts[round % kWaterTexts.length]];
@@ -245,20 +277,16 @@ List<PlannedNotice> planReminderNotices(AppData d, DateTime now, {int days = 7, 
     var g = 0;
     for (var i = 0; i < nudgeDays && i < days; i++) {
       final day = DateTime(today.year, today.month, today.day + i);
-      var slot = 0;
       for (var m = winFrom + p.nudgeEveryMin; m < winTo; m += p.nudgeEveryMin) {
         final when = _at(day, m);
         if (!when.isAfter(now) || inQuietHours(p, m)) continue;
-        // Dia com compromisso: um aviso sim, um não, pergunta se já foi feito.
-        final due = dueItems(d, day, includeExams: slot ~/ 2 < 6);
-        final List<String> tip;
-        if (due.isNotEmpty && slot.isEven) {
-          tip = due[(slot ~/ 2) % due.length];
-        } else {
-          tip = rotatingTip(d, now, g, studyPool, movePool);
+        // Um tema por vez, em ordem variada; nunca o mesmo assunto duas vezes seguidas.
+        var tip = rotatingTip(d, now, g, studyPool, movePool, day: day);
+        g++;
+        if (rot.isNotEmpty && rot.last.title == tip[0]) {
+          tip = rotatingTip(d, now, g, studyPool, movePool, day: day);
           g++;
         }
-        slot++;
         rot.add(PlannedNotice(id: 0, when: when, title: tip[0], body: tip[1], rotating: true, ttlMin: p.nudgeEveryMin));
       }
     }
@@ -328,7 +356,14 @@ List<PlannedNotice> planReminderNotices(AppData d, DateTime now, {int days = 7, 
   final horizon = now.add(Duration(days: days));
   // Só um aviso por vez: o rodízio cede a vez quando há outro aviso a menos de 30 minutos.
   final fixed = out.map((n) => n.when).toList();
-  out.addAll(rot.where((n) => !fixed.any((t) => t.difference(n.when).inMinutes.abs() < 30)));
+  PlannedNotice? prev;
+  for (final n in rot) {
+    if (fixed.any((t) => t.difference(n.when).inMinutes.abs() < 30)) continue;
+    // Se um aviso do meio saiu, não deixa sobrar dois seguidos do mesmo assunto.
+    if (prev != null && prev.title == n.title && dayKey(prev.when) == dayKey(n.when)) continue;
+    out.add(n);
+    prev = n;
+  }
   final list = out.where((n) => n.when.isBefore(horizon)).toList()..sort((a, b) => a.when.compareTo(b.when));
   final capped = list.take(max).toList();
   return [for (var i = 0; i < capped.length; i++) capped[i].withId(1000 + i)];

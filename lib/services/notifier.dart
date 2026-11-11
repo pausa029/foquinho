@@ -167,7 +167,9 @@ class LocalNotifier implements Notifier {
       if (!n.when.isAfter(now)) continue;
       try {
         // alarmClock é o modo mais pontual do Android (o mesmo do despertador).
-        await _schedule(n, n.alarm ? AndroidScheduleMode.alarmClock : AndroidScheduleMode.inexactAllowWhileIdle);
+        // Lembretes usam horário exato: no modo aproximado o Android segura os avisos
+        // enquanto o aparelho descansa e depois entrega vários de uma vez.
+        await _schedule(n, n.alarm ? AndroidScheduleMode.alarmClock : AndroidScheduleMode.exactAllowWhileIdle);
       } catch (_) {
         // Sem permissão de alarme exato: agenda de forma aproximada.
         try {

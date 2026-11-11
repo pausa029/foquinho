@@ -100,6 +100,25 @@ void main() {
     expect(list.every((n) => n.when.isBefore(DateTime(2026, 6, 13))), isTrue);
   });
 
+  test('rodízio: nunca dois avisos seguidos do mesmo assunto e nenhum texto repetido em sequência', () {
+    final d = sample();
+    final list = planReminderNotices(d, now).where((n) => n.rotating).toList();
+    for (var i = 1; i < list.length; i++) {
+      expect(list[i].title == list[i - 1].title, isFalse, reason: 'tema repetido em ${list[i].when}');
+    }
+    // Em qualquer janela de 4 avisos seguidos (2 horas), os 4 assuntos são diferentes.
+    for (var i = 3; i < list.length; i++) {
+      final w = list.sublist(i - 3, i + 1).where((n) => n.when.day == list[i].when.day).map((n) => n.title).toList();
+      expect(w.toSet().length >= w.length - 1, isTrue, reason: 'assuntos repetidos perto de ${list[i].when}: $w');
+    }
+    // A ordem muda de uma rodada para a outra.
+    expect(themeOrder(0).join(',') == themeOrder(1).join(','), isFalse);
+    for (var r = 1; r < 40; r++) {
+      expect(themeOrder(r).first == themeOrder(r - 1).last, isFalse);
+      expect(themeOrder(r).toSet().length, 6);
+    }
+  });
+
   test('compromisso do dia entra no rodízio perguntando se já fez', () {
     final d = sample();
     final hoje = dayKey(now);

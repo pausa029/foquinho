@@ -129,6 +129,17 @@ class AppState extends ChangeNotifier {
     return ok;
   }
 
+  /// Para o som e tira da tela os alarmes do temporizador que já tocaram.
+  Future<void> stopAlarmSound() async {
+    final n = notifier;
+    if (n == null || !n.supported) return;
+    try {
+      await n.dismissAlarms();
+    } catch (_) {
+      // sem efeito
+    }
+  }
+
   Future<void> disableNotifications() async {
     data.profile?.notifyOn = false;
     await save();
@@ -432,6 +443,7 @@ class AppState extends ChangeNotifier {
   Future<void> cancelSession() async {
     data.active = null;
     _finished = false;
+    await stopAlarmSound();
     await save();
   }
 
@@ -471,6 +483,7 @@ class AppState extends ChangeNotifier {
     }
     data.active = null;
     _finished = false;
+    await stopAlarmSound();
     await save();
     return rec;
   }

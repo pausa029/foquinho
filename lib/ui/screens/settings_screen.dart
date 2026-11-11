@@ -134,7 +134,7 @@ class SettingsScreen extends StatelessWidget {
                     const ListTile(
                       leading: Icon(Icons.alarm),
                       title: Text('Alarme do temporizador'),
-                      subtitle: Text('Toca quando o foco, o intervalo ou o exercício termina, mesmo com a tela apagada.'),
+                      subtitle: Text('Toca e vibra quando o foco, o intervalo ou o exercício termina, mesmo com a tela apagada. No fim da sessão o som repete até você parar. Usa o volume de alarme do celular.'),
                     ),
                     SwitchListTile(
                       title: const Text('Lembrete para estudar'),
@@ -170,8 +170,8 @@ class SettingsScreen extends StatelessWidget {
                         alignment: Alignment.centerLeft,
                         child: OutlinedButton.icon(
                           onPressed: () => state.notifier?.showTest(),
-                          icon: const Icon(Icons.notifications_none),
-                          label: const Text('Enviar notificação de teste'),
+                          icon: const Icon(Icons.volume_up_outlined),
+                          label: const Text('Testar o som do alarme'),
                         ),
                       ),
                     ),

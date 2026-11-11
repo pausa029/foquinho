@@ -353,6 +353,16 @@ class _SessionScreenState extends State<SessionScreen> {
         const SizedBox(height: 8),
         Center(child: Text(_forceRecord ? 'Sessão encerrada' : 'Tempo concluído', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700))),
         Center(child: Text(a.title, textAlign: TextAlign.center)),
+        if (!_forceRecord && state.notificationsSupported && (state.data.profile?.notifyOn ?? false)) ...[
+          const SizedBox(height: 12),
+          Center(
+            child: FilledButton.tonalIcon(
+              onPressed: () => state.stopAlarmSound(),
+              icon: const Icon(Icons.notifications_off_outlined),
+              label: const Text('Parar o som do alarme'),
+            ),
+          ),
+        ],
         const SizedBox(height: 16),
         Card(
           child: Padding(

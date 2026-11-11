@@ -22,6 +22,12 @@ class FakeNotifier implements Notifier {
     last = notices;
   }
 
+  int dismissed = 0;
+  @override
+  Future<void> dismissAlarms() async {
+    dismissed++;
+  }
+
   @override
   Future<void> showTest() async {}
 }
@@ -109,6 +115,19 @@ void main() {
     final b = planTimerNotices(cyc, t0);
     expect(b.map((n) => n.title).toList(), ['Hora do intervalo', 'De volta ao foco', 'Tempo concluído']);
     expect(b.last.when.millisecondsSinceEpoch, t0 + (25 + 5 + 25) * 60000);
+    expect(b.last.loop, isTrue, reason: 'o fim da sessão toca em repetição');
+    expect(b.first.loop, isFalse);
+    expect(b.map((n) => n.id).toList(), [100, 101, 102]);
+
+    // Depois do primeiro foco, os avisos restantes mantêm os mesmos ids.
+    cyc
+      ..phase = Phase.intervalo
+      ..phaseMs = 5 * 60000
+      ..phaseEndsAt = t0 + 30 * 60000;
+    expect(planTimerNotices(cyc, t0 + 25 * 60000 + 1).map((n) => n.id).toList(), [101, 102]);
+    cyc
+      ..phase = Phase.foco
+      ..phaseEndsAt = t0 + 25 * 60000;
 
     cyc.paused = true;
     expect(planTimerNotices(cyc, t0), isEmpty);
@@ -139,6 +158,7 @@ void main() {
     expect(st.plannedNotices().any((n) => n.alarm), isTrue);
     await st.cancelSession();
     expect(st.plannedNotices().any((n) => n.alarm), isFalse);
+    expect(fake.dismissed, greaterThan(0), reason: 'cancelar a sessão para o alarme');
 
     await st.resyncNotifications();
     expect(fake.calls, greaterThan(0));

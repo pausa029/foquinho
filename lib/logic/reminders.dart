@@ -15,9 +15,12 @@ class PlannedNotice {
   /// true = alarme do temporizador (som de alarme, horário exato).
   final bool alarm;
 
-  const PlannedNotice({required this.id, required this.when, required this.title, required this.body, this.alarm = false});
+  /// true = o som repete até a pessoa parar (fim da sessão).
+  final bool loop;
 
-  PlannedNotice withId(int newId) => PlannedNotice(id: newId, when: when, title: title, body: body, alarm: alarm);
+  const PlannedNotice({required this.id, required this.when, required this.title, required this.body, this.alarm = false, this.loop = false});
+
+  PlannedNotice withId(int newId) => PlannedNotice(id: newId, when: when, title: title, body: body, alarm: alarm, loop: loop);
 }
 
 /// O minuto do dia [m] cai no período "não me incomodar"?
@@ -28,6 +31,10 @@ bool inQuietHours(Profile p, int m) {
 }
 
 DateTime _at(DateTime day, int minutes) => DateTime(day.year, day.month, day.day, minutes ~/ 60, minutes % 60);
+
+/// Faixa de ids reservada aos alarmes do temporizador.
+const int kTimerIdBase = 100;
+const int kTimerIdCount = 30;
 
 const List<String> kNudgeTexts = [
   'Se você está no celular há um tempo, levante, alongue o corpo e beba água.',
@@ -45,6 +52,8 @@ List<PlannedNotice> planTimerNotices(ActiveSession? a, int nowMs) {
   var phase = a.phase;
   var idx = a.cycleIndex;
   final what = a.kind == SessionKind.estudo ? 'estudo' : 'exercício';
+  // Número fixo de cada fase dentro da sessão: o id do aviso não muda quando a lista é refeita.
+  var ordinal = 2 * (idx - 1) + (phase == Phase.foco ? 0 : 1);
   var guard = 0;
   while (guard < 30) {
     guard++;
@@ -58,6 +67,7 @@ List<PlannedNotice> planTimerNotices(ActiveSession? a, int nowMs) {
           title: 'Tempo concluído',
           body: '${a.title}. Abra o Foquinho para registrar seu $what.',
           alarm: true,
+          loop: true,
         );
         last = true;
       } else {
@@ -81,7 +91,8 @@ List<PlannedNotice> planTimerNotices(ActiveSession? a, int nowMs) {
       );
       phase = Phase.foco;
     }
-    if (t > nowMs) out.add(n.withId(100 + out.length));
+    if (t > nowMs) out.add(n.withId(kTimerIdBase + ordinal));
+    ordinal++;
     if (last) break;
     t += (phase == Phase.foco ? a.focusMin : a.breakMin) * 60000;
   }

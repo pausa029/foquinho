@@ -1,6 +1,8 @@
 // Notificações do sistema (Android e iOS), agendadas no próprio aparelho.
 // Não usa servidor nem internet. Na versão web este serviço fica desativado.
 
+import 'dart:typed_data';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/timezone.dart' as tz;
@@ -20,6 +22,9 @@ abstract class Notifier {
 
   /// Deixa agendada exatamente a lista nova (cancela pendentes que saíram dela).
   Future<void> replaceAll(List<PlannedNotice> notices);
+
+  /// Tira da tela (e silencia) os alarmes do temporizador que já tocaram.
+  Future<void> dismissAlarms();
 
   Future<void> showTest();
 }
@@ -88,22 +93,27 @@ class LocalNotifier implements Notifier {
     }
   }
 
-  NotificationDetails _details(bool alarm) {
+  NotificationDetails _details(bool alarm, {bool loop = false}) {
     if (alarm) {
-      return const NotificationDetails(
+      // Canal novo (v2): o Android não deixa mudar som e vibração de um canal já criado.
+      return NotificationDetails(
         android: AndroidNotificationDetails(
-          'foquinho_alarme',
+          'foquinho_alarme_v2',
           'Alarme do temporizador',
           channelDescription: 'Toca quando uma sessão de foco, intervalo ou exercício termina.',
           importance: Importance.max,
-          priority: Priority.high,
+          priority: Priority.max,
           category: AndroidNotificationCategory.alarm,
           audioAttributesUsage: AudioAttributesUsage.alarm,
           playSound: true,
+          sound: const RawResourceAndroidNotificationSound('foquinho_alarme'),
           enableVibration: true,
+          vibrationPattern: Int64List.fromList(<int>[0, 700, 400, 700, 400, 700, 400, 700]),
           visibility: NotificationVisibility.public,
+          // 4 = FLAG_INSISTENT: repete o som até a pessoa tocar no aviso ou parar pelo app.
+          additionalFlags: loop ? Int32List.fromList(<int>[4]) : null,
         ),
-        iOS: DarwinNotificationDetails(presentAlert: true, presentSound: true),
+        iOS: const DarwinNotificationDetails(presentAlert: true, presentSound: true),
       );
     }
     return const NotificationDetails(
@@ -127,7 +137,7 @@ class LocalNotifier implements Notifier {
       n.title,
       n.body,
       tz.TZDateTime.from(n.when, tz.UTC),
-      _details(n.alarm),
+      _details(n.alarm, loop: n.loop),
       androidScheduleMode: mode,
       uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
     );
@@ -151,7 +161,8 @@ class LocalNotifier implements Notifier {
     for (final n in notices) {
       if (!n.when.isAfter(now)) continue;
       try {
-        await _schedule(n, n.alarm ? AndroidScheduleMode.exactAllowWhileIdle : AndroidScheduleMode.inexactAllowWhileIdle);
+        // alarmClock é o modo mais pontual do Android (o mesmo do despertador).
+        await _schedule(n, n.alarm ? AndroidScheduleMode.alarmClock : AndroidScheduleMode.inexactAllowWhileIdle);
       } catch (_) {
         // Sem permissão de alarme exato: agenda de forma aproximada.
         try {
@@ -164,10 +175,25 @@ class LocalNotifier implements Notifier {
   }
 
   @override
+  Future<void> dismissAlarms() async {
+    if (!await init()) return;
+    try {
+      final pending = (await _p.pendingNotificationRequests()).map((r) => r.id).toSet();
+      for (var id = kTimerIdBase; id < kTimerIdBase + kTimerIdCount; id++) {
+        if (!pending.contains(id)) await _p.cancel(id);
+      }
+      await _p.cancel(2);
+    } catch (_) {
+      // nada a fazer
+    }
+  }
+
+  @override
   Future<void> showTest() async {
     if (!await init()) return;
     try {
-      await _p.show(1, 'Foquinho', 'As notificações estão funcionando.', _details(false));
+      // Teste com o mesmo som e vibração do alarme (toca uma vez).
+      await _p.show(2, 'Foquinho', 'Assim toca o alarme do temporizador.', _details(true));
     } catch (_) {
       // nada a fazer
     }

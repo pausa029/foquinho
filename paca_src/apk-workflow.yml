@@ -1,0 +1,68 @@
+name: APK da PACA
+# Gera o aplicativo Android da PACA (abre o site no Chrome do aparelho) e guarda como PACA.apk.
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/apk.yml']
+permissions:
+  contents: write
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+      - name: Montar o projeto Android
+        run: |
+          mkdir -p a/app/src/main/res/values a/app/src/main/res/mipmap-xxxhdpi
+          cp icon-192.png a/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png
+          cat > a/settings.gradle <<'EOF'
+          pluginManagement { repositories { google(); mavenCentral(); gradlePluginPortal() } }
+          dependencyResolutionManagement { repositories { google(); mavenCentral() } }
+          include ':app'
+          EOF
+          echo "plugins { id 'com.android.application' version '8.5.2' apply false }" > a/build.gradle
+          echo "android.useAndroidX=true" > a/gradle.properties
+          cat > a/app/build.gradle <<'EOF'
+          plugins { id 'com.android.application' }
+          android {
+            namespace 'br.paca.app'
+            compileSdk 34
+            defaultConfig { applicationId 'br.paca.app'; minSdk 21; targetSdk 34; versionCode 1; versionName '1.0' }
+            lint { abortOnError false }
+          }
+          dependencies { implementation 'com.google.androidbrowserhelper:androidbrowserhelper:2.5.0' }
+          EOF
+          cat > a/app/src/main/AndroidManifest.xml <<'EOF'
+          <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+            <uses-permission android:name="android.permission.INTERNET" />
+            <queries><intent><action android:name="android.support.customtabs.action.CustomTabsService" /></intent></queries>
+            <application android:label="PACA" android:icon="@mipmap/ic_launcher" android:allowBackup="false" android:theme="@android:style/Theme.Translucent.NoTitleBar">
+              <activity android:name="com.google.androidbrowserhelper.trusted.LauncherActivity" android:exported="true" android:label="PACA">
+                <meta-data android:name="android.support.customtabs.trusted.DEFAULT_URL" android:value="https://pausa029.github.io/paca/" />
+                <meta-data android:name="android.support.customtabs.trusted.STATUS_BAR_COLOR" android:resource="@color/teal" />
+                <meta-data android:name="android.support.customtabs.trusted.FALLBACK_STRATEGY" android:value="customtabs" />
+                <intent-filter><action android:name="android.intent.action.MAIN" /><category android:name="android.intent.category.LAUNCHER" /></intent-filter>
+              </activity>
+            </application>
+          </manifest>
+          EOF
+          echo '<resources><color name="teal">#17616B</color></resources>' > a/app/src/main/res/values/colors.xml
+      - name: Compilar
+        run: cd a && gradle :app:assembleDebug --no-daemon
+      - name: Guardar PACA.apk no repositorio
+        run: |
+          cp a/app/build/outputs/apk/debug/app-debug.apk PACA.apk
+          rm -rf a
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git add PACA.apk
+          git commit -m "Atualiza PACA.apk"
+          git push

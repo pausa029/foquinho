@@ -13,6 +13,7 @@ Aplicativo escolar, em português do Brasil, para ajudar estudantes a trocar par
 | Perfil | Nome/apelido, série, matérias, matérias difíceis, assuntos, provas/trabalhos com data, esportes, metas de estudo/exercício/tela, janela de lembretes e período de silêncio. Tudo opcional, editável e apagável. Sem e-mail, telefone ou senha. |
 | Painel | Metas do dia com progresso em texto + barra, tempo de tela **manual** (identificado como manual), próxima prova/trabalho, ações rápidas *Estudar agora*, *Pausa ativa*, *Ver plano*, sugestões personalizadas e lembrete gentil dentro do app. |
 | Plano | Tarefas em *A estudar / Em andamento / Concluído*, com matéria, assunto, duração e prazo; matérias com dificuldade e assuntos; provas e trabalhos. |
+| Planejamento | Aba Plano → Agenda. Quadro semanal ou mensal montado a partir das matérias, assuntos, dificuldades, provas e da disponibilidade informada (dias, horários, limite diário, duração e intervalo, datas bloqueadas). Regras fixas e sem IA: no máximo 80% do tempo livre, prova próxima primeiro, matéria difícil com o dobro de sessões, no máximo 2 sessões da mesma matéria por dia e nunca seguidas, revisão na véspera da prova. Criar, editar, mover (com aviso de conflito e horários alternativos), fixar, concluir, marcar incompleta ou não realizada, excluir; gerar de novo com prévia do que muda, preservando concluídas, fixadas e manuais; pausar e apagar. Aviso 10 min antes de cada sessão (app Android). |
 | Sessões | Temporizador de estudo simples ou com intervalos (25/5, 50/10, personalizado); iniciar, pausar, retomar, cancelar, concluir; registro com minutos ajustáveis e observação; tarefa pode ser marcada como concluída. O tempo é contado pelo relógio do aparelho e sobrevive ao fechar o app. |
 | Movimento | Lista editável de atividades (caminhada, alongamento, corrida, dança, bicicleta, futebol, exercício em casa e outras) com filtros de tempo e local; sugestões priorizam os esportes do estudante; temporizador e registro. |
 | Sugestões | Só a partir do que foi cadastrado: prova próxima → matéria difícil → tarefa pendente → assuntos anotados. Sem dados inventados. |
@@ -37,6 +38,11 @@ lib/
   data/app_state.dart       estado + persistência local + lógica do temporizador
   logic/stats.dart          resumos diários/semanais
   logic/suggestions.dart    sugestões personalizadas
+  logic/planner.dart        planejamento de estudos (distribuição, conflitos, alternativas)
+  logic/reminders.dart      o que agendar como notificação
+  logic/streak.dart         sequência de dias
+  models/plan.dart          disponibilidade e sessões planejadas
+  services/notifier.dart    notificações locais
   ui/screens/               onboarding, início, plano, movimento, histórico, ajustes, sessão
   ui/widgets/common.dart    componentes compartilhados
 test/                       testes unitários e de widget

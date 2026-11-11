@@ -6,6 +6,7 @@ import '../../data/app_state.dart';
 import '../../logic/stats.dart';
 import '../../models/models.dart';
 import '../widgets/common.dart';
+import 'agenda_tab.dart';
 import 'onboarding_screen.dart' show kSubjectOptions;
 import 'session_screen.dart';
 
@@ -17,7 +18,7 @@ class PlanScreen extends StatefulWidget {
 }
 
 class _PlanScreenState extends State<PlanScreen> with SingleTickerProviderStateMixin {
-  late final TabController tabs = TabController(length: 3, vsync: this);
+  late final TabController tabs = TabController(length: 4, vsync: this);
 
   @override
   void dispose() {
@@ -32,12 +33,12 @@ class _PlanScreenState extends State<PlanScreen> with SingleTickerProviderStateM
         title: const Text('Plano de estudo'),
         bottom: TabBar(
           controller: tabs,
-          tabs: const [Tab(text: 'Tarefas'), Tab(text: 'Matérias'), Tab(text: 'Provas')],
+          tabs: const [Tab(text: 'Agenda'), Tab(text: 'Tarefas'), Tab(text: 'Matérias'), Tab(text: 'Provas')],
         ),
       ),
       body: TabBarView(
         controller: tabs,
-        children: const [_TasksTab(), _SubjectsTab(), _ExamsTab()],
+        children: [AgendaTab(onGoSubjects: () => tabs.animateTo(2)), const _TasksTab(), const _SubjectsTab(), const _ExamsTab()],
       ),
     );
   }

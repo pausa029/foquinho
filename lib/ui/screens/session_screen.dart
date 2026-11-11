@@ -19,6 +19,7 @@ class SessionScreen extends StatefulWidget {
   final String? presetSubjectId;
   final String? presetTopic;
   final String? presetTaskId;
+  final String? presetPlanId;
 
   const SessionScreen({
     super.key,
@@ -28,6 +29,7 @@ class SessionScreen extends StatefulWidget {
     this.presetSubjectId,
     this.presetTopic,
     this.presetTaskId,
+    this.presetPlanId,
   });
 
   @override
@@ -221,6 +223,7 @@ class _SessionScreenState extends State<SessionScreen> {
       subjectId: isStudy ? subjectId : null,
       topic: widget.presetTopic,
       taskId: isStudy ? widget.presetTaskId : null,
+      planId: isStudy ? widget.presetPlanId : null,
       focusMin: isStudy && withBreaks ? focusMin : minutes,
       breakMin: breakMin,
       cycles: isStudy && withBreaks ? cycles : 1,

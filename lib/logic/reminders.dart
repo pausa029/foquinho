@@ -176,6 +176,18 @@ List<PlannedNotice> planReminderNotices(AppData d, DateTime now, {int days = 7, 
     add(_at(DateTime(dt.year, dt.month, dt.day), winFrom + 2), '$kind hoje', '$name. Vai dar certo!');
   }
 
+  // Planejamento: aviso 10 minutos antes de cada sessão planejada.
+  if (!d.plan.paused) {
+    for (final ps in d.planSessions) {
+      if (ps.state != PlanState.planejada) continue;
+      add(
+        ps.dateTime.subtract(const Duration(minutes: 10)),
+        'Sessão de estudo em 10 minutos',
+        '${d.subjectName(ps.subjectId)}${ps.topic == null ? '' : ': ${ps.topic}'}, ${ps.minutes} min.',
+      );
+    }
+  }
+
   // Sequência: um aviso à noite, só hoje e só se ainda falta a sessão do dia.
   final streak = computeStreak(d, now);
   if (streak.count >= 2 && !streak.todayDone) {

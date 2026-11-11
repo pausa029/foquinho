@@ -3,6 +3,10 @@
 
 import 'dart:math';
 
+import 'plan.dart';
+
+export 'plan.dart';
+
 String newId() {
   final r = Random();
   final t = DateTime.now().millisecondsSinceEpoch.toRadixString(36);
@@ -481,6 +485,7 @@ class ActiveSession {
   String? subjectId;
   String? topic;
   String? taskId;
+  String? planId; // sessão do planejamento que originou este temporizador
   int focusMin;
   int breakMin;
   int cycles; // 1 = sessão simples, sem intervalos
@@ -499,6 +504,7 @@ class ActiveSession {
     this.subjectId,
     this.topic,
     this.taskId,
+    this.planId,
     required this.focusMin,
     required this.breakMin,
     required this.cycles,
@@ -520,6 +526,7 @@ class ActiveSession {
         'subjectId': subjectId,
         'topic': topic,
         'taskId': taskId,
+        'planId': planId,
         'focusMin': focusMin,
         'breakMin': breakMin,
         'cycles': cycles,
@@ -540,6 +547,7 @@ class ActiveSession {
     final sid = readStr(m, 'subjectId');
     final topic = readStr(m, 'topic');
     final tid = readStr(m, 'taskId');
+    final pid = readStr(m, 'planId');
     final focusMin = readInt(m, 'focusMin', 25, min: 1, max: 180);
     return ActiveSession(
       kind: readStr(m, 'kind') == 'exercicio' ? SessionKind.exercicio : SessionKind.estudo,
@@ -547,6 +555,7 @@ class ActiveSession {
       subjectId: sid.isEmpty ? null : sid,
       topic: topic.isEmpty ? null : topic,
       taskId: tid.isEmpty ? null : tid,
+      planId: pid.isEmpty ? null : pid,
       focusMin: focusMin,
       breakMin: readInt(m, 'breakMin', 5, min: 1, max: 60),
       cycles: readInt(m, 'cycles', 1, min: 1, max: 12),
@@ -578,6 +587,8 @@ class AppData {
   ActiveSession? active;
   ThemeChoice theme;
   bool soundOn;
+  PlanSettings plan;
+  List<PlanSession> planSessions;
 
   AppData({
     this.profile,
@@ -591,12 +602,16 @@ class AppData {
     this.active,
     this.theme = ThemeChoice.sistema,
     this.soundOn = true,
+    PlanSettings? plan,
+    List<PlanSession>? planSessions,
   })  : subjects = subjects ?? <Subject>[],
         exams = exams ?? <Exam>[],
         tasks = tasks ?? <StudyTask>[],
         activities = activities ?? defaultActivities(),
         sessions = sessions ?? <Session>[],
-        screenLog = screenLog ?? <String, int>{};
+        screenLog = screenLog ?? <String, int>{},
+        plan = plan ?? PlanSettings(),
+        planSessions = planSessions ?? <PlanSession>[];
 
   Map<String, dynamic> toJson() => {
         'v': 1,
@@ -611,6 +626,8 @@ class AppData {
         'active': active?.toJson(),
         'theme': theme.name,
         'soundOn': soundOn,
+        'plan': plan.toJson(),
+        'planSessions': planSessions.map((e) => e.toJson()).toList(),
       };
 
   static AppData fromJson(Map<String, dynamic> m) {
@@ -635,6 +652,8 @@ class AppData {
       if (t.name == readStr(m, 'theme')) theme = t;
     }
     final activeRaw = m['active'];
+    final planRaw = m['plan'];
+    final planSessions = readMapList(m, 'planSessions').map(PlanSession.fromJson).whereType<PlanSession>().where((p) => subjectIds.contains(p.subjectId)).toList();
     return AppData(
       profile: prof is Map ? Profile.fromJson(Map<String, dynamic>.from(prof)) : null,
       onboarded: readBool(m, 'onboarded', false),
@@ -647,6 +666,8 @@ class AppData {
       active: activeRaw is Map ? ActiveSession.fromJson(Map<String, dynamic>.from(activeRaw)) : null,
       theme: theme,
       soundOn: readBool(m, 'soundOn', true),
+      plan: planRaw is Map ? PlanSettings.fromJson(Map<String, dynamic>.from(planRaw)) : null,
+      planSessions: planSessions,
     );
   }
 

@@ -67,14 +67,20 @@ jobs:
 
       - name: Analisar o código (não bloqueia o build)
         continue-on-error: true
-        run: flutter analyze --no-fatal-infos --no-fatal-warnings
+        run: |
+          set -o pipefail
+          flutter analyze --no-fatal-infos --no-fatal-warnings 2>&1 | tee analyze.txt || { bash tool/annotate.sh analyze.txt ' error •|^error' 'Erros da análise'; exit 1; }
 
       - name: Rodar os testes (não bloqueia o build; veja o log)
         continue-on-error: true
-        run: flutter test
+        run: |
+          set -o pipefail
+          flutter test 2>&1 | tee test.txt || { bash tool/annotate.sh test.txt '\[E\]|Expected:|Actual:|Which:|Error:|error:|Some tests failed|_test\.dart [0-9]+:' 'Testes que falharam'; exit 1; }
 
       - name: Compilar APK de depuração
-        run: flutter build apk --debug
+        run: |
+          set -o pipefail
+          flutter build apk --debug 2>&1 | tee build.txt || { bash tool/annotate.sh build.txt 'Error:|error:|FAILURE|What went wrong|lib/.*\.dart:[0-9]+' 'Erros da compilação'; exit 1; }
 
       - name: Compilar AAB (assinado com chave de teste)
         continue-on-error: true

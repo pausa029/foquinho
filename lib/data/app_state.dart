@@ -9,6 +9,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../logic/planner.dart';
 import '../logic/reminders.dart';
 import '../models/models.dart';
 import '../services/notifier.dart';
@@ -213,6 +214,7 @@ class AppState extends ChangeNotifier {
     data.subjects.removeWhere((s) => s.id == id);
     data.exams.removeWhere((e) => e.subjectId == id);
     data.tasks.removeWhere((t) => t.subjectId == id);
+    data.planSessions.removeWhere((p) => p.subjectId == id);
     await save();
   }
 
@@ -335,6 +337,7 @@ class AppState extends ChangeNotifier {
     String? subjectId,
     String? topic,
     String? taskId,
+    String? planId,
     required int focusMin,
     int breakMin = 5,
     int cycles = 1,
@@ -348,6 +351,7 @@ class AppState extends ChangeNotifier {
       subjectId: subjectId,
       topic: topic,
       taskId: taskId,
+      planId: planId,
       focusMin: focusMin,
       breakMin: breakMin,
       cycles: cycles,
@@ -476,6 +480,12 @@ class AppState extends ChangeNotifier {
       );
       data.sessions.add(rec);
     }
+    // Sessão vinda do planejamento: concluída se fez pelo menos 80% do previsto.
+    if (a.planId != null && minutes >= 1) {
+      for (final p in data.planSessions) {
+        if (p.id == a.planId) p.state = minutes >= (p.minutes * 0.8).ceil() ? PlanState.concluida : PlanState.incompleta;
+      }
+    }
     if (markTaskDone && a.taskId != null) {
       for (final t in data.tasks) {
         if (t.id == a.taskId) t.status = TaskStatus.done;
@@ -486,6 +496,80 @@ class AppState extends ChangeNotifier {
     await stopAlarmSound();
     await save();
     return rec;
+  }
+
+  // ---------- planejamento de estudos ----------
+
+  Future<void> savePlanSettings(PlanSettings s) async {
+    data.plan = s;
+    await save();
+  }
+
+  /// Aplica um plano gerado: troca as sessões do período pelas preservadas + novas.
+  Future<void> applyPlan(PlanResult r, DateTime from, DateTime to) async {
+    final fromK = dayKey(from), toK = dayKey(to);
+    final keepIds = r.kept.map((p) => p.id).toSet();
+    data.planSessions.removeWhere((p) => p.day.compareTo(fromK) >= 0 && p.day.compareTo(toK) <= 0 && !keepIds.contains(p.id));
+    data.planSessions.addAll(r.sessions);
+    data.plan.examSig = examSignature(data);
+    await save();
+  }
+
+  Future<void> upsertPlanSession(PlanSession p) async {
+    final i = data.planSessions.indexWhere((x) => x.id == p.id);
+    if (i >= 0) {
+      data.planSessions[i] = p;
+    } else {
+      data.planSessions.add(p);
+    }
+    await save();
+  }
+
+  Future<void> removePlanSession(String id) async {
+    data.planSessions.removeWhere((p) => p.id == id);
+    await save();
+  }
+
+  /// Muda o estado. Ao concluir à mão, registra os minutos no histórico (conta na sequência).
+  Future<void> setPlanState(String id, PlanState st, {bool record = false}) async {
+    for (final p in data.planSessions) {
+      if (p.id != id) continue;
+      p.state = st;
+      if (record && st == PlanState.concluida) {
+        final when = p.dateTime;
+        final n = DateTime.now();
+        data.sessions.add(Session(
+          id: newId(),
+          kind: SessionKind.estudo,
+          title: '${data.subjectName(p.subjectId)}${p.topic == null ? '' : ': ${p.topic}'}',
+          subjectId: p.subjectId,
+          topic: p.topic,
+          minutes: p.minutes,
+          startedAt: (when.isAfter(n) ? n : when).millisecondsSinceEpoch,
+        ));
+      }
+    }
+    await save();
+  }
+
+  Future<void> togglePlanPin(String id) async {
+    for (final p in data.planSessions) {
+      if (p.id == id) p.pinned = !p.pinned;
+    }
+    await save();
+  }
+
+  Future<void> setPlanPaused(bool v) async {
+    data.plan.paused = v;
+    await save();
+  }
+
+  /// Apaga todas as sessões planejadas (a disponibilidade informada continua).
+  Future<void> clearPlan() async {
+    data.planSessions.clear();
+    data.plan.examSig = null;
+    data.plan.paused = false;
+    await save();
   }
 
   // ---------- configurações ----------

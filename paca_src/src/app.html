@@ -53,6 +53,7 @@ svg { width: 1.3em; height: 1.3em; flex: none; fill: none; stroke: currentColor;
 .cover .lead { font-size: 1.1em; font-weight: 800; max-width: 17em; }
 .cover .btn { max-width: 330px; font-size: 1.2em; }
 .cover img { width: 100%; max-width: 420px; margin-top: auto; border-radius: 28px 28px 0 0; display: block; }
+.cover a.mini { display: inline-flex; align-items: center; }
 .cover .mini { background: none; border: 0; color: #fff; text-decoration: underline; font: inherit; min-height: 48px; cursor: pointer; }
 
 /* início */
@@ -137,7 +138,7 @@ form { display: flex; flex-direction: column; gap: 14px; }
 <script>
 (function () {
 'use strict';
-var LOGO = '{{LOGO}}', COVER = '{{COVER}}', FOQ = '{{FOQ}}';
+var LOGO = '{{LOGO}}', COVER = '{{COVER}}', APK = '{{APK}}';
 
 /* ---------- utilidades ---------- */
 function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
@@ -272,7 +273,6 @@ function command(t) {
   if (/cultura|evento|sugest/.test(s)) return go('cultura');
   if (/mensage/.test(s)) return go('mensagens');
   if (/perfil|configura|acessibilidade/.test(s)) return go('perfil');
-  if (/foquinho|foco|estud/.test(s)) { location.href = FOQ; return; }
   if (/in[íi]cio|come[çc]o|voltar/.test(s)) return go('home');
   if (/ler|ouvir|escutar/.test(s)) { render(); say(screenText()); return; }
   flash('Ouvi “' + t + '”. Diga: rádio, serviços, cultura, fala cidadão, mensagens ou perfil.', true); render(); say('Não entendi. Diga rádio, serviços, cultura, fala cidadão, mensagens ou perfil.');
@@ -295,6 +295,7 @@ function go(scr, keep) {
   S.scr = scr; S.tmp = {}; S.focus = true;
   render();
 }
+function standalone() { try { return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true || /android-app:/.test(document.referrer); } catch (e) { return false; } }
 function applyAcc() { var r = document.documentElement; r.classList.toggle('hc', D.acc.hc); r.classList.toggle('fs1', D.acc.fs === 1); r.classList.toggle('fs2', D.acc.fs === 2); }
 
 /* ---------- peças de tela ---------- */
@@ -330,6 +331,7 @@ V.capa = function () {
     '<p class="lead" data-say>Tecnologia para quê? Para quem? Com quais consequências?</p>' +
     '<button class="btn orange" data-a="enter">Acessar agora ' + I('arrow') + '</button>' +
     '<button class="mini" data-a="readScreen">' + 'Ouvir esta tela em voz alta</button>' +
+    (APK && !standalone() ? '<a class="mini" href="' + APK + '" download="PACA.apk">Baixar o aplicativo para Android (APK)</a>' : '') +
     '<img src="' + COVER + '" alt="Ilustração: uma senhora vende frutas na feira, um senhor de chapéu toca pandeiro e um jovem usa o celular. Ao redor, as frases Uma tecnologia comunitária e Soberania de dados.">' +
     '</section>';
 };
@@ -368,7 +370,6 @@ V.home = function () {
     '<button class="tile t2" data-a="go" data-v="servicos">' + I('serv') + '<span data-say>Acessar Serviços</span></button>' +
     '<button class="tile t3" data-a="go" data-v="cultura">' + I('cult') + '<span data-say>Nossa Cultura</span></button>' +
     '<button class="tile t4" data-a="go" data-v="fala">' + I('fala') + '<span data-say>Fala Cidadão</span></button></div>' +
-    '<a class="appcard" href="' + FOQ + '"><span class="appic" aria-hidden="true">' + I('focus') + '</span><span><strong data-say>Foquinho: menos tela, mais estudo</strong><br><span class="muted" data-say>Aplicativo da comunidade para trocar o tempo de celular por estudo e exercício.</span></span>' + I('arrow') + '</a>' +
     '<div class="voicebar"><button class="btn ghost" data-a="readScreen">' + I('ear') + '<span>Ouvir a tela</span></button>' +
     '<button class="btn teal" data-a="voiceCmd">' + I('mic') + '<span>' + (S.rec === 'cmd' ? 'Ouvindo…' : 'Falar comando') + '</span></button></div>' +
     '<p class="muted center">Comandos de voz: “rádio”, “serviços”, “cultura”, “fala cidadão”, “mensagens”, “perfil”.</p></main>' + tabs();
@@ -405,7 +406,7 @@ V.servicos = function () {
   });
   h += '</ul><h2 data-say>Onde resolver</h2><ul class="list">';
   GUIAS.forEach(function (g) { h += '<li class="card"><span class="tag">' + esc(g[0]) + '</span><h3 data-say>' + esc(g[1]) + '</h3><p data-say>' + esc(g[2]) + '</p></li>'; });
-  h += '</ul><h2 data-say>Aplicativos da comunidade</h2><a class="appcard" href="' + FOQ + '"><span class="appic" aria-hidden="true">' + I('focus') + '</span><span><strong data-say>Foquinho</strong><br><span class="muted" data-say>Do scroll à ação: menos tempo de tela, mais estudo e exercício físico. Temporizador de foco, mural de estudos e lembretes de provas.</span></span>' + I('arrow') + '</a><h2 data-say>Serviços da comunidade</h2>';
+  h += '</ul><h2 data-say>Serviços da comunidade</h2>';
   h += D.servicos.length ? '<ul class="list">' + D.servicos.slice().reverse().map(function (s) {
     return '<li class="card"><span class="tag">' + esc(s.cat || 'Serviço') + '</span><h3 data-say>' + esc(s.nome) + '</h3><p data-say>' + esc(s.desc) + '</p>' + (s.onde ? '<p class="muted" data-say>' + esc('Onde e quando: ' + s.onde) + '</p>' : '') +
       '<div class="row"><button class="btn danger small" data-a="delServ" data-v="' + esc(s.id) + '" aria-label="Apagar ' + esc(s.nome) + '">' + I('trash') + '<span>Apagar</span></button></div></li>'; }).join('') + '</ul>'
@@ -489,6 +490,12 @@ V.perfil = function () {
     '<p class="lg" id="lg-r">Velocidade da voz</p><div class="chips" role="group" aria-labelledby="lg-r">' + [[0.8, 'Devagar'], [1, 'Normal'], [1.2, 'Rápida']].map(function (r) {
       return '<button class="chip" aria-pressed="' + (D.acc.rate === r[0] ? 'true' : 'false') + '" data-a="rate" data-v="' + r[0] + '">' + r[1] + '</button>'; }).join('') + '</div>' +
     '<button class="btn ghost" data-a="testVoice">' + I('ear') + '<span>Testar a voz</span></button></section>';
+  if (!standalone()) {
+    h += '<section class="card"><h2 data-say>Aplicativo</h2>' +
+      (APK ? '<p class="muted" data-say>No Android, baixe o aplicativo da PACA. Ao abrir o arquivo, o celular pede para permitir a instalação.</p><a class="btn teal" href="' + APK + '" download="PACA.apk">' + I('arrow') + '<span>Baixar para Android (APK)</span></a>' : '') +
+      (S.install ? '<button class="btn ghost" data-a="install">' + I('plus') + '<span>Instalar na tela inicial</span></button>' : '') +
+      '<p class="muted" data-say>No iPhone, abra no Safari, toque em Compartilhar e depois em Adicionar à Tela de Início.</p></section>';
+  }
   h += '<section class="card"><h2 data-say>Sobre a PACA</h2><p data-say>PACA é a Plataforma Comunitária Aberta de Autoria: um aplicativo feito com a comunidade, que une comunicação, inclusão, cultura e governança.</p>' +
     '<p data-say><strong>Para quê?</strong> Para dar voz e acesso a quem a tecnologia costuma deixar de fora.</p><p data-say><strong>Para quem?</strong> Para os moradores, inclusive quem não lê, enxerga pouco ou tem pouca internet.</p>' +
     '<p data-say><strong>Com quais consequências?</strong> Coleta mínima de dados, sem biometria, com os dados sob controle da própria comunidade.</p></section>';
@@ -558,6 +565,7 @@ var A = {
   falaOk: function (v) { D.falas.forEach(function (x) { if (x.id === v) x.ok = !x.ok; }); save(); },
   apoiar: function (v) { if (D.apoio[v]) delete D.apoio[v]; else D.apoio[v] = 1; save(); announce(D.apoio[v] ? 'Você apoia esta sugestão.' : 'Apoio retirado.'); },
   logout: function () { D.logged = false; save(); S.back = []; S.scr = 'capa'; S.focus = true; },
+  install: function () { var ev = S.install; if (!ev) return; S.install = null; try { ev.prompt(); } catch (e) {} },
   wipeAsk: function () { go('wipe'); return false; },
   wipeNow: function () { var acc = D.acc; D = blank(); D.acc = acc; save(); S.back = []; S.scr = 'capa'; S.focus = true; flash('Dados apagados.'); }
 };
@@ -654,6 +662,7 @@ document.addEventListener('input', function (ev) {
   if (el && el.id === 'nasc') { var d = el.value.replace(/\D/g, '').slice(0, 8); el.value = d.length > 4 ? d.slice(0, 2) + '/' + d.slice(2, 4) + '/' + d.slice(4) : (d.length > 2 ? d.slice(0, 2) + '/' + d.slice(2) : d); }
 });
 window.addEventListener('pagehide', hush);
+window.addEventListener('beforeinstallprompt', function (ev) { ev.preventDefault(); S.install = ev; if (S.scr === 'perfil') render(); });
 applyAcc();
 S.focus = false;
 render();

@@ -45,8 +45,8 @@ function boardSuggestions(d) {
     var planned = d.planSessions.filter(function (p) { return p.subject === e.subject && (p.state === 'planejada' || p.state === 'concluida') && p.day >= today && p.day <= lastK; }).length;
     var slot = null;
     if (planned < wanted && d.splan.configured) {
-      var o = planSuggestSlots(d, today, d.splan.sessionMin, new Date(), null, 14)[0];
-      if (o && o.day <= lastK) slot = o;
+      var opts = planSuggestSlots(d, today, d.splan.sessionMin, new Date(), null, 14).filter(function (o) { return o.day <= lastK; });
+      slot = opts.filter(function (o) { return !d.planSessions.some(function (p) { return p.day === o.day && p.subject === e.subject && psOccupies(p); }); })[0] || opts[0] || null;
     }
     out.push({ exam: e, left: left, planned: planned, wanted: wanted, slot: slot });
   });

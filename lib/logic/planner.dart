@@ -502,10 +502,14 @@ List<BoardSuggestion> boardSuggestions(AppData d, DateTime now, {int horizon = 1
     final minutes = isTask ? (it.minutes < 10 ? 10 : (it.minutes > 120 ? 120 : it.minutes)) : d.plan.sessionMin;
     SlotOption? slot;
     if (d.plan.configured) {
+      // Espalha pelos dias: prefere um dia que ainda não tem sessão dessa matéria.
       for (final o in suggestSlots(d, today, minutes, now, count: 14)) {
         if (lastK != null && o.day.compareTo(lastK) > 0) break;
-        slot = o;
-        break;
+        slot ??= o;
+        if (!d.planSessions.any((p) => p.day == o.day && p.subjectId == it.subjectId && p.occupies)) {
+          slot = o;
+          break;
+        }
       }
     }
     out.add(BoardSuggestion(item: it, daysLeft: left, planned: planned, wanted: wanted, minutes: minutes, slot: slot));

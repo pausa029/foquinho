@@ -106,7 +106,7 @@ void main() {
     final d = sample();
     d.profile!.nudgeOn = false;
     for (var i = 0; i < 5; i++) {
-      d.tasks.add(StudyTask(id: 't\$i', subjectId: 'mat', topic: 'Lista \$i', deadline: '2026-06-12'));
+      d.tasks.add(StudyTask(id: 't$i', subjectId: 'mat', topic: 'Lista $i', deadline: '2026-06-12'));
     }
     d.exams.add(Exam(id: 'e', subjectId: 'mat', title: 'Frações', date: '2026-06-12'));
     final list = planReminderNotices(d, now);

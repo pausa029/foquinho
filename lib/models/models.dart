@@ -140,7 +140,7 @@ class Profile {
     this.moveRemindOn = true,
     this.moveRemindAt = '17:00',
     this.nudgeOn = true,
-    this.nudgeEveryMin = 120,
+    this.nudgeEveryMin = 180,
   }) : sports = sports ?? <String>[];
 
   Map<String, dynamic> toJson() => {
@@ -162,6 +162,7 @@ class Profile {
         'moveRemindAt': moveRemindAt,
         'nudgeOn': nudgeOn,
         'nudgeEveryMin': nudgeEveryMin,
+        'nudgeV': 2,
       };
 
   static Profile fromJson(Map<String, dynamic> m) {
@@ -189,7 +190,8 @@ class Profile {
       moveRemindOn: readBool(m, 'moveRemindOn', true),
       moveRemindAt: validHm(readStr(m, 'moveRemindAt')) ?? '17:00',
       nudgeOn: readBool(m, 'nudgeOn', true),
-      nudgeEveryMin: readInt(m, 'nudgeEveryMin', 120, min: 30, max: 480),
+      // Versões antigas gravavam 120 como padrão; o padrão agora é 180 (menos avisos).
+      nudgeEveryMin: (m['nudgeV'] == null && m['nudgeEveryMin'] == 120) ? 180 : readInt(m, 'nudgeEveryMin', 180, min: 30, max: 480),
     );
   }
 }

@@ -102,6 +102,42 @@ void main() {
     expect(list.any((n) => n.title == 'Prova hoje' && n.when.day == 13), isTrue);
   });
 
+  test('várias tarefas e provas no mesmo dia viram um aviso só', () {
+    final d = sample();
+    d.profile!.nudgeOn = false;
+    for (var i = 0; i < 5; i++) {
+      d.tasks.add(StudyTask(id: 't\$i', subjectId: 'mat', topic: 'Lista \$i', deadline: '2026-06-12'));
+    }
+    d.exams.add(Exam(id: 'e', subjectId: 'mat', title: 'Frações', date: '2026-06-12'));
+    final list = planReminderNotices(d, now);
+    final dia12 = list.where((n) => n.when.day == 12 && n.when.hour == 8).toList();
+    expect(dia12.length, 1);
+    expect(dia12.single.title, 'Tarefas e provas de hoje');
+    expect(dia12.single.body, contains('e mais 3'));
+    expect(list.where((n) => n.when.day == 11 && n.when.hour == 8).length, 1);
+  });
+
+  test('nenhuma pausa de tela a menos de 45 minutos de outro aviso', () {
+    final d = sample();
+    d.profile!
+      ..nudgeEveryMin = 60
+      ..studyRemindAt = '10:30';
+    final list = planReminderNotices(d, now);
+    final others = list.where((n) => n.title != 'Pausa de tela').toList();
+    for (final n in list.where((n) => n.title == 'Pausa de tela')) {
+      expect(others.every((o) => o.when.difference(n.when).inMinutes.abs() >= 45), isTrue);
+    }
+  });
+
+  test('dia com sessão planejada não repete o lembrete de estudar', () {
+    final d = sample();
+    d.profile!.nudgeOn = false;
+    d.planSessions.add(PlanSession(id: 'a', subjectId: 'mat', topic: null, day: '2026-06-11', start: '15:00', minutes: 25));
+    final list = planReminderNotices(d, now);
+    expect(list.any((n) => n.title == 'Hora de estudar' && n.when.day == 11), isFalse);
+    expect(list.any((n) => n.title == 'Hora de estudar' && n.when.day == 12), isTrue);
+  });
+
   test('alarme do temporizador: sessão simples e com intervalos', () {
     final t0 = now.millisecondsSinceEpoch;
     final simple = ActiveSession(kind: SessionKind.exercicio, title: 'Caminhada', focusMin: 10, breakMin: 5, cycles: 1, phaseEndsAt: t0 + 600000, phaseMs: 600000, startedAt: t0);

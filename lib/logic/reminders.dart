@@ -122,10 +122,17 @@ List<PlannedNotice> planReminderNotices(AppData d, DateTime now, {int days = 7, 
   final studySug = studySuggestions(d, now: now, limit: 1);
   final moveSug = moveSuggestions(d, limit: 1);
 
+  // Dias com sessão planejada já têm o aviso da própria sessão: sem "Hora de estudar" repetido.
+  final plannedDays = <String>{
+    if (!d.plan.paused)
+      for (final ps in d.planSessions)
+        if (ps.state == PlanState.planejada) dayKey(ps.dateTime),
+  };
+
   for (var i = 0; i < days; i++) {
     final day = DateTime(today.year, today.month, today.day + i);
 
-    if (p.studyRemindOn && !(i == 0 && st.studyMin >= p.studyGoalMin)) {
+    if (p.studyRemindOn && !plannedDays.contains(dayKey(day)) && !(i == 0 && st.studyMin >= p.studyGoalMin)) {
       add(
         _at(day, studyAt),
         'Hora de estudar',
@@ -151,30 +158,47 @@ List<PlannedNotice> planReminderNotices(AppData d, DateTime now, {int days = 7, 
     }
   }
 
-  // Tarefas com prazo: na véspera e no dia.
-  var stagger = 0;
+  // Tarefas e provas: no máximo UM aviso de manhã e UM no fim da tarde por dia,
+  // juntando tudo o que vence (várias tarefas não viram várias notificações).
+  final morning = <String, List<List<String>>>{};
+  final evening = <String, List<List<String>>>{};
+  void put(Map<String, List<List<String>>> m, DateTime day, String label, String text) {
+    m.putIfAbsent(dayKey(day), () => <List<String>>[]).add([label, text]);
+  }
+
   for (final t in d.tasks) {
     if (t.status == TaskStatus.done) continue;
     final dl = parseDayKey(t.deadline);
     if (dl == null) continue;
     final name = '${d.subjectName(t.subjectId)} · ${t.topic}';
-    final base = winFrom + 5 + (stagger % 10);
-    stagger++;
-    add(_at(DateTime(dl.year, dl.month, dl.day - 1), base), 'Tarefa para amanhã', '$name (${fmtMin(t.minutes)}).');
-    add(_at(DateTime(dl.year, dl.month, dl.day), base), 'Prazo hoje', '$name. Um bloco de foco resolve?');
+    put(morning, DateTime(dl.year, dl.month, dl.day - 1), 'Tarefa para amanhã', name);
+    put(morning, DateTime(dl.year, dl.month, dl.day), 'Prazo hoje', name);
   }
-
-  // Provas e trabalhos: 3 dias antes, na véspera e no dia.
   for (final e in d.exams) {
     final dt = parseDayKey(e.date);
     if (dt == null) continue;
     final kind = e.kind == ExamKind.trabalho ? 'Trabalho' : 'Prova';
     final name = '${d.subjectName(e.subjectId)}${e.title.isEmpty ? '' : ': ${e.title}'}';
-    final evening = inQuietHours(p, 18 * 60) ? winFrom + 15 : 18 * 60;
-    add(_at(DateTime(dt.year, dt.month, dt.day - 3), evening), '$kind em 3 dias', '$name. Revise 10 minutos hoje.');
-    add(_at(DateTime(dt.year, dt.month, dt.day - 1), evening), '$kind amanhã', '$name. Uma revisão curta e depois descanso.');
-    add(_at(DateTime(dt.year, dt.month, dt.day), winFrom + 2), '$kind hoje', '$name. Vai dar certo!');
+    put(evening, DateTime(dt.year, dt.month, dt.day - 3), '$kind em 3 dias', name);
+    put(evening, DateTime(dt.year, dt.month, dt.day - 1), '$kind amanhã', name);
+    put(morning, DateTime(dt.year, dt.month, dt.day), '$kind hoje', name);
   }
+  void digest(Map<String, List<List<String>>> m, int minutes, String manyTitle) {
+    m.forEach((k, items) {
+      final day = parseDayKey(k);
+      if (day == null) return;
+      if (items.length == 1) {
+        add(_at(day, minutes), items.first[0], '${items.first[1]}.');
+      } else {
+        final shown = items.take(3).map((x) => '${x[0]}: ${x[1]}').join(' · ');
+        final extra = items.length > 3 ? ' · e mais ${items.length - 3}' : '';
+        add(_at(day, minutes), manyTitle, '$shown$extra.');
+      }
+    });
+  }
+
+  digest(morning, winFrom + 5, 'Tarefas e provas de hoje');
+  digest(evening, inQuietHours(p, 18 * 60) ? winFrom + 20 : 18 * 60, 'Provas e trabalhos chegando');
 
   // Planejamento: aviso 10 minutos antes de cada sessão planejada.
   if (!d.plan.paused) {
@@ -196,6 +220,9 @@ List<PlannedNotice> planReminderNotices(AppData d, DateTime now, {int days = 7, 
   }
 
   final horizon = now.add(Duration(days: days));
+  // Nenhuma pausa de tela a menos de 45 minutos de outro aviso: evita vários de uma vez.
+  final others = out.where((n) => n.title != 'Pausa de tela').map((n) => n.when).toList();
+  out.removeWhere((n) => n.title == 'Pausa de tela' && others.any((t) => t.difference(n.when).inMinutes.abs() < 45));
   final list = out.where((n) => n.when.isBefore(horizon)).toList()..sort((a, b) => a.when.compareTo(b.when));
   final capped = list.take(max).toList();
   return [for (var i = 0; i < capped.length; i++) capped[i].withId(1000 + i)];

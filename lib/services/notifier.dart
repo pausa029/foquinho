@@ -116,6 +116,8 @@ class LocalNotifier implements Notifier {
         iOS: const DarwinNotificationDetails(presentAlert: true, presentSound: true),
       );
     }
+    // timeoutAfter: lembrete velho some sozinho da barra depois de 3 horas.
+    // onlyAlertOnce: se o mesmo aviso for atualizado, não toca de novo.
     return const NotificationDetails(
       android: AndroidNotificationDetails(
         'foquinho_lembretes',
@@ -126,6 +128,8 @@ class LocalNotifier implements Notifier {
         category: AndroidNotificationCategory.reminder,
         playSound: true,
         enableVibration: true,
+        onlyAlertOnce: true,
+        timeoutAfter: 3 * 60 * 60 * 1000,
       ),
       iOS: DarwinNotificationDetails(presentAlert: true, presentSound: true),
     );

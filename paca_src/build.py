@@ -10,18 +10,17 @@ body = src.replace('<title>PACA</title>\n', '', 1)
 open('dist/index.html', 'w', encoding='utf-8').write(HEAD % '' + body.replace('{{FOQ}}', 'https://foquinho.com.br/web/') + '</body></html>')
 # pasta do site (PACA + Foquinho dentro)
 site = 'site'
-shutil.rmtree(site, ignore_errors=True); os.makedirs(site + '/foquinho'); os.makedirs(site + '/icons')
-icons = '<link rel="icon" href="icons/icon-192.png"><link rel="apple-touch-icon" href="icons/icon-180.png"><link rel="manifest" href="manifest.webmanifest"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="PACA">'
-open(site + '/index.html', 'w', encoding='utf-8').write(HEAD % icons + body.replace('{{FOQ}}', 'foquinho/') + '</body></html>')
+shutil.rmtree(site, ignore_errors=True); os.makedirs(site)
+icons = '<link rel="icon" href="icon-192.png"><link rel="apple-touch-icon" href="icon-180.png"><link rel="manifest" href="manifest.webmanifest"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="PACA">'
+open(site + '/index.html', 'w', encoding='utf-8').write(HEAD % icons + body.replace('{{FOQ}}', 'foquinho.html') + '</body></html>')
 lg = Image.open('logo.jpg').convert('RGB')
 for n in (180, 192, 512):
     im = Image.new('RGB', (n, n), lg.getpixel((4, 4)))
-    w = int(n * .84); h = int(w * lg.height / lg.width); im.paste(lg.resize((w, h), Image.LANCZOS), ((n - w) // 2, (n - h) // 2)); im.save(site + '/icons/icon-%d.png' % n)
-open(site + '/manifest.webmanifest', 'w').write('{"name":"PACA","short_name":"PACA","start_url":"./","display":"standalone","background_color":"#fbf1de","theme_color":"#17616b","icons":[{"src":"icons/icon-192.png","sizes":"192x192","type":"image/png"},{"src":"icons/icon-512.png","sizes":"512x512","type":"image/png"}]}')
-open(site + '/.nojekyll', 'w').write('')
+    w = int(n * .84); h = int(w * lg.height / lg.width); im.paste(lg.resize((w, h), Image.LANCZOS), ((n - w) // 2, (n - h) // 2)); im.save(site + '/icon-%d.png' % n)
+open(site + '/manifest.webmanifest', 'w').write('{"name":"PACA","short_name":"PACA","start_url":"./","display":"standalone","background_color":"#fbf1de","theme_color":"#17616b","icons":[{"src":"icon-192.png","sizes":"192x192","type":"image/png"},{"src":"icon-512.png","sizes":"512x512","type":"image/png"}]}')
 f = open('/home/claude/pausa/dist/test.html', encoding='utf-8').read()
-back = '<a href="../" style="display:block;padding:10px 16px;background:#17616b;color:#fff;font:700 15px system-ui,sans-serif;text-decoration:none">&larr; Voltar para a PACA</a>'
-f = f.replace('<title>Foquinho</title>', '<title>Foquinho</title><link rel="icon" href="../icons/icon-192.png"><meta name="theme-color" content="#0F6E56">', 1)
+back = '<a href="./" style="display:block;padding:10px 16px;background:#17616b;color:#fff;font:700 15px system-ui,sans-serif;text-decoration:none">&larr; Voltar para a PACA</a>'
+f = f.replace('<title>Foquinho</title>', '<title>Foquinho</title><link rel="icon" href="icon-192.png"><meta name="theme-color" content="#0F6E56">', 1)
 i = f.find('<body'); j = f.find('>', i) + 1
-open(site + '/foquinho/index.html', 'w', encoding='utf-8').write(f[:j] + back + f[j:])
-print('ok', os.path.getsize(site + '/index.html'), os.path.getsize(site + '/foquinho/index.html'))
+open(site + '/foquinho.html', 'w', encoding='utf-8').write(f[:j] + back + f[j:])
+print('ok', os.path.getsize(site + '/index.html'), os.path.getsize(site + '/foquinho.html'))

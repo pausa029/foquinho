@@ -93,7 +93,7 @@ class LocalNotifier implements Notifier {
     }
   }
 
-  NotificationDetails _details(bool alarm, {bool loop = false}) {
+  NotificationDetails _details(bool alarm, {bool loop = false, int ttlMin = 0}) {
     if (alarm) {
       // Canal novo (v2): o Android não deixa mudar som e vibração de um canal já criado.
       return NotificationDetails(
@@ -118,7 +118,7 @@ class LocalNotifier implements Notifier {
     }
     // timeoutAfter: lembrete velho some sozinho da barra depois de 3 horas.
     // onlyAlertOnce: se o mesmo aviso for atualizado, não toca de novo.
-    return const NotificationDetails(
+    return NotificationDetails(
       android: AndroidNotificationDetails(
         'foquinho_lembretes',
         'Lembretes',
@@ -129,9 +129,10 @@ class LocalNotifier implements Notifier {
         playSound: true,
         enableVibration: true,
         onlyAlertOnce: true,
-        timeoutAfter: 3 * 60 * 60 * 1000,
+        // Avisos do rodízio somem quando chega a vez do próximo: fica só um na barra.
+        timeoutAfter: (ttlMin > 0 ? ttlMin : 180) * 60 * 1000,
       ),
-      iOS: DarwinNotificationDetails(presentAlert: true, presentSound: true),
+      iOS: const DarwinNotificationDetails(presentAlert: true, presentSound: true),
     );
   }
 
@@ -141,7 +142,7 @@ class LocalNotifier implements Notifier {
       n.title,
       n.body,
       tz.TZDateTime.from(n.when, tz.UTC),
-      _details(n.alarm, loop: n.loop),
+      _details(n.alarm, loop: n.loop, ttlMin: n.ttlMin),
       androidScheduleMode: mode,
       uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
     );

@@ -79,14 +79,25 @@ void main() {
 
   test('avisos de pausa ficam dentro da janela e longe dos outros lembretes', () {
     final d = sample();
-    final list = planReminderNotices(d, now).where((n) => n.title == 'Pausa de tela').toList();
+    final list = planReminderNotices(d, now).where((n) => n.rotating).toList();
     expect(list, isNotEmpty);
     for (final n in list) {
       final m = n.when.hour * 60 + n.when.minute;
       expect(m, greaterThan(8 * 60));
       expect(m, lessThan(21 * 60));
-      expect((m - 19 * 60).abs() >= 20 && (m - 17 * 60).abs() >= 20, isTrue);
+      expect((m - 19 * 60).abs() >= 30 && (m - 17 * 60).abs() >= 30, isTrue);
+      expect(n.ttlMin, 30);
     }
+    // Um por vez: nunca dois avisos do rodízio a menos de 30 minutos um do outro.
+    for (var i = 1; i < list.length; i++) {
+      expect(list[i].when.difference(list[i - 1].when).inMinutes >= 30, isTrue);
+    }
+    // O rodízio alterna os assuntos e usa a matéria cadastrada.
+    final titles = list.map((n) => n.title).toSet();
+    expect(titles.containsAll(['Beba água', 'Alongue o corpo', 'Que tal estudar um pouco?', 'Movimente-se', 'Pausa de tela']), isTrue);
+    expect(list.any((n) => n.title == 'Que tal estudar um pouco?' && n.body.contains('Matemática')), isTrue);
+    // Só os próximos 3 dias.
+    expect(list.every((n) => n.when.isBefore(DateTime(2026, 6, 13))), isTrue);
   });
 
   test('tarefas com prazo e provas geram avisos', () {
@@ -117,15 +128,15 @@ void main() {
     expect(list.where((n) => n.when.day == 11 && n.when.hour == 8).length, 1);
   });
 
-  test('nenhuma pausa de tela a menos de 45 minutos de outro aviso', () {
+  test('o rodízio cede a vez quando há outro aviso a menos de 30 minutos', () {
     final d = sample();
     d.profile!
       ..nudgeEveryMin = 60
       ..studyRemindAt = '10:30';
     final list = planReminderNotices(d, now);
-    final others = list.where((n) => n.title != 'Pausa de tela').toList();
-    for (final n in list.where((n) => n.title == 'Pausa de tela')) {
-      expect(others.every((o) => o.when.difference(n.when).inMinutes.abs() >= 45), isTrue);
+    final others = list.where((n) => !n.rotating).toList();
+    for (final n in list.where((n) => n.rotating)) {
+      expect(others.every((o) => o.when.difference(n.when).inMinutes.abs() >= 30), isTrue);
     }
   });
 
@@ -136,6 +147,13 @@ void main() {
     final list = planReminderNotices(d, now);
     expect(list.any((n) => n.title == 'Hora de estudar' && n.when.day == 11), isFalse);
     expect(list.any((n) => n.title == 'Hora de estudar' && n.when.day == 12), isTrue);
+  });
+
+  test('prova chegando entra no rodízio do dia', () {
+    final d = sample();
+    d.exams.add(Exam(id: 'e', subjectId: 'mat', title: 'Frações', date: '2026-06-15'));
+    final list = planReminderNotices(d, now).where((n) => n.rotating).toList();
+    expect(list.any((n) => n.title == 'Prova chegando' && n.body.contains('Matemática: Frações')), isTrue);
   });
 
   test('alarme do temporizador: sessão simples e com intervalos', () {

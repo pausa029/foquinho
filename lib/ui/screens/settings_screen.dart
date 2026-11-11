@@ -149,15 +149,15 @@ class SettingsScreen extends StatelessWidget {
                     ),
                     if (p.moveRemindOn) _timeTile(context, 'Todos os dias às', p.moveRemindAt, (v) => saveP((x) => x.moveRemindAt = v)),
                     SwitchListTile(
-                      title: const Text('Avisos para sair da tela'),
-                      subtitle: const Text('Sugestões de pausa ao longo do dia, dentro do horário em que você aceita lembretes.'),
+                      title: const Text('Avisos ao longo do dia'),
+                      subtitle: const Text('Um por vez, alternando: beber água, estudar, alongar, prova ou tarefa chegando, pausa de tela e movimento.'),
                       value: p.nudgeOn,
                       onChanged: (v) => saveP((x) => x.nudgeOn = v),
                     ),
                     if (p.nudgeOn)
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: _stepRow(context, 'A cada', fmtMin(p.nudgeEveryMin), () => saveP((x) => x.nudgeEveryMin = (x.nudgeEveryMin - 30).clamp(30, 480).toInt()), () => saveP((x) => x.nudgeEveryMin = (x.nudgeEveryMin + 30).clamp(30, 480).toInt())),
+                        child: _stepRow(context, 'Um aviso a cada', fmtMin(p.nudgeEveryMin), () => saveP((x) => x.nudgeEveryMin = (x.nudgeEveryMin - 15).clamp(30, 480).toInt()), () => saveP((x) => x.nudgeEveryMin = (x.nudgeEveryMin + 15).clamp(30, 480).toInt())),
                       ),
                     const ListTile(
                       leading: Icon(Icons.event_note_outlined),
@@ -178,7 +178,7 @@ class SettingsScreen extends StatelessWidget {
                   ],
                   const Padding(
                     padding: EdgeInsets.fromLTRB(16, 0, 16, 12),
-                    child: InfoNote('Os avisos são agendados no próprio aparelho, sem internet, para os próximos 7 dias, e renovados cada vez que você abre o app. O Foquinho não sabe se você está no celular: os avisos de pausa chegam no horário, e você decide. O período "não me incomodar" é respeitado.'),
+                    child: InfoNote('Os avisos são agendados no próprio aparelho, sem internet, e renovados cada vez que você abre o app (os do dia a dia valem por 3 dias; provas, tarefas e sessões, por 7). Eles chegam em horário fixo: o Foquinho não mede quanto tempo a tela ficou ligada. Cada aviso some quando chega o próximo, para não acumular. O período "não me incomodar" é respeitado.'),
                   ),
                 ],
               ],

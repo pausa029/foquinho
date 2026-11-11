@@ -32,6 +32,7 @@ class AppState extends ChangeNotifier {
   /// Serviço de notificações do sistema. Nulo nos testes e onde não há suporte.
   final Notifier? notifier;
   Timer? _resyncTimer;
+  String? _lastNoticeSig;
 
   AppState({
     Future<String?> Function()? read,
@@ -113,7 +114,12 @@ class AppState extends ChangeNotifier {
     final n = notifier;
     if (n == null || !n.supported) return;
     try {
-      await n.replaceAll(plannedNotices());
+      final list = plannedNotices();
+      // Nada mudou desde o último agendamento: não refaz (são muitos avisos).
+      final sig = list.map((x) => '${x.id}|${x.when.millisecondsSinceEpoch}|${x.title}|${x.body}').join('~');
+      if (sig == _lastNoticeSig) return;
+      await n.replaceAll(list);
+      _lastNoticeSig = sig;
     } catch (_) {
       // Notificação é um extra: uma falha aqui nunca deve travar o app.
     }

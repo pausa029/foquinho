@@ -19,9 +19,16 @@ class PlannedNotice {
   /// true = o som repete até a pessoa parar (fim da sessão).
   final bool loop;
 
-  const PlannedNotice({required this.id, required this.when, required this.title, required this.body, this.alarm = false, this.loop = false});
+  /// true = aviso do rodízio do dia (água, alongar, estudo, pausa de tela...).
+  final bool rotating;
 
-  PlannedNotice withId(int newId) => PlannedNotice(id: newId, when: when, title: title, body: body, alarm: alarm, loop: loop);
+  /// Minutos até o aviso sumir sozinho da barra (0 = padrão do canal).
+  final int ttlMin;
+
+  const PlannedNotice({required this.id, required this.when, required this.title, required this.body, this.alarm = false, this.loop = false, this.rotating = false, this.ttlMin = 0});
+
+  PlannedNotice withId(int newId) =>
+      PlannedNotice(id: newId, when: when, title: title, body: body, alarm: alarm, loop: loop, rotating: rotating, ttlMin: ttlMin);
 }
 
 /// O minuto do dia [m] cai no período "não me incomodar"?
@@ -102,7 +109,59 @@ List<PlannedNotice> planTimerNotices(ActiveSession? a, int nowMs) {
 
 /// Lembretes dos próximos [days] dias: estudo, movimento, pausas de tela,
 /// tarefas com prazo e provas. Respeita o período "não me incomodar".
-List<PlannedNotice> planReminderNotices(AppData d, DateTime now, {int days = 7, int max = 50}) {
+const List<String> kWaterTexts = [
+  'Um copo de água agora ajuda a manter o foco.',
+  'Hora de se hidratar. Aproveite e levante um pouco.',
+];
+const List<String> kStretchTexts = [
+  'Gire os ombros e estique os braços e o pescoço por um minuto.',
+  'Levante, estique as pernas e respire fundo três vezes.',
+  'Solte os punhos e as mãos. Olhe para longe por alguns segundos.',
+];
+
+/// Rodízio de avisos do dia: água, estudo, alongar, compromisso, pausa de tela, movimento.
+/// Devolve [título, texto] para a posição [g] do rodízio, usando só o que foi cadastrado.
+List<String> rotatingTip(AppData d, DateTime now, int g, List<Suggestion> study, List<Suggestion> move) {
+  const cycle = ['agua', 'estudo', 'alongar', 'compromisso', 'tela', 'movimento'];
+  final round = g ~/ cycle.length;
+  var type = cycle[g % cycle.length];
+  if (type == 'compromisso') {
+    final items = <List<String>>[];
+    final exams = d.exams.where((e) {
+      final n = e.daysUntil(now);
+      return n != null && n >= 0 && n <= 14;
+    }).toList()
+      ..sort((a, b) => a.daysUntil(now)!.compareTo(b.daysUntil(now)!));
+    for (final e in exams) {
+      final kind = e.kind == ExamKind.trabalho ? 'Trabalho' : 'Prova';
+      final name = '${d.subjectName(e.subjectId)}${e.title.isEmpty ? '' : ': ${e.title}'}';
+      items.add(['$kind chegando', '$name, ${relativeDays(e.daysUntil(now)!)}. Dez minutos de revisão hoje ajudam.']);
+    }
+    for (final t in d.tasks.where((t) => t.status != TaskStatus.done)) {
+      final dl = parseDayKey(t.deadline);
+      items.add(['Tarefa pendente', '${d.subjectName(t.subjectId)} · ${t.topic}${dl == null ? '' : ', prazo ${fmtDay(t.deadline!)}'}.']);
+    }
+    if (items.isEmpty) {
+      type = 'tela';
+    } else {
+      return items[round % items.length];
+    }
+  }
+  switch (type) {
+    case 'agua':
+      return ['Beba água', kWaterTexts[round % kWaterTexts.length]];
+    case 'alongar':
+      return ['Alongue o corpo', kStretchTexts[round % kStretchTexts.length]];
+    case 'estudo':
+      return ['Que tal estudar um pouco?', study.isEmpty ? 'Dez minutos de estudo agora já contam.' : '${study[round % study.length].title}.'];
+    case 'movimento':
+      return ['Movimente-se', move.isEmpty ? 'Uma pausa ativa de 5 minutos faz bem.' : '${move[round % move.length].title} (${move[round % move.length].minutes} min).'];
+    default:
+      return ['Pausa de tela', kNudgeTexts[round % kNudgeTexts.length]];
+  }
+}
+
+List<PlannedNotice> planReminderNotices(AppData d, DateTime now, {int days = 7, int nudgeDays = 3, int max = 150}) {
   final p = d.profile;
   if (p == null || !p.remindersOn) return const [];
   final out = <PlannedNotice>[];
@@ -146,14 +205,23 @@ List<PlannedNotice> planReminderNotices(AppData d, DateTime now, {int days = 7, 
         moveSug.isNotEmpty ? '${moveSug.first.title} (${moveSug.first.minutes} min).' : 'Uma pausa ativa de 10 minutos já ajuda.',
       );
     }
-    if (p.nudgeOn && winFrom < winTo && p.nudgeEveryMin >= 30) {
-      var k = 0;
+  }
+
+  // Rodízio do dia: um aviso a cada N minutos, alternando água, estudo, alongar,
+  // compromisso, pausa de tela e movimento. Agendado para poucos dias (é renovado ao abrir o app).
+  final rot = <PlannedNotice>[];
+  if (p.nudgeOn && winFrom < winTo && p.nudgeEveryMin >= 30) {
+    final studyPool = studySuggestions(d, now: now, limit: 6);
+    final movePool = moveSuggestions(d, limit: 6);
+    var g = 0;
+    for (var i = 0; i < nudgeDays && i < days; i++) {
+      final day = DateTime(today.year, today.month, today.day + i);
       for (var m = winFrom + p.nudgeEveryMin; m < winTo; m += p.nudgeEveryMin) {
-        k++;
-        final nearStudy = p.studyRemindOn && (m - studyAt).abs() < 20;
-        final nearMove = p.moveRemindOn && (m - moveAt).abs() < 20;
-        if (nearStudy || nearMove) continue;
-        add(_at(day, m), 'Pausa de tela', kNudgeTexts[(i + k) % kNudgeTexts.length]);
+        final when = _at(day, m);
+        if (!when.isAfter(now) || inQuietHours(p, m)) continue;
+        final tip = rotatingTip(d, now, g, studyPool, movePool);
+        g++;
+        rot.add(PlannedNotice(id: 0, when: when, title: tip[0], body: tip[1], rotating: true, ttlMin: p.nudgeEveryMin));
       }
     }
   }
@@ -220,9 +288,9 @@ List<PlannedNotice> planReminderNotices(AppData d, DateTime now, {int days = 7, 
   }
 
   final horizon = now.add(Duration(days: days));
-  // Nenhuma pausa de tela a menos de 45 minutos de outro aviso: evita vários de uma vez.
-  final others = out.where((n) => n.title != 'Pausa de tela').map((n) => n.when).toList();
-  out.removeWhere((n) => n.title == 'Pausa de tela' && others.any((t) => t.difference(n.when).inMinutes.abs() < 45));
+  // Só um aviso por vez: o rodízio cede a vez quando há outro aviso a menos de 30 minutos.
+  final fixed = out.map((n) => n.when).toList();
+  out.addAll(rot.where((n) => !fixed.any((t) => t.difference(n.when).inMinutes.abs() < 30)));
   final list = out.where((n) => n.when.isBefore(horizon)).toList()..sort((a, b) => a.when.compareTo(b.when));
   final capped = list.take(max).toList();
   return [for (var i = 0; i < capped.length; i++) capped[i].withId(1000 + i)];

@@ -100,6 +100,23 @@ void main() {
     expect(list.every((n) => n.when.isBefore(DateTime(2026, 6, 13))), isTrue);
   });
 
+  test('compromisso do dia entra no rodízio perguntando se já fez', () {
+    final d = sample();
+    final hoje = dayKey(now);
+    d.tasks.add(StudyTask(id: 't', subjectId: 'mat', topic: 'Lista 3', deadline: hoje));
+    d.exams.add(Exam(id: 'e', subjectId: 'mat', title: 'Maquete', date: hoje, kind: ExamKind.trabalho));
+    var rot = planReminderNotices(d, now).where((n) => n.rotating && n.when.day == now.day).toList();
+    expect(rot.any((n) => n.title == 'Atividade para hoje: já fez?' && n.body.contains('Lista 3')), isTrue);
+    expect(rot.any((n) => n.title == 'Trabalho para hoje: já fez?' && n.body.contains('Maquete')), isTrue);
+    // Continua alternando com os outros avisos e nunca dois no mesmo horário.
+    expect(rot.any((n) => n.title == 'Beba água' || n.title == 'Alongue o corpo'), isTrue);
+    expect(rot.map((n) => n.when).toSet().length, rot.length);
+    // Tarefa concluída sai dos avisos.
+    d.tasks.first.status = TaskStatus.done;
+    rot = planReminderNotices(d, now).where((n) => n.rotating).toList();
+    expect(rot.any((n) => n.title == 'Atividade para hoje: já fez?'), isFalse);
+  });
+
   test('tarefas com prazo e provas geram avisos', () {
     final d = sample();
     d.profile!.nudgeOn = false;

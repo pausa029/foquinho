@@ -161,6 +161,35 @@ List<String> rotatingTip(AppData d, DateTime now, int g, List<Suggestion> study,
   }
 }
 
+/// Compromissos do dia [day] que ainda pedem atenção: tarefas com prazo no dia
+/// (ou atrasadas) que não foram concluídas, e provas ou trabalhos marcados para o dia.
+/// Devolve pares [título, texto] no tom "já fez?".
+List<List<String>> dueItems(AppData d, DateTime day, {bool includeExams = true}) {
+  final key = dayKey(day);
+  final out = <List<String>>[];
+  for (final t in d.tasks) {
+    if (t.status == TaskStatus.done || t.deadline == null || parseDayKey(t.deadline) == null) continue;
+    final name = '${d.subjectName(t.subjectId)} · ${t.topic}';
+    if (t.deadline == key) {
+      out.add(['Atividade para hoje: já fez?', '$name. Se já fez, marque como concluída no Foquinho.']);
+    } else if (t.deadline!.compareTo(key) < 0) {
+      out.add(['Atividade atrasada', '$name (prazo ${fmtDay(t.deadline!)}). Dá para resolver hoje? Se já fez, marque como concluída.']);
+    }
+  }
+  if (includeExams) {
+    for (final e in d.exams) {
+      if (e.date != key) continue;
+      final name = '${d.subjectName(e.subjectId)}${e.title.isEmpty ? '' : ': ${e.title}'}';
+      if (e.kind == ExamKind.trabalho) {
+        out.add(['Trabalho para hoje: já fez?', '$name. Confira se está pronto para entregar.']);
+      } else {
+        out.add(['Prova hoje', '$name. Uma revisão rápida de 10 minutos ainda ajuda.']);
+      }
+    }
+  }
+  return out;
+}
+
 List<PlannedNotice> planReminderNotices(AppData d, DateTime now, {int days = 7, int nudgeDays = 3, int max = 150}) {
   final p = d.profile;
   if (p == null || !p.remindersOn) return const [];
@@ -216,11 +245,20 @@ List<PlannedNotice> planReminderNotices(AppData d, DateTime now, {int days = 7, 
     var g = 0;
     for (var i = 0; i < nudgeDays && i < days; i++) {
       final day = DateTime(today.year, today.month, today.day + i);
+      var slot = 0;
       for (var m = winFrom + p.nudgeEveryMin; m < winTo; m += p.nudgeEveryMin) {
         final when = _at(day, m);
         if (!when.isAfter(now) || inQuietHours(p, m)) continue;
-        final tip = rotatingTip(d, now, g, studyPool, movePool);
-        g++;
+        // Dia com compromisso: um aviso sim, um não, pergunta se já foi feito.
+        final due = dueItems(d, day, includeExams: slot ~/ 2 < 6);
+        final List<String> tip;
+        if (due.isNotEmpty && slot.isEven) {
+          tip = due[(slot ~/ 2) % due.length];
+        } else {
+          tip = rotatingTip(d, now, g, studyPool, movePool);
+          g++;
+        }
+        slot++;
         rot.add(PlannedNotice(id: 0, when: when, title: tip[0], body: tip[1], rotating: true, ttlMin: p.nudgeEveryMin));
       }
     }

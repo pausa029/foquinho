@@ -1,7 +1,7 @@
 name: foquinho
 description: "Foquinho — Menos tela. Mais estudo e movimento. App escolar para trocar tempo de celular por estudo e atividade física."
 publish_to: "none"
-version: 1.4.0+7
+version: 1.5.1+9
 
 environment:
   sdk: ">=3.4.0 <4.0.0"

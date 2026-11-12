@@ -33,11 +33,23 @@ android {
         versionName = flutter.versionName
     }
 
+    // Chave fixa SÓ para os APKs de teste baixados do site. Com ela, cada versão nova
+    // instala por cima da anterior. Para a Play Store será usada outra chave, privada.
+    signingConfigs {
+        teste {
+            storeFile file("foquinho-teste.jks")
+            storePassword "foquinho-teste"
+            keyAlias "foquinho"
+            keyPassword "foquinho-teste"
+        }
+    }
+
     buildTypes {
+        debug {
+            signingConfig = signingConfigs.teste
+        }
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.debug
+            signingConfig = signingConfigs.teste
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }

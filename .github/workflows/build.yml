@@ -77,10 +77,10 @@ jobs:
           set -o pipefail
           flutter test 2>&1 | tee test.txt || { bash tool/annotate.sh test.txt '\[E\]|Expected:|Actual:|Which:|Error:|error:|Some tests failed|_test\.dart [0-9]+:' 'Testes que falharam'; exit 1; }
 
-      - name: Compilar APK de depuração
+      - name: Compilar APK
         run: |
           set -o pipefail
-          flutter build apk --debug 2>&1 | tee build.txt || { bash tool/annotate.sh build.txt 'Error:|error:|FAILURE|What went wrong|lib/.*\.dart:[0-9]+' 'Erros da compilação'; exit 1; }
+          flutter build apk --release 2>&1 | tee build.txt || { bash tool/annotate.sh build.txt 'Error:|error:|FAILURE|What went wrong|lib/.*\.dart:[0-9]+' 'Erros da compilação'; exit 1; }
 
       - name: Compilar AAB (assinado com chave de teste)
         continue-on-error: true
@@ -100,8 +100,8 @@ jobs:
       - name: Guardar o APK para download
         uses: actions/upload-artifact@v4
         with:
-          name: foquinho-apk-debug
-          path: build/app/outputs/flutter-apk/app-debug.apk
+          name: foquinho-apk
+          path: build/app/outputs/flutter-apk/app-release.apk
           if-no-files-found: error
 
       - name: Publicar o APK em Releases (link público, sem precisar de login)
@@ -109,11 +109,11 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          cp build/app/outputs/flutter-apk/app-debug.apk Foquinho.apk
+          cp build/app/outputs/flutter-apk/app-release.apk Foquinho.apk
           gh release delete latest --yes --cleanup-tag 2>/dev/null || true
           gh release create latest Foquinho.apk \
-            --title "Foquinho — APK de teste (última versão)" \
-            --notes "APK de depuração gerado automaticamente pelo GitHub Actions (commit ${{ github.sha }}). Para instalar: baixe no Android, abra o arquivo e permita a instalação."
+            --title "Foquinho — APK (última versão)" \
+            --notes "APK gerado automaticamente pelo GitHub Actions (commit ${{ github.sha }}). Para instalar: baixe no Android, abra o arquivo e permita a instalação."
 
       - name: Guardar o AAB para download
         uses: actions/upload-artifact@v4

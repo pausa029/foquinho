@@ -12,7 +12,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../logic/planner.dart';
 import '../logic/reminders.dart';
 import '../models/models.dart';
-import '../services/cloud.dart';
 import '../services/notifier.dart';
 
 const String kStorageKey = 'foquinho.v1';
@@ -35,28 +34,12 @@ class AppState extends ChangeNotifier {
   Timer? _resyncTimer;
   String? _lastNoticeSig;
 
-  /// Conta na nuvem. Nulo nos testes e onde a conta não está disponível.
-  final CloudApi? cloud;
-  final CloudStore? _cloudStore;
-  CloudSession? session;
-  bool cloudBusy = false;
-  String? cloudNote; // última situação da sincronização, em texto simples
-  int? lastSyncMs;
-  String? _remoteStamp; // carimbo da última versão da nuvem que este aparelho conhece
-  bool _dirty = false; // há mudança local ainda não enviada
-  int _localChangedMs = 0;
-  bool _applyingRemote = false;
-  Timer? _pushTimer;
-
   AppState({
     Future<String?> Function()? read,
     Future<bool> Function(String)? write,
     Future<bool> Function()? clear,
     this.notifier,
-    this.cloud,
-    CloudStore? cloudStore,
-  })  : _cloudStore = cloudStore ?? (cloud == null ? null : PrefsCloudStore()),
-        _read = read ?? _prefsRead,
+  })  : _read = read ?? _prefsRead,
         _write = write ?? _prefsWrite,
         _clear = clear ?? _prefsClear;
 
@@ -100,7 +83,6 @@ class AppState extends ChangeNotifier {
     syncSession();
     notifyListeners();
     _scheduleResync();
-    await _restoreCloud();
   }
 
   // ---------- notificações do sistema ----------
@@ -173,7 +155,6 @@ class AppState extends ChangeNotifier {
   @override
   void dispose() {
     _resyncTimer?.cancel();
-    _pushTimer?.cancel();
     super.dispose();
   }
 
@@ -192,7 +173,6 @@ class AppState extends ChangeNotifier {
         lastError = null;
         notifyListeners();
       }
-      if (ok) _markChanged();
     } catch (e) {
       status = LoadStatus.erroEscrita;
       lastError = 'A última alteração não pôde ser gravada.';
@@ -610,237 +590,8 @@ class AppState extends ChangeNotifier {
     await save();
   }
 
-  // ---------- conta e cópia na nuvem ----------
-
-  bool get cloudAvailable => cloud != null;
-  bool get signedIn => session != null;
-
-  Future<void> _storeCloud() async {
-    final st = _cloudStore;
-    if (st == null) return;
-    final s = session;
-    if (s == null) {
-      await st.clear();
-      return;
-    }
-    await st.write({'session': s.toJson(), 'remoteStamp': _remoteStamp, 'dirty': _dirty, 'localChangedMs': _localChangedMs, 'lastSyncMs': lastSyncMs});
-  }
-
-  Future<void> _restoreCloud() async {
-    final st = _cloudStore;
-    if (cloud == null || st == null) return;
-    try {
-      final m = await st.read();
-      final raw = m == null ? null : m['session'];
-      if (m == null || raw is! Map) return;
-      final s = CloudSession.fromJson(Map<String, dynamic>.from(raw));
-      if (s == null) return;
-      session = s;
-      final stamp = m['remoteStamp'];
-      _remoteStamp = stamp is String ? stamp : null;
-      _dirty = m['dirty'] == true;
-      final lc = m['localChangedMs'];
-      _localChangedMs = lc is int ? lc : 0;
-      final ls = m['lastSyncMs'];
-      lastSyncMs = ls is int ? ls : null;
-      notifyListeners();
-      await cloudSync();
-    } catch (_) {
-      // conta indisponível agora: o app segue com os dados do aparelho
-    }
-  }
-
-  void _markChanged() {
-    if (session == null || _applyingRemote) return;
-    _dirty = true;
-    _localChangedMs = DateTime.now().millisecondsSinceEpoch;
-    _pushTimer?.cancel();
-    _pushTimer = Timer(const Duration(seconds: 4), () {
-      cloudSync();
-    });
-  }
-
-  Future<CloudSession?> _freshSession() async {
-    final c = cloud;
-    var s = session;
-    if (c == null || s == null) return null;
-    if (s.expiresSoon(DateTime.now().millisecondsSinceEpoch)) {
-      s = await c.refresh(s);
-      session = s;
-      await _storeCloud();
-    }
-    return s;
-  }
-
-  Future<void> _adoptRemote(CloudRow row) async {
-    _applyingRemote = true;
-    try {
-      data = AppData.fromJson(row.data);
-      _finished = false;
-      syncSession();
-      await save();
-    } finally {
-      _applyingRemote = false;
-    }
-    _remoteStamp = row.updatedAt;
-    _dirty = false;
-  }
-
-  Future<void> _pushLocal(CloudSession s) async {
-    _remoteStamp = await cloud!.push(s, data.toJson());
-    _dirty = false;
-  }
-
-  /// Compara aparelho e nuvem e deixa os dois iguais. Nunca lança exceção.
-  /// Regra: se só um lado mudou, ele vale; se os dois mudaram, vale o mais recente.
-  Future<bool> cloudSync() async {
-    final c = cloud;
-    if (c == null || session == null || cloudBusy) return false;
-    _pushTimer?.cancel();
-    cloudBusy = true;
-    notifyListeners();
-    var ok = false;
-    try {
-      final s = await _freshSession();
-      if (s == null) return false;
-      final row = await c.pull(s);
-      if (row == null) {
-        await _pushLocal(s);
-      } else if (row.updatedAt == _remoteStamp) {
-        if (_dirty) await _pushLocal(s);
-      } else if (!_dirty) {
-        await _adoptRemote(row);
-      } else {
-        final remoteMs = DateTime.tryParse(row.updatedAt)?.millisecondsSinceEpoch ?? 0;
-        if (remoteMs > _localChangedMs) {
-          await _adoptRemote(row);
-        } else {
-          await _pushLocal(s);
-        }
-      }
-      lastSyncMs = DateTime.now().millisecondsSinceEpoch;
-      cloudNote = null;
-      ok = true;
-    } on CloudError catch (e) {
-      cloudNote = e.message;
-      if (e.code == 'unauthorized' || e.code == 'session_not_found' || e.code == 'refresh_token_not_found' || e.code == 'refresh_token_already_used') {
-        session = null; // os dados continuam no aparelho; só é preciso entrar de novo
-        cloudNote = 'Sua sessão venceu. Entre de novo para voltar a sincronizar.';
-      }
-    } catch (_) {
-      cloudNote = 'Não foi possível sincronizar agora.';
-    } finally {
-      cloudBusy = false;
-      await _storeCloud();
-      notifyListeners();
-    }
-    return ok;
-  }
-
-  /// Depois de entrar: decide o que fazer com os dados.
-  /// Devolve true quando há dados nos dois lados e a pessoa precisa escolher.
-  Future<bool> _afterSignIn(CloudSession s) async {
-    session = s;
-    _remoteStamp = null;
-    _dirty = false;
-    _localChangedMs = DateTime.now().millisecondsSinceEpoch;
-    cloudNote = null;
-    final row = await cloud!.pull(s);
-    var choose = false;
-    if (row == null) {
-      if (data.onboarded) await _pushLocal(s);
-    } else if (!data.onboarded) {
-      await _adoptRemote(row);
-    } else {
-      _remoteStamp = row.updatedAt;
-      choose = true;
-    }
-    lastSyncMs = DateTime.now().millisecondsSinceEpoch;
-    await _storeCloud();
-    notifyListeners();
-    return choose;
-  }
-
-  /// Cria a conta. Devolve true se já entrou; false se falta confirmar o e-mail.
-  Future<bool> cloudSignUp(String email, String password) async {
-    final s = await cloud!.signUp(email.trim(), password);
-    if (s == null) return false;
-    await _afterSignIn(s);
-    return true;
-  }
-
-  /// Entra na conta. Devolve true quando a pessoa precisa escolher quais dados manter.
-  Future<bool> cloudSignIn(String email, String password) async {
-    return _afterSignIn(await cloud!.signIn(email.trim(), password));
-  }
-
-  Future<bool> cloudVerifyCode(String email, String code) async {
-    return _afterSignIn(await cloud!.verifyCode(email.trim(), code.trim()));
-  }
-
-  Future<void> cloudResend(String email) => cloud!.resendConfirmation(email.trim());
-
-  Future<void> cloudResetPassword(String email) => cloud!.sendPasswordReset(email.trim());
-
-  /// Resolve a escolha feita ao entrar: ficar com os dados da conta ou com os deste aparelho.
-  Future<void> cloudChoose({required bool useCloud}) async {
-    final c = cloud;
-    final s = session;
-    if (c == null || s == null) return;
-    if (useCloud) {
-      final row = await c.pull(s);
-      if (row != null) await _adoptRemote(row);
-    } else {
-      await _pushLocal(s);
-    }
-    lastSyncMs = DateTime.now().millisecondsSinceEpoch;
-    await _storeCloud();
-    notifyListeners();
-  }
-
-  /// Sai da conta neste aparelho. Os dados continuam aqui e na nuvem.
-  Future<void> cloudSignOut() async {
-    final c = cloud;
-    final s = session;
-    _pushTimer?.cancel();
-    if (c != null && s != null) {
-      if (_dirty) await cloudSync();
-      await c.signOut(s);
-    }
-    session = null;
-    _remoteStamp = null;
-    _dirty = false;
-    lastSyncMs = null;
-    cloudNote = null;
-    await _storeCloud();
-    notifyListeners();
-  }
-
-  /// Apaga a conta e a cópia da nuvem. Os dados deste aparelho continuam.
-  Future<void> cloudDeleteAccount() async {
-    final c = cloud;
-    if (c == null || session == null) return;
-    _pushTimer?.cancel();
-    final s = await _freshSession();
-    if (s == null) return;
-    await c.deleteAccount(s);
-    session = null;
-    _remoteStamp = null;
-    _dirty = false;
-    lastSyncMs = null;
-    cloudNote = null;
-    await _storeCloud();
-    notifyListeners();
-  }
-
-  /// Apaga perfil e todos os dados locais. Se houver conta, sai dela antes,
-  /// para a cópia da nuvem não ser apagada junto.
+  /// Apaga perfil e todos os dados locais.
   Future<void> deleteEverything() async {
-    if (session != null) {
-      _pushTimer?.cancel();
-      _dirty = false;
-      await cloudSignOut();
-    }
     data = AppData();
     _finished = false;
     try {

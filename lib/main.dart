@@ -3,8 +3,6 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'data/app_state.dart';
 import 'models/models.dart';
-import 'services/cloud.dart';
-import 'services/cloud_config.dart';
 import 'services/notifier.dart';
 import 'ui/screens/home_screen.dart';
 import 'ui/screens/history_screen.dart';
@@ -16,7 +14,7 @@ import 'ui/widgets/common.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  final state = AppState(notifier: LocalNotifier(), cloud: SupabaseCloud(url: kSupabaseUrl, key: kSupabaseKey));
+  final state = AppState(notifier: LocalNotifier());
   state.load();
   runApp(FoquinhoApp(state: state));
 }

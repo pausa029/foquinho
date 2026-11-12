@@ -589,6 +589,7 @@ class AppData {
   ActiveSession? active;
   ThemeChoice theme;
   bool soundOn;
+  bool tourDone; // já viu o tutorial da Foquinha
   PlanSettings plan;
   List<PlanSession> planSessions;
 
@@ -604,6 +605,7 @@ class AppData {
     this.active,
     this.theme = ThemeChoice.sistema,
     this.soundOn = true,
+    this.tourDone = false,
     PlanSettings? plan,
     List<PlanSession>? planSessions,
   })  : subjects = subjects ?? <Subject>[],
@@ -628,6 +630,7 @@ class AppData {
         'active': active?.toJson(),
         'theme': theme.name,
         'soundOn': soundOn,
+        'tourDone': tourDone,
         'plan': plan.toJson(),
         'planSessions': planSessions.map((e) => e.toJson()).toList(),
       };
@@ -668,6 +671,7 @@ class AppData {
       active: activeRaw is Map ? ActiveSession.fromJson(Map<String, dynamic>.from(activeRaw)) : null,
       theme: theme,
       soundOn: readBool(m, 'soundOn', true),
+      tourDone: readBool(m, 'tourDone', false),
       plan: planRaw is Map ? PlanSettings.fromJson(Map<String, dynamic>.from(planRaw)) : null,
       planSessions: planSessions,
     );

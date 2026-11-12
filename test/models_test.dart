@@ -91,4 +91,12 @@ void main() {
     expect(Exam(id: '1', subjectId: 's', title: '', date: '2026-05-09').daysUntil(now), -1);
     expect(Exam(id: '1', subjectId: 's', title: '').daysUntil(now), isNull);
   });
+
+  test('tutorial da Foquinha: começa não visto e é lembrado depois de visto', () {
+    final d = AppData();
+    expect(d.tourDone, isFalse);
+    d.tourDone = true;
+    expect(AppData.fromJson(d.toJson()).tourDone, isTrue);
+    expect(AppData.fromJson(<String, dynamic>{}).tourDone, isFalse);
+  });
 }

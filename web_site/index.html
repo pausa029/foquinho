@@ -97,9 +97,31 @@ header.top { position: sticky; top: 0; z-index: 5; background: color-mix(in srgb
 .faq details { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 14px 18px; margin-top: 10px; }
 .faq summary { cursor: pointer; font-weight: 600; }
 .faq p { margin-top: 8px; color: var(--muted); }
-footer { padding-block: 32px 48px; color: var(--muted); font-size: .9rem; }
+footer { padding-block: 32px 120px; color: var(--muted); font-size: .9rem; }
 footer .wrap { display: flex; flex-wrap: wrap; gap: 8px 20px; align-items: center; }
 footer img { width: 28px; height: 28px; border-radius: 8px; }
+
+/* Foquinha (mascote) */
+.mascot { display: grid; grid-template-columns: minmax(0, 220px) minmax(0, 1fr); gap: 28px; align-items: center; }
+.mascot img { width: 100%; max-width: 220px; height: auto; }
+.mascot ul { margin: 12px 0 0; padding-left: 1.2em; }
+.mascot li { margin: 6px 0; }
+@media (max-width: 640px) { .mascot { grid-template-columns: 1fr; text-align: left; } .mascot img { max-width: 160px; } }
+.fq-btn { position: fixed; right: max(16px, env(safe-area-inset-right)); bottom: max(16px, env(safe-area-inset-bottom)); z-index: 50; width: 76px; height: 76px; border-radius: 50%; border: 3px solid var(--brand); background: var(--surface); box-shadow: 0 6px 20px rgba(0,0,0,.18); padding: 2px; cursor: pointer; }
+.fq-btn img { width: 100%; height: 100%; display: block; }
+.fq-panel { position: fixed; right: max(16px, env(safe-area-inset-right)); bottom: calc(max(16px, env(safe-area-inset-bottom)) + 88px); z-index: 50; width: min(360px, calc(100vw - 32px)); max-height: calc(100vh - 140px); overflow: auto; background: var(--surface); color: var(--fg); border: 2px solid var(--brand); border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,.22); padding: 16px; }
+.fq-head { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.fq-head img { width: 56px; height: 56px; flex: none; }
+.fq-head b { font-family: var(--font-display); font-size: 1.05rem; }
+.fq-close { margin-left: auto; min-width: 44px; min-height: 44px; border: 0; background: none; color: var(--muted); font-size: 1.6rem; line-height: 1; cursor: pointer; border-radius: 10px; }
+.fq-say { margin: 0 0 12px; }
+.fq-say ol { margin: 8px 0 0; padding-left: 1.2em; }
+.fq-opts { display: flex; flex-direction: column; gap: 8px; }
+.fq-opts button, .fq-opts a { display: block; width: 100%; min-height: 44px; padding: 10px 14px; border-radius: 14px; border: 2px solid var(--line); background: var(--surface-2); color: var(--fg); font: inherit; font-weight: 600; text-align: left; text-decoration: none; cursor: pointer; }
+.fq-opts .go { background: var(--brand); border-color: var(--brand); color: var(--brand-fg); text-align: center; }
+.fq-hello { position: fixed; right: calc(max(16px, env(safe-area-inset-right)) + 86px); bottom: calc(max(16px, env(safe-area-inset-bottom)) + 18px); z-index: 50; max-width: min(240px, calc(100vw - 120px)); background: var(--surface); color: var(--fg); border: 2px solid var(--brand); border-radius: 16px 16px 4px 16px; padding: 10px 12px; font-weight: 600; box-shadow: 0 6px 18px rgba(0,0,0,.15); cursor: pointer; }
+.fq-spot { outline: 4px solid var(--accent); outline-offset: 6px; border-radius: 18px; transition: outline-color .3s; }
+@media print { .fq-btn, .fq-panel, .fq-hello { display: none; } }
 :focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
 @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
 </style>
@@ -112,6 +134,7 @@ footer img { width: 28px; height: 28px; border-radius: 8px; }
     <nav aria-label="Seções">
       <a href="#como" class="hide-sm">Como funciona</a>
       <a href="#recursos" class="hide-sm">Recursos</a>
+      <a href="#foquinha" class="hide-sm">Foquinha</a>
       <a href="#instalar">Instalar</a>
     </nav>
   </div>
@@ -173,7 +196,23 @@ footer img { width: 28px; height: 28px; border-radius: 8px; }
     </div>
   </section>
 
-  <section class="band alt" id="instalar">
+  <section class="band alt" id="foquinha">
+    <div class="wrap mascot">
+      <img src="foquinha/acenando.png" alt="A Foquinha, uma foca branca com uma presilha laranja, acenando" width="240" height="240">
+      <div>
+        <p class="eyebrow">Conheça a Foquinha</p>
+        <h2>Ela te mostra o caminho</h2>
+        <p>A Foquinha é a mascote do Foquinho. Ela aparece para você não se sentir perdido:</p>
+        <ul>
+          <li><strong>No aplicativo:</strong> na primeira vez, ela passa por cada parte (início, temporizador, plano, movimento, histórico e ajustes) e explica para que serve. Quer ver de novo? Em Ajustes tem <strong>Rever o tutorial da Foquinha</strong>.</li>
+          <li><strong>Aqui no site:</strong> toque nela no canto da tela. Ela tira as dúvidas mais comuns, ajuda a instalar e faz um passeio pelo site com você.</li>
+        </ul>
+        <p style="margin-top:14px"><button class="btn primary" type="button" id="fq-open-2">Falar com a Foquinha</button></p>
+      </div>
+    </div>
+  </section>
+
+  <section class="band" id="instalar"
     <div class="wrap">
       <p class="eyebrow">Instalar</p>
       <h2>No iPhone ou no Android, em um minuto</h2>
@@ -210,6 +249,7 @@ footer img { width: 28px; height: 28px; border-radius: 8px; }
       <details><summary>O Foquinho mede meu tempo de celular sozinho?</summary><p>Não. Nenhum site consegue isso, e no app isso exigiria permissões especiais do Android e da Apple. Você copia o número que o próprio celular mostra em Bem-estar digital (Android) ou Tempo de Uso (iPhone), e ele fica registrado como manual.</p></details>
       <details><summary>Ele bloqueia outros aplicativos?</summary><p>Não, e nunca finge que bloqueia. Para limites de verdade, use os controles do próprio celular. O Foquinho mostra onde encontrá-los.</p></details>
       <details><summary>Precisa de conta ou e-mail?</summary><p>Não. Você escolhe um apelido e pronto. Os dados ficam só no seu aparelho; se trocar de celular, use a exportação para levar uma cópia.</p></details>
+      <details><summary>Baixei o APK e aparece "app não instalado". E agora?</summary><p>Se você já tinha uma versão antiga do Foquinho, desinstale-a uma vez e instale a nova. Isso só é preciso uma vez: as próximas versões instalam por cima, sem perder nada.</p></details>
       <details><summary>É pago?</summary><p>Não. É um projeto escolar, gratuito e sem anúncios.</p></details>
       <details><summary>Por que o APK não está na Play Store?</summary><p>Por enquanto a distribuição é direta. O Android avisa sobre "fontes desconhecidas" porque o app não veio da loja; é esperado.</p></details>
     </div>
@@ -241,6 +281,106 @@ footer img { width: 28px; height: 28px; border-radius: 8px; }
     web.classList.remove('primary');
     hint.innerHTML = 'No seu Android: baixe o <strong>Foquinho.apk</strong>, abra o arquivo e permita a instalação. Ou use a versão web no Chrome.';
   }
+})();
+</script>
+
+<button class="fq-btn" type="button" id="fq-btn" aria-label="Abrir a ajuda da Foquinha" aria-expanded="false" aria-controls="fq-panel"><img src="foquinha/feliz.png" alt=""></button>
+<div class="fq-hello" id="fq-hello" hidden>Oi! Quer ajuda para instalar?</div>
+<div class="fq-panel" id="fq-panel" role="dialog" aria-label="Ajuda da Foquinha" hidden>
+  <div class="fq-head"><img id="fq-img" src="foquinha/acenando.png" alt=""><b>Foquinha</b><button class="fq-close" type="button" id="fq-close" aria-label="Fechar">×</button></div>
+  <div class="fq-say" id="fq-say" aria-live="polite"></div>
+  <div class="fq-opts" id="fq-opts"></div>
+</div>
+<script>
+(function () {
+  'use strict';
+  var APK = 'https://github.com/pausa029/foquinho/releases/latest/download/Foquinho.apk';
+  var ua = navigator.userAgent || '';
+  var isIOS = /iPhone|iPad|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  var isAndroid = /Android/.test(ua);
+  var btn = document.getElementById('fq-btn'), panel = document.getElementById('fq-panel'), say = document.getElementById('fq-say');
+  var opts = document.getElementById('fq-opts'), img = document.getElementById('fq-img'), hello = document.getElementById('fq-hello');
+  var spot = null;
+  function mark(el) { if (spot) spot.classList.remove('fq-spot'); spot = el; if (el) el.classList.add('fq-spot'); }
+  function scrollTo(id) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    var card = el.querySelector('.wrap') || el;
+    el.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
+    mark(card);
+  }
+  // Cada item: [texto do botão, ação]. Ação: nome de outra fala, um link {href} ou uma função.
+  var T = {
+    inicio: {
+      pose: 'acenando',
+      text: 'Oi! Eu sou a Foquinha. Posso te ajudar com o quê?',
+      opts: [['O que o Foquinho faz?', 'oque'], [isIOS ? 'Como usar no iPhone' : 'Como baixar no Android', isIOS ? 'iphone' : 'android'], [isIOS ? 'Tenho Android' : 'Tenho iPhone', isIOS ? 'android' : 'iphone'], ['Precisa de conta? É seguro?', 'seguro'], ['Me mostra o site', 'tour0']]
+    },
+    oque: {
+      pose: 'feliz',
+      text: 'Eu te ajudo a trocar um pouco de tela por estudo e movimento. Você conta suas matérias, provas e esportes, e eu sugiro o que fazer agora: 10 minutos de revisão, uma pausa ativa, uma caminhada. Tem temporizador com alarme, mural da semana e histórico. Sem ranking e sem culpa.',
+      opts: [['Quero experimentar', 'android'], ['Ver os recursos', function () { scrollTo('recursos'); }], ['Voltar', 'inicio']]
+    },
+    android: {
+      pose: 'apontando',
+      text: '<b>No Android:</b><ol><li>Toque em <b>Baixar o APK</b> abaixo.</li><li>Abra o arquivo <b>Foquinho.apk</b> e permita a instalação quando o celular pedir.</li><li>Toque em <b>Instalar</b>.</li></ol><p style="margin:8px 0 0">Já tinha uma versão antiga? Desinstale ela uma vez antes.</p>',
+      opts: [['Baixar o APK', { href: APK, go: true }], ['Prefiro usar no navegador', { href: 'web/' }], ['Voltar', 'inicio']]
+    },
+    iphone: {
+      pose: 'apontando',
+      text: '<b>No iPhone:</b><ol><li>Abra este site no <b>Safari</b> e toque em <b>Usar agora no navegador</b>.</li><li>Toque em <b>Compartilhar</b> (quadrado com seta).</li><li>Escolha <b>Adicionar à Tela de Início</b>.</li></ol>',
+      opts: [['Abrir a versão web', { href: 'web/', go: true }], ['Voltar', 'inicio']]
+    },
+    seguro: {
+      pose: 'pensando',
+      text: 'Não precisa de conta, e-mail nem telefone. Tudo fica guardado só no seu celular, nada é vendido ou enviado. E eu nunca finjo que bloqueio apps ou que meço sua tela sozinha: o tempo de tela você mesmo informa, se quiser.',
+      opts: [['Entendi, quero instalar', isIOS ? 'iphone' : 'android'], ['Voltar', 'inicio']]
+    },
+    tour0: { pose: 'apontando', text: 'Bora! Primeiro: <b>como funciona</b>, em três passos.', at: 'como', opts: [['Próximo', 'tour1'], ['Parar', 'fim']] },
+    tour1: { pose: 'apontando', text: 'Aqui está <b>tudo o que vem no app</b>: foco, pausa ativa, plano, metas e histórico.', at: 'recursos', opts: [['Próximo', 'tour2'], ['Voltar', 'tour0'], ['Parar', 'fim']] },
+    tour2: { pose: 'acenando', text: 'Essa sou eu! No app, eu apareço na primeira vez para te guiar.', at: 'foquinha', opts: [['Próximo', 'tour3'], ['Voltar', 'tour1'], ['Parar', 'fim']] },
+    tour3: { pose: 'apontando', text: 'E aqui você <b>instala</b>, no iPhone ou no Android.', at: 'instalar', opts: [['Próximo', 'tour4'], ['Voltar', 'tour2'], ['Parar', 'fim']] },
+    tour4: { pose: 'comemorando', text: 'Fim do passeio! Ficou alguma dúvida? Elas estão aqui embaixo.', at: 'faq', opts: [[isIOS ? 'Como usar no iPhone' : 'Baixar o app', isIOS ? 'iphone' : 'android'], ['Voltar ao começo', 'inicio']] },
+    fim: { close: true }
+  };
+  function show(key) {
+    var t = T[key];
+    if (!t) return;
+    if (t.close) { close(); return; }
+    img.src = 'foquinha/' + t.pose + '.png';
+    say.innerHTML = t.text;
+    opts.innerHTML = '';
+    if (t.at) scrollTo(t.at); else mark(null);
+    t.opts.forEach(function (o) {
+      var a = o[1], el;
+      if (a && typeof a === 'object') {
+        el = document.createElement('a'); el.href = a.href; if (a.go) el.className = 'go';
+      } else {
+        el = document.createElement('button'); el.type = 'button';
+        el.addEventListener('click', function () { if (typeof a === 'function') { a(); } else { show(a); } });
+      }
+      el.textContent = o[0];
+      opts.appendChild(el);
+    });
+  }
+  function open(key) {
+    hello.hidden = true; seen();
+    panel.hidden = false; btn.setAttribute('aria-expanded', 'true');
+    show(key || 'inicio');
+    var f = opts.querySelector('button, a'); if (f) f.focus();
+  }
+  function close() {
+    panel.hidden = true; btn.setAttribute('aria-expanded', 'false'); mark(null); btn.focus();
+  }
+  function seen() { try { localStorage.setItem('foquinha.oi', '1'); } catch (e) {} }
+  btn.addEventListener('click', function () { if (panel.hidden) open(); else close(); });
+  document.getElementById('fq-close').addEventListener('click', close);
+  document.getElementById('fq-open-2').addEventListener('click', function () { open(); });
+  hello.addEventListener('click', function () { open(isIOS ? 'iphone' : 'android'); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !panel.hidden) close(); });
+  var already = false;
+  try { already = localStorage.getItem('foquinha.oi') === '1'; } catch (e) {}
+  if (!already && (isAndroid || isIOS)) setTimeout(function () { if (panel.hidden) hello.hidden = false; }, 2500);
 })();
 </script>
 </body>

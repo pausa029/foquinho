@@ -6,6 +6,7 @@ import '../../data/app_state.dart';
 import '../../logic/stats.dart';
 import '../../models/models.dart';
 import '../widgets/common.dart';
+import '../widgets/foquinha.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -240,6 +241,15 @@ class SettingsScreen extends StatelessWidget {
             ),
           ),
 
+          Card(
+            child: ListTile(
+              leading: const Foquinha(pose: FoquinhaPose.acenando, size: 44),
+              title: const Text('Rever o tutorial da Foquinha'),
+              subtitle: const Text('Mostra de novo para que serve cada parte do app'),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => state.setTourDone(false),
+            ),
+          ),
           const SectionTitle('Privacidade'),
           Card(
             child: Padding(

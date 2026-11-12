@@ -4,6 +4,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'data/app_state.dart';
 import 'models/models.dart';
 import 'services/notifier.dart';
+import 'ui/tour.dart';
 import 'ui/screens/home_screen.dart';
 import 'ui/screens/history_screen.dart';
 import 'ui/screens/move_screen.dart';
@@ -110,6 +111,7 @@ class MainShell extends StatefulWidget {
 
 class _MainShellState extends State<MainShell> {
   int index = 0;
+  final _navKey = GlobalKey();
 
   @override
   Widget build(BuildContext context) {
@@ -121,7 +123,7 @@ class _MainShellState extends State<MainShell> {
       const HistoryScreen(),
       const SettingsScreen(),
     ];
-    return Scaffold(
+    final shell = Scaffold(
       body: Column(
         children: [
           if (state.status == LoadStatus.erroLeitura || state.status == LoadStatus.erroEscrita)
@@ -131,6 +133,7 @@ class _MainShellState extends State<MainShell> {
         ],
       ),
       bottomNavigationBar: NavigationBar(
+        key: _navKey,
         selectedIndex: index,
         onDestinationSelected: (i) => setState(() => index = i),
         destinations: const [
@@ -141,6 +144,23 @@ class _MainShellState extends State<MainShell> {
           NavigationDestination(icon: Icon(Icons.settings_outlined), selectedIcon: Icon(Icons.settings), label: 'Ajustes'),
         ],
       ),
+    );
+    if (state.data.tourDone) return shell;
+    return Stack(
+      children: [
+        shell,
+        Positioned.fill(
+          child: FoquinhaTour(
+            navKey: _navKey,
+            tabCount: pages.length,
+            onTab: (i) => setState(() => index = i),
+            onDone: () {
+              setState(() => index = 0);
+              state.setTourDone(true);
+            },
+          ),
+        ),
+      ],
     );
   }
 }

@@ -37,6 +37,16 @@ void main() {
     expect(find.text('Pausa ativa'), findsOneWidget);
     expect(find.text('Ver plano'), findsOneWidget);
 
+    // Na primeira vez, a Foquinha aparece com o tutorial.
+    expect(find.text('Oi! Eu sou a Foquinha.'), findsOneWidget);
+    await tester.tap(find.text('Próximo'));
+    await tester.pumpAndSettle();
+    expect(find.text('2 de ${8}'), findsOneWidget);
+    await tester.tap(find.text('Pular'));
+    await tester.pumpAndSettle();
+    expect(find.text('Oi! Eu sou a Foquinha.'), findsNothing);
+    expect(state.data.tourDone, isTrue);
+
     // Desmonta a árvore para encerrar os temporizadores da interface.
     await tester.pumpWidget(const SizedBox());
   });

@@ -585,6 +585,13 @@ class AppState extends ChangeNotifier {
     await save();
   }
 
+  /// Marca o tutorial da Foquinha como visto (ou pede para mostrar de novo).
+  Future<void> setTourDone(bool done) async {
+    data.tourDone = done;
+    notifyListeners();
+    await save();
+  }
+
   Future<void> setSound(bool on) async {
     data.soundOn = on;
     await save();

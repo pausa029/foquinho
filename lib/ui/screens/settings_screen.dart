@@ -6,6 +6,7 @@ import '../../data/app_state.dart';
 import '../../logic/stats.dart';
 import '../../models/models.dart';
 import '../widgets/common.dart';
+import 'account_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -27,6 +28,18 @@ class SettingsScreen extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
         children: [
+          if (state.cloudAvailable) ...[
+            const SectionTitle('Conta'),
+            Card(
+              child: ListTile(
+                leading: Icon(state.signedIn ? Icons.cloud_done_outlined : Icons.account_circle_outlined),
+                title: Text(state.signedIn ? (state.session!.email.isEmpty ? 'Conta conectada' : state.session!.email) : 'Entrar ou criar conta'),
+                subtitle: Text(state.signedIn ? (state.cloudNote ?? 'Seus dados estão guardados na conta') : 'Guarde seus dados e use em outro aparelho'),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const AccountScreen())),
+              ),
+            ),
+          ],
           const SectionTitle('Perfil'),
           Card(
             child: Column(

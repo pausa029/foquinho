@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.pausa029.lembraai",
+      "sha256_cert_fingerprints": [
+        "69:F1:2A:EF:4E:20:7D:E0:6A:49:43:32:73:0D:F7:0E:70:0E:7D:77:5D:26:2E:F3:2C:DE:33:EE:F0:E6:94:65"
+      ]
+    }
+  }
+]

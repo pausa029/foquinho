@@ -1,6 +1,7 @@
 package com.pausa029.lembraai.data
 
 import android.content.Context
+import androidx.room.ColumnInfo
 import androidx.room.Dao
 import androidx.room.Database
 import androidx.room.Entity
@@ -11,6 +12,8 @@ import androidx.room.Query
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.Transaction
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
 import com.pausa029.lembraai.domain.Compromisso
 import com.pausa029.lembraai.domain.EstiloAviso
 import com.pausa029.lembraai.domain.Frequencia
@@ -48,6 +51,8 @@ data class CompromissoEntity(
     val telefone: String,
     val endereco: String,
     val feitos: String,
+    @ColumnInfo(defaultValue = "") val codigoId: String = "",
+    @ColumnInfo(defaultValue = "") val enviadoPor: String = "",
 )
 
 /** Avisos avulsos: "lembrar em 10 minutos", nova tentativa depois de não responder e o teste. */
@@ -78,6 +83,9 @@ interface LembraDao {
 
     @Query("SELECT * FROM compromisso WHERE id = :id")
     suspend fun porId(id: Long): CompromissoEntity?
+
+    @Query("SELECT * FROM compromisso WHERE codigoId = :codigo AND codigoId != '' LIMIT 1")
+    suspend fun porCodigo(codigo: String): CompromissoEntity?
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun salvar(c: CompromissoEntity): Long
@@ -117,12 +125,20 @@ interface LembraDao {
     }
 }
 
-@Database(entities = [CompromissoEntity::class, AvisoExtraEntity::class], version = 1, exportSchema = false)
+@Database(entities = [CompromissoEntity::class, AvisoExtraEntity::class], version = 2, exportSchema = false)
 abstract class LembraDb : RoomDatabase() {
     abstract fun dao(): LembraDao
 
     companion object {
         @Volatile private var instancia: LembraDb? = null
+
+        /** Versão 2: compromisso enviado por link (identificador e nome de quem enviou). */
+        val MIGRACAO_1_2 = object : Migration(1, 2) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE compromisso ADD COLUMN codigoId TEXT NOT NULL DEFAULT ''")
+                db.execSQL("ALTER TABLE compromisso ADD COLUMN enviadoPor TEXT NOT NULL DEFAULT ''")
+            }
+        }
 
         /** Fica no armazenamento que funciona antes do primeiro desbloqueio, para os alarmes voltarem depois de reiniciar. */
         fun get(ctx: Context): LembraDb = instancia ?: synchronized(this) {
@@ -130,7 +146,7 @@ abstract class LembraDb : RoomDatabase() {
                 ctx.applicationContext.createDeviceProtectedStorageContext(),
                 LembraDb::class.java,
                 "lembra.db",
-            ).build().also { instancia = it }
+            ).addMigrations(MIGRACAO_1_2).build().also { instancia = it }
         }
     }
 }
@@ -167,6 +183,8 @@ fun CompromissoEntity.paraDominio() = Compromisso(
     telefone = telefone,
     endereco = endereco,
     feitos = feitos.split(',').mapNotNull { it.trim().toLongOrNull() }.map { LocalDate.ofEpochDay(it) }.toSet(),
+    codigoId = codigoId,
+    enviadoPor = enviadoPor,
 )
 
 fun Compromisso.paraEntidade() = CompromissoEntity(
@@ -195,4 +213,6 @@ fun Compromisso.paraEntidade() = CompromissoEntity(
     endereco = endereco,
     // guarda só os "já fiz" dos últimos 400 dias
     feitos = feitos.filter { it >= LocalDate.now().minusDays(400) }.map { it.toEpochDay() }.sorted().joinToString(","),
+    codigoId = codigoId,
+    enviadoPor = enviadoPor,
 )

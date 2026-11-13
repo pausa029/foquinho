@@ -69,3 +69,11 @@ jobs:
             --title "Lembra Aí 1.0.${{ github.run_number }}" \
             --latest=false \
             --notes "APK do Lembra Aí, pronto para instalar no Android 8 ou mais novo. Baixe o arquivo LembraAi.apk abaixo, abra no celular e toque em Instalar. Se pedir, permita instalar apps desta fonte."
+          # Endereço fixo do APK mais recente (usado pela página de compromisso enviado e pelo botão "Atualize").
+          gh release delete lembra-ai-ultimo --repo "${{ github.repository }}" --yes --cleanup-tag || true
+          gh release create lembra-ai-ultimo LembraAi.apk \
+            --repo "${{ github.repository }}" \
+            --target "${{ github.sha }}" \
+            --title "Lembra Aí (versão mais recente)" \
+            --latest=false \
+            --notes "Sempre o APK mais recente do Lembra Aí. Endereço fixo: releases/download/lembra-ai-ultimo/LembraAi.apk"

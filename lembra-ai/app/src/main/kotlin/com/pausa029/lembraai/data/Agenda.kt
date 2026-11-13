@@ -23,6 +23,17 @@ object Agenda {
 
     suspend fun porId(ctx: Context, id: Long): Compromisso? = dao(ctx).porId(id)?.paraDominio()
 
+    suspend fun porCodigo(ctx: Context, codigo: String): Compromisso? =
+        if (codigo.isBlank()) null else dao(ctx).porCodigo(codigo)?.paraDominio()
+
+    /** Dá um identificador de envio ao compromisso (o mesmo em todos os envios, para quem recebe poder atualizar). */
+    suspend fun garantirCodigo(ctx: Context, c: Compromisso): Compromisso {
+        if (c.codigoId.isNotBlank()) return c
+        val n = c.copy(codigoId = java.util.UUID.randomUUID().toString())
+        dao(ctx).salvar(n.paraEntidade())
+        return n
+    }
+
     suspend fun salvar(ctx: Context, c: Compromisso): Long {
         val id = dao(ctx).salvar(c.paraEntidade())
         if (c.id != 0L) dao(ctx).apagarExtrasDe(c.id)
@@ -80,6 +91,7 @@ object Agenda {
                 put("estilo", e.estilo); put("falar", e.falar); put("repete", e.repete); put("diasSemana", e.diasSemana)
                 put("cadaDias", e.cadaDias); put("ateEpoch", e.ateEpoch ?: JSONObject.NULL)
                 put("observacao", e.observacao); put("telefone", e.telefone); put("endereco", e.endereco); put("feitos", e.feitos)
+                put("codigoId", e.codigoId); put("enviadoPor", e.enviadoPor)
             })
         }
         return JSONObject().put("app", "Lembra Aí").put("versao", 1).put("compromissos", arr).toString(2)
@@ -105,6 +117,7 @@ object Agenda {
                 ateEpoch = if (o.isNull("ateEpoch")) null else o.getLong("ateEpoch"),
                 observacao = o.optString("observacao", ""), telefone = o.optString("telefone", ""),
                 endereco = o.optString("endereco", ""), feitos = o.optString("feitos", ""),
+                codigoId = o.optString("codigoId", ""), enviadoPor = o.optString("enviadoPor", ""),
             )
         }
     }

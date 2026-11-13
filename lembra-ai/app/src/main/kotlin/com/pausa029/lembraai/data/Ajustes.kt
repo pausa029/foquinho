@@ -26,6 +26,8 @@ data class Preferencias(
     /** 1 a 10 */
     val volume: Int = 10,
     val bomDia: Boolean = true,
+    /** "Seu nome (aparece para quem recebe)" */
+    val nome: String = "",
 ) {
     val escalaLetra get() = when (letra) { 0 -> 1.0f; 2 -> 1.3f; else -> 1.15f }
 }
@@ -67,6 +69,7 @@ object Ajustes {
             som = p.getInt("som", d.som),
             volume = p.getInt("volume", d.volume),
             bomDia = p.getBoolean("bomDia", d.bomDia),
+            nome = p.getString("nome", "").orEmpty(),
         )
     }
 
@@ -88,6 +91,7 @@ object Ajustes {
             .putInt("som", n.som)
             .putInt("volume", n.volume)
             .putBoolean("bomDia", n.bomDia)
+            .putString("nome", n.nome)
             .apply()
         estado.value = n
     }
@@ -98,5 +102,12 @@ object Ajustes {
 
     fun marcarDisparo(ctx: Context, millis: Long) {
         prefs(ctx).edit().putLong("ultimoDisparo", millis).apply()
+    }
+
+    /** Último código da área de transferência já oferecido (para não perguntar duas vezes). */
+    fun codigoVisto(ctx: Context): String = prefs(ctx).getString("codigoVisto", "").orEmpty()
+
+    fun marcarCodigoVisto(ctx: Context, codigo: String) {
+        prefs(ctx).edit().putString("codigoVisto", codigo.takeLast(64)).apply()
     }
 }

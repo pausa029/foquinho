@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
@@ -87,6 +88,21 @@ fun TelaAjustes(vm: LembraViewModel) {
                 escopo.launch { Disparo.testar(ctx) }
                 vm.avisar("Pronto! Em 10 segundos o celular vai tocar o aviso de teste.")
             }, cor = Cores.verde)
+        }
+
+        Bloco(null, "Seu nome") {
+            Frase("Aparece para quem recebe um compromisso enviado por você.", 18.sp, Cores.suave)
+            androidx.compose.material3.OutlinedTextField(
+                value = p.nome,
+                onValueChange = { vm.salvarPrefs(pAtual.copy(nome = it.take(40))) },
+                modifier = Modifier.fillMaxWidth(),
+                label = { Text("Seu nome (ex.: Luiz)", fontSize = 18.sp) },
+                textStyle = androidx.compose.ui.text.TextStyle(fontSize = 22.sp),
+                singleLine = true,
+                keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                    capitalization = androidx.compose.ui.text.input.KeyboardCapitalization.Words,
+                ),
+            )
         }
 
         Bloco(null, "Horário que o app pode avisar") {

@@ -142,7 +142,7 @@ fun TelaAgendar(vm: LembraViewModel) {
                 var outro by remember { mutableStateOf(c.diasAntes !in listOf(0, 1, 2, 3, 7)) }
                 val ops = listOf("Só no dia" to 0, "1 dia antes" to 1, "2 dias antes" to 2, "3 dias antes" to 3, "1 semana antes" to 7)
                 Grade(ops.map { (t, n) -> t to (!outro && c.diasAntes == n) } + ("OUTRO" to outro)) { i ->
-                    if (i < ops.size) { outro = false; muda(atual.copy(diasAntes = ops[i].second)) } else outro = true
+                    if (i < ops.size) { outro = false; muda(atual.copy(diasAntes = ops[i].second)) } else { outro = true }
                 }
                 if (outro) {
                     MaisMenos(
@@ -314,7 +314,7 @@ fun BlocoFrequencia(c: Compromisso, janela: Janela, muda: (Compromisso) -> Unit,
             var outro by remember { mutableStateOf(f.intervaloMin !in ops) }
             val rotulo = { n: Int -> if (n == 30) "De 30 em 30 min" else Texto.cap(Texto.intervalo(n)) }
             Grade(ops.map { rotulo(it) to (!outro && f.intervaloMin == it) } + ("OUTRO" to outro)) { i ->
-                if (i < ops.size) { outro = false; muda(atual().let { a -> a.copy(frequencia = a.frequencia.copy(intervaloMin = ops[i])) }) } else outro = true
+                if (i < ops.size) { outro = false; muda(atual().let { a -> a.copy(frequencia = a.frequencia.copy(intervaloMin = ops[i])) }) } else { outro = true }
             }
             if (outro) {
                 val h = f.intervaloMin / 60
@@ -329,7 +329,7 @@ fun BlocoFrequencia(c: Compromisso, janela: Janela, muda: (Compromisso) -> Unit,
             val ops = listOf(1, 2, 3, 5)
             var outro by remember { mutableStateOf(f.vezes !in ops) }
             Grade(ops.map { Texto.vezes(it) to (!outro && f.vezes == it) } + ("OUTRO" to outro)) { i ->
-                if (i < ops.size) { outro = false; muda(atual().let { a -> a.copy(frequencia = a.frequencia.copy(vezes = ops[i])) }) } else outro = true
+                if (i < ops.size) { outro = false; muda(atual().let { a -> a.copy(frequencia = a.frequencia.copy(vezes = ops[i])) }) } else { outro = true }
             }
             if (outro) {
                 MaisMenos(

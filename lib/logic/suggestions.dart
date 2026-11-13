@@ -163,6 +163,13 @@ List<Suggestion> moveSuggestions(
 }
 
 /// Uma frase curta para o painel, com base no dia (sem culpa, sem bronca).
+/// Frase do topo do Início, só sobre estudo.
+String studyHomeMessage({required int studyMin, required int studyGoal}) {
+  if (studyMin >= studyGoal) return 'Meta de estudo de hoje alcançada. Você pode parar por aqui ou continuar no seu ritmo.';
+  if (studyMin > 0) return 'Você já estudou hoje. Mais um bloco curto e a meta chega.';
+  return 'Comece pequeno: 10 minutos de estudo já contam.';
+}
+
 String homeMessage({required int studyMin, required int moveMin, required int studyGoal, required int moveGoal}) {
   if (studyMin >= studyGoal && moveMin >= moveGoal) return 'Metas de hoje alcançadas. Você pode parar por aqui ou continuar no seu ritmo.';
   if (studyMin > 0 && moveMin > 0) return 'Hoje já teve estudo e movimento. Bom equilíbrio.';

@@ -20,15 +20,13 @@ class OnboardingScreen extends StatefulWidget {
 
 class _OnboardingScreenState extends State<OnboardingScreen> {
   int step = 0;
-  static const int steps = 5;
+  static const int steps = 4;
 
   final nick = TextEditingController();
   SchoolLevel? level;
   final subjects = <String>[]; // nomes
   final hard = <String>{};
-  final sports = <String>[];
   int studyGoal = 60;
-  int moveGoal = 30;
   int? screenGoal;
   bool remindersOn = true;
   String remindFrom = '08:00';
@@ -48,9 +46,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     final p = Profile(
       nickname: name.isEmpty ? 'Estudante' : name,
       level: level,
-      sports: List.of(sports),
       studyGoalMin: studyGoal,
-      moveGoalMin: moveGoal,
       screenGoalMin: screenGoal,
       remindersOn: remindersOn,
       remindFrom: remindFrom,
@@ -160,7 +156,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               ],
             ),
             const SizedBox(height: 16),
-            _title('Menos tela. Mais estudo e movimento.', 'Como você quer ser chamado? Não pedimos e-mail nem telefone.'),
+            _title('Menos tela. Mais estudo.', 'Como você quer ser chamado? Não pedimos e-mail nem telefone.'),
             TextField(
               controller: nick,
               maxLength: 20,
@@ -239,40 +235,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           ],
         );
       case 2:
-        final all = [...kSportOptions, ...sports.where((s) => !kSportOptions.contains(s))];
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _title('Quais esportes ou atividades você gosta?', 'Marque quantos quiser. Dá para mudar depois.'),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                for (final s in all)
-                  FilterChip(
-                    label: Text(s),
-                    selected: sports.contains(s),
-                    onSelected: (v) => setState(() => v ? sports.add(s) : sports.remove(s)),
-                  ),
-                ActionChip(
-                  avatar: const Icon(Icons.add),
-                  label: const Text('Outro'),
-                  onPressed: () async {
-                    final v = await promptText(context, title: 'Esporte ou atividade', maxLength: 40);
-                    if (v != null && !sports.contains(v)) setState(() => sports.add(v));
-                  },
-                ),
-              ],
-            ),
-          ],
-        );
-      case 3:
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _title('Quanto tempo por dia você quer dedicar?', 'Comece pequeno. Você ajusta quando quiser.'),
             _stepRow('Estudo por dia', fmtMin(studyGoal), () => setState(() => studyGoal = (studyGoal - 15).clamp(15, 600).toInt()), () => setState(() => studyGoal = (studyGoal + 15).clamp(15, 600).toInt())),
-            _stepRow('Atividade física por dia', fmtMin(moveGoal), () => setState(() => moveGoal = (moveGoal - 10).clamp(10, 300).toInt()), () => setState(() => moveGoal = (moveGoal + 10).clamp(10, 300).toInt())),
             const SizedBox(height: 12),
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
@@ -294,7 +261,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             _title('Quando você aceita lembretes?', 'Os lembretes aparecem dentro do app. No Android, dá para ligar também as notificações do sistema.'),
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
-              title: const Text('Mostrar lembretes de estudo e movimento'),
+              title: const Text('Mostrar lembretes de estudo'),
               value: remindersOn,
               onChanged: (v) => setState(() => remindersOn = v),
             ),

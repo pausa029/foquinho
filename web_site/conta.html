@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex">
+<meta name="referrer" content="no-referrer">
+<title>Conta · Foquinho</title>
+<link rel="icon" href="icons/favicon-64.png">
+<meta name="theme-color" content="#0F6E56">
+<style>
+:root { --bg: #f4f8f6; --card: #fff; --ink: #14241f; --muted: #51635d; --brand: #0f6e56; --line: #d5e2dc; --err: #a3261c; color-scheme: light; }
+@media (prefers-color-scheme: dark) { :root { --bg: #0e1513; --card: #17211e; --ink: #e8f1ed; --muted: #a3b5ae; --brand: #5fd0ae; --line: #2a3a35; --err: #ff9c92; color-scheme: dark; } }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 17px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px max(16px, env(safe-area-inset-left)) 24px max(16px, env(safe-area-inset-right)); }
+main { width: 100%; max-width: 440px; background: var(--card); border: 1px solid var(--line); border-radius: 20px; padding: 28px 24px; }
+img { width: 64px; height: 64px; border-radius: 16px; display: block; margin-bottom: 12px; }
+h1 { font-size: 1.4em; margin: 0 0 8px; text-wrap: balance; }
+p { margin: 0 0 14px; }
+.muted { color: var(--muted); font-size: .92em; }
+label { display: block; font-weight: 600; margin: 14px 0 6px; }
+input { width: 100%; min-height: 50px; padding: 10px 12px; border: 2px solid var(--line); border-radius: 12px; background: transparent; color: var(--ink); font: inherit; }
+input:focus-visible, button:focus-visible, a:focus-visible { outline: 3px solid var(--brand); outline-offset: 2px; }
+button, .btn { display: block; width: 100%; min-height: 52px; margin-top: 18px; padding: 12px; border: 0; border-radius: 999px; background: var(--brand); color: #fff; font: inherit; font-weight: 700; text-align: center; text-decoration: none; cursor: pointer; }
+@media (prefers-color-scheme: dark) { button, .btn { color: #06231b; } }
+button[disabled] { opacity: .6; cursor: default; }
+.err { color: var(--err); font-weight: 600; }
+[hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<main>
+  <img src="icons/apple-touch-icon.png" alt="">
+  <section id="v-ok" hidden>
+    <h1>E-mail confirmado!</h1>
+    <p>Sua conta do Foquinho está pronta. Volte ao aplicativo e toque em <strong>“Já confirmei, entrar”</strong>.</p>
+    <p class="muted">Pode fechar esta página.</p>
+  </section>
+  <section id="v-senha" hidden>
+    <h1>Criar uma senha nova</h1>
+    <p>Escolha a nova senha da sua conta do Foquinho.</p>
+    <form id="f" novalidate>
+      <label for="p1">Nova senha (8 caracteres ou mais)</label>
+      <input id="p1" type="password" autocomplete="new-password" minlength="8" required>
+      <label for="p2">Repita a nova senha</label>
+      <input id="p2" type="password" autocomplete="new-password" minlength="8" required>
+      <p class="err" id="e" role="alert" hidden></p>
+      <button id="b">Salvar a nova senha</button>
+    </form>
+  </section>
+  <section id="v-feito" hidden>
+    <h1>Senha alterada</h1>
+    <p>Agora é só voltar ao aplicativo e entrar com a senha nova.</p>
+  </section>
+  <section id="v-erro" hidden>
+    <h1>Este link não vale mais</h1>
+    <p id="m">O link já foi usado ou venceu. Volte ao aplicativo e peça um novo.</p>
+  </section>
+  <section id="v-nada" hidden>
+    <h1>Conta do Foquinho</h1>
+    <p>Esta página confirma o e-mail e troca a senha da conta. Para usar, abra o link que o Foquinho enviou para o seu e-mail.</p>
+    <a class="btn" href="./">Ir para o Foquinho</a>
+  </section>
+</main>
+<script>
+(function () {
+  'use strict';
+  var URL_ = 'https://iqteaquzluhmgydgpmzk.supabase.co', KEY = 'sb_publishable_qCb8wlUdjhc1cvFHBzxU5g_kA-XAidu';
+  function show(id) { ['v-ok', 'v-senha', 'v-feito', 'v-erro', 'v-nada'].forEach(function (x) { document.getElementById(x).hidden = x !== id; }); }
+  var q = new URLSearchParams((location.hash || '').replace(/^#/, ''));
+  var s = new URLSearchParams(location.search);
+  var token = q.get('access_token'), type = q.get('type'), err = q.get('error') || s.get('error');
+  // tira o código de acesso da barra de endereço e do histórico
+  try { history.replaceState(null, '', location.pathname); } catch (e) {}
+  if (err) { show('v-erro'); return; }
+  if (token && type === 'recovery') {
+    show('v-senha');
+    var f = document.getElementById('f'), e = document.getElementById('e'), b = document.getElementById('b');
+    f.addEventListener('submit', function (ev) {
+      ev.preventDefault();
+      var p1 = document.getElementById('p1').value, p2 = document.getElementById('p2').value;
+      function fail(t) { e.textContent = t; e.hidden = false; b.disabled = false; }
+      if (p1.length < 8) return fail('A senha precisa de 8 caracteres ou mais.');
+      if (p1 !== p2) return fail('As duas senhas estão diferentes.');
+      e.hidden = true; b.disabled = true;
+      fetch(URL_ + '/auth/v1/user', { method: 'PUT', headers: { 'apikey': KEY, 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' }, body: JSON.stringify({ password: p1 }) })
+        .then(function (r) {
+          if (r.ok) { token = null; show('v-feito'); return; }
+          return r.json().catch(function () { return {}; }).then(function (j) {
+            var t = ((j.error_code || '') + ' ' + (j.msg || j.message || '')).toLowerCase();
+            fail(/same_password|different from the old/.test(t) ? 'Escolha uma senha diferente da anterior.' : (/weak|should be/.test(t) ? 'Senha fraca. Use 8 caracteres ou mais.' : 'O link venceu. Volte ao aplicativo e peça um novo.'));
+          });
+        }, function () { fail('Sem conexão com a internet. Tente de novo.'); });
+    });
+    return;
+  }
+  if (token || type === 'signup' || type === 'email') { show('v-ok'); return; }
+  show('v-nada');
+})();
+</script>
+</body>
+</html>

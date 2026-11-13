@@ -47,12 +47,12 @@ void main() {
     expect(planReminderNotices(d, now), isEmpty);
   });
 
-  test('agenda estudo e movimento todos os dias, sempre no futuro', () {
+  test('agenda estudo todos os dias, sem lembrete de movimento, sempre no futuro', () {
     final d = sample();
     d.profile!.nudgeOn = false;
     final list = planReminderNotices(d, now);
     expect(list.where((n) => n.title == 'Hora de estudar').length, 7);
-    expect(list.where((n) => n.title == 'Hora de se mexer').length, 7);
+    expect(list.where((n) => n.title == 'Hora de se mexer'), isEmpty);
     expect(list.every((n) => n.when.isAfter(now)), isTrue);
     expect(list.map((n) => n.id).toSet().length, list.length, reason: 'ids únicos');
     final first = list.firstWhere((n) => n.title == 'Hora de estudar');
@@ -94,7 +94,7 @@ void main() {
     }
     // O rodízio alterna os assuntos e usa a matéria cadastrada.
     final titles = list.map((n) => n.title).toSet();
-    expect(titles.containsAll(['Beba água', 'Alongue o corpo', 'Que tal estudar um pouco?', 'Movimente-se', 'Pausa de tela']), isTrue);
+    expect(titles.containsAll(['Beba água', 'Alongue o corpo', 'Que tal estudar um pouco?', 'Pausa de tela']), isTrue);
     expect(list.any((n) => n.title == 'Que tal estudar um pouco?' && n.body.contains('Matemática')), isTrue);
     // Só os próximos 3 dias.
     expect(list.every((n) => n.when.isBefore(DateTime(2026, 6, 13))), isTrue);
@@ -115,7 +115,7 @@ void main() {
     expect(themeOrder(0).join(',') == themeOrder(1).join(','), isFalse);
     for (var r = 1; r < 40; r++) {
       expect(themeOrder(r).first == themeOrder(r - 1).last, isFalse);
-      expect(themeOrder(r).toSet().length, 6);
+      expect(themeOrder(r).toSet().length, 5);
     }
   });
 

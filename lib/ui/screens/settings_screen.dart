@@ -7,6 +7,7 @@ import '../../logic/stats.dart';
 import '../../models/models.dart';
 import '../widgets/common.dart';
 import '../widgets/foquinha.dart';
+import 'account_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -28,6 +29,18 @@ class SettingsScreen extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
         children: [
+          if (state.cloudAvailable) ...[
+            const SectionTitle('Conta'),
+            Card(
+              child: ListTile(
+                leading: Icon(state.signedIn ? Icons.cloud_done_outlined : Icons.account_circle_outlined),
+                title: Text(state.signedIn ? (state.session!.email.isEmpty ? 'Conta conectada' : state.session!.email) : 'Entrar ou criar conta'),
+                subtitle: Text(state.signedIn ? (state.cloudNote ?? 'Seus dados estão guardados na conta') : 'Guarde seus dados e use em outro aparelho'),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const AccountScreen())),
+              ),
+            ),
+          ],
           const SectionTitle('Perfil'),
           Card(
             child: Column(
@@ -61,13 +74,6 @@ class SettingsScreen extends StatelessWidget {
                     await saveP((x) => x.level = v);
                   },
                 ),
-                ListTile(
-                  leading: const Icon(Icons.sports_soccer_outlined),
-                  title: const Text('Esportes e atividades'),
-                  subtitle: Text(p.sports.isEmpty ? 'Nenhum escolhido' : p.sports.join(', ')),
-                  trailing: const Icon(Icons.edit_outlined),
-                  onTap: () => _editSports(context, state, p),
-                ),
               ],
             ),
           ),
@@ -79,7 +85,6 @@ class SettingsScreen extends StatelessWidget {
               child: Column(
                 children: [
                   _stepRow(context, 'Estudo', fmtMin(p.studyGoalMin), () => saveP((x) => x.studyGoalMin = (x.studyGoalMin - 15).clamp(15, 600).toInt()), () => saveP((x) => x.studyGoalMin = (x.studyGoalMin + 15).clamp(15, 600).toInt())),
-                  _stepRow(context, 'Atividade física', fmtMin(p.moveGoalMin), () => saveP((x) => x.moveGoalMin = (x.moveGoalMin - 10).clamp(10, 300).toInt()), () => saveP((x) => x.moveGoalMin = (x.moveGoalMin + 10).clamp(10, 300).toInt())),
                   SwitchListTile(
                     contentPadding: EdgeInsets.zero,
                     title: const Text('Meta de tempo de tela'),
@@ -135,7 +140,7 @@ class SettingsScreen extends StatelessWidget {
                     const ListTile(
                       leading: Icon(Icons.alarm),
                       title: Text('Alarme do temporizador'),
-                      subtitle: Text('Toca e vibra quando o foco, o intervalo ou o exercício termina, mesmo com a tela apagada. No fim da sessão o som repete até você parar. Usa o volume de alarme do celular.'),
+                      subtitle: Text('Toca e vibra quando o foco ou o intervalo termina, mesmo com a tela apagada. No fim da sessão o som repete até você parar. Usa o volume de alarme do celular.'),
                     ),
                     SwitchListTile(
                       title: const Text('Lembrete para estudar'),
@@ -144,14 +149,8 @@ class SettingsScreen extends StatelessWidget {
                     ),
                     if (p.studyRemindOn) _timeTile(context, 'Todos os dias às', p.studyRemindAt, (v) => saveP((x) => x.studyRemindAt = v)),
                     SwitchListTile(
-                      title: const Text('Lembrete para se movimentar'),
-                      value: p.moveRemindOn,
-                      onChanged: (v) => saveP((x) => x.moveRemindOn = v),
-                    ),
-                    if (p.moveRemindOn) _timeTile(context, 'Todos os dias às', p.moveRemindAt, (v) => saveP((x) => x.moveRemindAt = v)),
-                    SwitchListTile(
                       title: const Text('Avisos ao longo do dia'),
-                      subtitle: const Text('Um por vez, alternando: beber água, estudar, alongar, prova ou tarefa chegando, pausa de tela e movimento.'),
+                      subtitle: const Text('Um por vez, alternando: estudar, prova ou tarefa chegando, beber água, alongar e pausa de tela.'),
                       value: p.nudgeOn,
                       onChanged: (v) => saveP((x) => x.nudgeOn = v),
                     ),
@@ -284,7 +283,7 @@ class SettingsScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 12),
-          Center(child: Text('Foquinho 1.0 · Menos tela. Mais estudo e movimento.', style: TextStyle(color: cs.onSurfaceVariant, fontSize: 12))),
+          Center(child: Text('Foquinho · Menos tela. Mais estudo.', style: TextStyle(color: cs.onSurfaceVariant, fontSize: 12))),
         ],
       ),
     );
@@ -344,49 +343,5 @@ class SettingsScreen extends StatelessWidget {
         ],
       ),
     );
-  }
-
-  Future<void> _editSports(BuildContext context, AppState state, Profile p) async {
-    final sel = List<String>.of(p.sports);
-    final saved = await showModalBottomSheet<bool>(
-      context: context,
-      isScrollControlled: true,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setSt) {
-          final all = [...kSportOptions, ...sel.where((s) => !kSportOptions.contains(s))];
-          return Padding(
-            padding: const EdgeInsets.all(16),
-            child: ListView(
-              shrinkWrap: true,
-              children: [
-                Text('Esportes e atividades', style: Theme.of(ctx).textTheme.titleLarge),
-                const SizedBox(height: 12),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    for (final s in all)
-                      FilterChip(label: Text(s), selected: sel.contains(s), onSelected: (v) => setSt(() => v ? sel.add(s) : sel.remove(s))),
-                    ActionChip(
-                      avatar: const Icon(Icons.add),
-                      label: const Text('Outro'),
-                      onPressed: () async {
-                        final v = await promptText(ctx, title: 'Esporte ou atividade', maxLength: 40);
-                        if (v != null && !sel.contains(v)) setSt(() => sel.add(v));
-                      },
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Salvar')),
-              ],
-            ),
-          );
-        },
-      ),
-    );
-    if (saved != true) return;
-    p.sports = sel;
-    await state.saveProfile(p);
   }
 }

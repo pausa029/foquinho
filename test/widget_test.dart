@@ -25,7 +25,7 @@ void main() {
     await tester.pumpWidget(FoquinhoApp(state: state));
     await tester.pumpAndSettle();
 
-    expect(find.text('Menos tela. Mais estudo e movimento.'), findsOneWidget);
+    expect(find.text('Menos tela. Mais estudo.'), findsOneWidget);
     expect(find.text('Pular tudo'), findsOneWidget);
 
     await tester.enterText(find.byType(TextField).first, 'Rafa');
@@ -34,14 +34,14 @@ void main() {
 
     expect(find.text('Oi, Rafa'), findsOneWidget);
     expect(find.text('Estudar agora'), findsOneWidget);
-    expect(find.text('Pausa ativa'), findsOneWidget);
+    expect(find.text('Pausa ativa'), findsNothing);
     expect(find.text('Ver plano'), findsOneWidget);
 
     // Na primeira vez, a Foquinha aparece com o tutorial.
     expect(find.text('Oi! Eu sou a Foquinha.'), findsOneWidget);
     await tester.tap(find.text('Próximo'));
     await tester.pumpAndSettle();
-    expect(find.text('2 de ${8}'), findsOneWidget);
+    expect(find.text('2 de ${7}'), findsOneWidget);
     await tester.tap(find.text('Pular'));
     await tester.pumpAndSettle();
     expect(find.text('Oi! Eu sou a Foquinha.'), findsNothing);

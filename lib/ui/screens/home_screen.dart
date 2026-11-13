@@ -11,7 +11,7 @@ import '../widgets/common.dart';
 import 'session_screen.dart';
 
 class HomeScreen extends StatelessWidget {
-  final ValueChanged<int> onGoTo; // troca de aba: 1 = Plano, 2 = Movimento
+  final ValueChanged<int> onGoTo; // troca de aba: 1 = Plano
   const HomeScreen({super.key, required this.onGoTo});
 
   @override
@@ -25,7 +25,6 @@ class HomeScreen extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
     final exams = state.upcomingExams(now);
     final studySugs = studySuggestions(d, now: now, limit: 2);
-    final moveSugs = moveSuggestions(d, limit: 1);
     final screenToday = d.screenLog[today];
 
     return Scaffold(
@@ -34,7 +33,7 @@ class HomeScreen extends StatelessWidget {
         padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
         children: [
           Text(
-            homeMessage(studyMin: st.studyMin, moveMin: st.moveMin, studyGoal: p.studyGoalMin, moveGoal: p.moveGoalMin),
+            studyHomeMessage(studyMin: st.studyMin, studyGoal: p.studyGoalMin),
             style: Theme.of(context).textTheme.titleMedium?.copyWith(color: cs.onSurfaceVariant),
           ),
           const SizedBox(height: 12),
@@ -46,9 +45,7 @@ class HomeScreen extends StatelessWidget {
             children: [
               Expanded(child: _QuickAction(icon: Icons.menu_book, label: 'Estudar agora', color: cs.primary, onTap: () => _startStudy(context))),
               const SizedBox(width: 8),
-              Expanded(child: _QuickAction(icon: Icons.directions_run, label: 'Pausa ativa', color: cs.tertiary, onTap: () => _startMove(context))),
-              const SizedBox(width: 8),
-              Expanded(child: _QuickAction(icon: Icons.checklist, label: 'Ver plano', color: cs.secondary, onTap: () => onGoTo(1))),
+              Expanded(child: _QuickAction(icon: Icons.calendar_month, label: 'Ver plano', color: cs.secondary, onTap: () => onGoTo(1))),
             ],
           ),
 
@@ -60,8 +57,6 @@ class HomeScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   GoalProgress(label: 'Estudo', done: st.studyMin, goal: p.studyGoalMin, color: cs.primary),
-                  const SizedBox(height: 14),
-                  GoalProgress(label: 'Atividade física', done: st.moveMin, goal: p.moveGoalMin, color: cs.tertiary),
                   if (st.sessions == 0) ...[
                     const SizedBox(height: 12),
                     Text('Os minutos aparecem aqui quando você conclui uma sessão no temporizador.', style: TextStyle(color: cs.onSurfaceVariant)),
@@ -158,12 +153,10 @@ class HomeScreen extends StatelessWidget {
             ),
 
           const SectionTitle('Sugestões para agora'),
-          if (studySugs.isEmpty && moveSugs.isEmpty)
-            const EmptyState(icon: Icons.lightbulb_outline, title: 'Ainda sem sugestões', text: 'Cadastre matérias, provas e esportes para receber ideias feitas para você.')
-          else ...[
+          if (studySugs.isEmpty)
+            const EmptyState(icon: Icons.lightbulb_outline, title: 'Ainda sem sugestões', text: 'Cadastre suas matérias e provas para receber ideias feitas para você.')
+          else
             for (final s in studySugs) SuggestionCard(s: s),
-            for (final s in moveSugs) SuggestionCard(s: s),
-          ],
 
           if (p.remindersOn && _inReminderWindow(p, now) && st.sessions == 0) ...[
             const SizedBox(height: 8),
@@ -172,7 +165,7 @@ class HomeScreen extends StatelessWidget {
               child: ListTile(
                 leading: Icon(Icons.notifications_none, color: cs.onSecondaryContainer),
                 title: Text('Lembrete gentil', style: TextStyle(color: cs.onSecondaryContainer, fontWeight: FontWeight.w600)),
-                subtitle: Text('Ainda não teve estudo nem movimento hoje. Que tal 10 minutos? Sem pressa.', style: TextStyle(color: cs.onSecondaryContainer)),
+                subtitle: Text('Ainda não teve estudo hoje. Que tal 10 minutos? Sem pressa.', style: TextStyle(color: cs.onSecondaryContainer)),
               ),
             ),
           ],
@@ -199,10 +192,6 @@ class HomeScreen extends StatelessWidget {
 
   void _startStudy(BuildContext context) {
     Navigator.of(context).push(MaterialPageRoute(builder: (_) => const SessionScreen(kind: SessionKind.estudo)));
-  }
-
-  void _startMove(BuildContext context) {
-    Navigator.of(context).push(MaterialPageRoute(builder: (_) => const SessionScreen(kind: SessionKind.exercicio)));
   }
 
   void _studyFor(BuildContext context, Exam e) {

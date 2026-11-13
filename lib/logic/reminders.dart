@@ -119,7 +119,7 @@ const List<String> kStretchTexts = [
   'Solte os punhos e as mãos. Olhe para longe por alguns segundos.',
 ];
 
-const kTipThemes = ['agua', 'estudo', 'alongar', 'compromisso', 'tela', 'movimento'];
+const kTipThemes = ['agua', 'estudo', 'alongar', 'compromisso', 'tela'];
 
 /// Ordem dos temas na rodada [round]. Muda a cada rodada (parece sorteio, mas é
 /// sempre igual para a mesma rodada) e nunca começa pelo tema que fechou a anterior:
@@ -170,7 +170,7 @@ List<List<String>> commitmentTips(AppData d, DateTime day) {
   return items;
 }
 
-/// Rodízio de avisos: água, estudo, alongar, compromisso, pausa de tela, movimento.
+/// Rodízio de avisos: água, estudo, alongar, compromisso e pausa de tela.
 /// Devolve [título, texto] para a posição [g], usando só o que foi cadastrado.
 /// Cada tema aparece uma vez por rodada; sem compromissos, esse tema fica de fora.
 List<String> rotatingTip(AppData d, DateTime now, int g, List<Suggestion> study, List<Suggestion> move, {DateTime? day}) {
@@ -230,7 +230,6 @@ List<PlannedNotice> planReminderNotices(AppData d, DateTime now, {int days = 7, 
   final winFrom = hmToMinutes(p.remindFrom);
   final winTo = hmToMinutes(p.remindTo);
   final studyAt = hmToMinutes(p.studyRemindAt);
-  final moveAt = hmToMinutes(p.moveRemindAt);
 
   void add(DateTime when, String title, String body) {
     if (!when.isAfter(now)) return;
@@ -240,7 +239,6 @@ List<PlannedNotice> planReminderNotices(AppData d, DateTime now, {int days = 7, 
 
   final st = dayStats(d, dayKey(now));
   final studySug = studySuggestions(d, now: now, limit: 1);
-  final moveSug = moveSuggestions(d, limit: 1);
 
   // Dias com sessão planejada já têm o aviso da própria sessão: sem "Hora de estudar" repetido.
   final plannedDays = <String>{
@@ -259,17 +257,10 @@ List<PlannedNotice> planReminderNotices(AppData d, DateTime now, {int days = 7, 
         studySug.isNotEmpty ? studySug.first.title : 'Que tal ${fmtMin(p.studyGoalMin)} de estudo hoje? Comece com 10 minutos.',
       );
     }
-    if (p.moveRemindOn && !(i == 0 && st.moveMin >= p.moveGoalMin)) {
-      add(
-        _at(day, moveAt),
-        'Hora de se mexer',
-        moveSug.isNotEmpty ? '${moveSug.first.title} (${moveSug.first.minutes} min).' : 'Uma pausa ativa de 10 minutos já ajuda.',
-      );
-    }
   }
 
   // Rodízio do dia: um aviso a cada N minutos, alternando água, estudo, alongar,
-  // compromisso, pausa de tela e movimento. Agendado para poucos dias (é renovado ao abrir o app).
+  // compromisso e pausa de tela. Agendado para poucos dias (é renovado ao abrir o app).
   final rot = <PlannedNotice>[];
   if (p.nudgeOn && winFrom < winTo && p.nudgeEveryMin >= 30) {
     final studyPool = studySuggestions(d, now: now, limit: 6);

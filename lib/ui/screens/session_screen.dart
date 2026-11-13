@@ -1,4 +1,4 @@
-// Temporizador de estudo (foco com intervalos) e de exercício / pausa ativa.
+// Temporizador de estudo (foco com intervalos).
 // O tempo é contado pelo relógio do aparelho, então continua certo mesmo
 // se a tela apagar ou o app ficar em segundo plano.
 
@@ -118,18 +118,6 @@ class _SessionScreenState extends State<SessionScreen> {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        if (widget.kind == null)
-          SegmentedButton<SessionKind>(
-            segments: const [
-              ButtonSegment(value: SessionKind.estudo, label: Text('Estudo'), icon: Icon(Icons.menu_book)),
-              ButtonSegment(value: SessionKind.exercicio, label: Text('Exercício'), icon: Icon(Icons.directions_run)),
-            ],
-            selected: {kind},
-            onSelectionChanged: (s) => setState(() {
-              kind = s.first;
-              minutes = kind == SessionKind.estudo ? 25 : 10;
-            }),
-          ),
         const SizedBox(height: 12),
         TextField(
           controller: title,

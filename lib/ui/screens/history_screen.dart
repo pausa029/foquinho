@@ -29,7 +29,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
     final todayKey = dayKey(now);
     final sessions = d.sessions.where((s) => s.day.compareTo(w.start) >= 0 && s.day.compareTo(dayKey(end)) <= 0).toList()
       ..sort((a, b) => b.startedAt.compareTo(a.startedAt));
-    final maxBar = [30, ...w.days.map((x) => x.studyMin), ...w.days.map((x) => x.moveMin)].reduce((a, b) => a > b ? a : b);
+    final maxBar = [30, ...w.days.map((x) => x.studyMin)].reduce((a, b) => a > b ? a : b);
 
     return Scaffold(
       appBar: AppBar(title: const Text('Histórico')),
@@ -61,7 +61,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         _line(Icons.menu_book, 'Estudo: ${fmtMin(w.studyMin)} em ${w.studyDays} ${w.studyDays == 1 ? 'dia' : 'dias'}'),
-                        _line(Icons.directions_run, 'Atividade física: ${fmtMin(w.moveMin)} em ${w.moveDays} ${w.moveDays == 1 ? 'dia' : 'dias'}'),
+                        if (w.moveMin > 0) _line(Icons.directions_run, 'Atividade física (registros antigos): ${fmtMin(w.moveMin)} em ${w.moveDays} ${w.moveDays == 1 ? 'dia' : 'dias'}'),
                         _line(Icons.phone_android, w.screenDays == 0 ? 'Tempo de tela: sem dados informados' : 'Tempo de tela: média de ${fmtMin(w.screenAvg!)} em ${w.screenDays} ${w.screenDays == 1 ? 'dia informado' : 'dias informados'} (registro manual)'),
                         if (w.bySubject.isNotEmpty) ...[
                           const SizedBox(height: 8),
@@ -103,8 +103,6 @@ class _HistoryScreenState extends State<HistoryScreen> {
                                           crossAxisAlignment: CrossAxisAlignment.end,
                                           children: [
                                             Expanded(child: _bar(w.days[i].studyMin, maxBar, cs.primary)),
-                                            const SizedBox(width: 2),
-                                            Expanded(child: _bar(w.days[i].moveMin, maxBar, cs.tertiary)),
                                           ],
                                         ),
                                       ),
@@ -124,8 +122,6 @@ class _HistoryScreenState extends State<HistoryScreen> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       _legend(cs.primary, 'estudo'),
-                      const SizedBox(width: 12),
-                      _legend(cs.tertiary, 'exercício'),
                       const SizedBox(width: 12),
                       Text('– sem dados', style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant)),
                     ],

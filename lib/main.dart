@@ -1,13 +1,15 @@
+import 'package:app_links/app_links.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'data/app_state.dart';
 import 'models/models.dart';
+import 'services/cloud.dart';
+import 'services/cloud_config.dart';
 import 'services/notifier.dart';
 import 'ui/tour.dart';
 import 'ui/screens/home_screen.dart';
 import 'ui/screens/history_screen.dart';
-import 'ui/screens/move_screen.dart';
 import 'ui/screens/onboarding_screen.dart';
 import 'ui/screens/plan_screen.dart';
 import 'ui/screens/settings_screen.dart';
@@ -15,9 +17,22 @@ import 'ui/widgets/common.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  final state = AppState(notifier: LocalNotifier());
-  state.load();
+  final state = AppState(notifier: LocalNotifier(), cloud: SupabaseCloud(url: kSupabaseUrl, key: kSupabaseKey));
+  state.load().then((_) => _listenLoginLinks(state));
   runApp(FoquinhoApp(state: state));
+}
+
+/// Volta do login com Google: o navegador abre foquinho://login-callback.
+void _listenLoginLinks(AppState state) {
+  try {
+    final links = AppLinks();
+    links.getInitialLink().then((u) {
+      if (u != null) state.cloudHandleLink(u);
+    }).catchError((_) {});
+    links.uriLinkStream.listen(state.cloudHandleLink, onError: (_) {});
+  } catch (_) {
+    // sem suporte a links neste aparelho: o login por e-mail continua funcionando
+  }
 }
 
 class FoquinhoApp extends StatelessWidget {
@@ -119,7 +134,6 @@ class _MainShellState extends State<MainShell> {
     final pages = [
       HomeScreen(onGoTo: (i) => setState(() => index = i)),
       const PlanScreen(),
-      const MoveScreen(),
       const HistoryScreen(),
       const SettingsScreen(),
     ];
@@ -139,7 +153,6 @@ class _MainShellState extends State<MainShell> {
         destinations: const [
           NavigationDestination(icon: Icon(Icons.home_outlined), selectedIcon: Icon(Icons.home), label: 'Início'),
           NavigationDestination(icon: Icon(Icons.menu_book_outlined), selectedIcon: Icon(Icons.menu_book), label: 'Plano'),
-          NavigationDestination(icon: Icon(Icons.directions_run_outlined), selectedIcon: Icon(Icons.directions_run), label: 'Movimento'),
           NavigationDestination(icon: Icon(Icons.bar_chart_outlined), selectedIcon: Icon(Icons.bar_chart), label: 'Histórico'),
           NavigationDestination(icon: Icon(Icons.settings_outlined), selectedIcon: Icon(Icons.settings), label: 'Ajustes'),
         ],

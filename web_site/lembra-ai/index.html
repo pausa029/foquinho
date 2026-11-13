@@ -1,0 +1,888 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}[hidden]{display:none!important}</style>
+</head>
+<body>
+<title>Lembra Aí</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&display=swap">
+<style>
+/* Layout: uma coluna de leitura (máx. 560px), barra azul no topo, duas abas grandes fixas embaixo.
+   Visual único e claro de propósito: alto contraste para pessoa idosa, igual em qualquer tema. */
+:root {
+  color-scheme: light;
+  --fundo: #fffdf7;
+  --papel: #ffffff;
+  --tinta: #111111;
+  --suave: #3a3a3a;
+  --azul: #0b3d91;
+  --azul-claro: #dde8fb;
+  --verde: #1b5e20;
+  --verde-claro: #dff3e0;
+  --vermelho: #b71c1c;
+  --amarelo: #ffe082;
+  --amarelo-borda: #b26a00;
+  --laranja: #d84315;
+  --borda: #5a5a5a;
+  --linha: #bdbdbd;
+  --texto: "Atkinson Hyperlegible", "Segoe UI", Roboto, Arial, sans-serif;
+  --escala: 1.15;
+}
+* { box-sizing: border-box }
+html, body { background: var(--fundo); color: var(--tinta) }
+body { font-family: var(--texto); font-size: calc(20px * var(--escala)); line-height: 1.4; -webkit-text-size-adjust: 100% }
+button, input, textarea { font: inherit; color: inherit }
+button { cursor: pointer }
+:focus-visible { outline: 4px solid var(--laranja); outline-offset: 2px }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 30; background: var(--azul) }
+
+.topo { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; background: var(--azul); color: #fff }
+.topo .in { max-width: 560px; margin: 0 auto; display: flex; align-items: center; gap: 12px; padding-block: 10px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)) }
+.marca { flex: 1; font-size: 1.3em; font-weight: 700; letter-spacing: .01em }
+.btn-ajustes { background: #fff; color: var(--azul); border: 0; border-radius: 12px; padding: 10px 14px; font-weight: 700; font-size: .9em; min-height: 52px }
+
+main { max-width: 560px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px;
+  padding-block: 16px calc(120px + env(safe-area-inset-bottom, 0px));
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)) }
+
+.abas { position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; background: var(--papel); border-top: 2px solid var(--borda);
+  padding-block: 8px calc(8px + env(safe-area-inset-bottom, 0px));
+  padding-left: max(8px, env(safe-area-inset-left, 0px)); padding-right: max(8px, env(safe-area-inset-right, 0px)) }
+.abas .in { max-width: 560px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 8px }
+
+.b { display: block; width: 100%; min-height: 64px; border-radius: 14px; border: 3px solid var(--azul); background: var(--azul); color: #fff;
+  font-weight: 700; font-size: 1.05em; padding: 10px 14px; text-align: center; line-height: 1.2 }
+.b.contorno { background: var(--papel); color: var(--azul) }
+.b.verde { background: var(--verde); border-color: var(--verde) }
+.b.vermelho { background: var(--vermelho); border-color: var(--vermelho) }
+.b.escuro { background: var(--tinta); border-color: var(--tinta) }
+.b.grande { min-height: 76px; font-size: 1.3em }
+.b.peq { font-size: .9em }
+.b:disabled { opacity: .45 }
+.grade { display: grid; grid-template-columns: 1fr 1fr; gap: 8px }
+.grade.tres { grid-template-columns: repeat(3, 1fr) }
+.grade.quatro { grid-template-columns: repeat(4, 1fr) }
+.linha { display: flex; gap: 8px; align-items: center }
+.linha > * { flex: 1; min-width: 0 }
+
+.bloco { background: var(--papel); border: 2px solid var(--borda); border-radius: 18px; padding: 16px; display: flex; flex-direction: column; gap: 12px }
+.bloco > h2 { margin: 0; font-size: 1.25em; color: var(--azul); line-height: 1.2; text-wrap: balance }
+.destaque { background: var(--azul-claro); border-radius: 12px; padding: 12px 14px; font-weight: 700 }
+.aviso { background: var(--amarelo); border: 3px solid var(--amarelo-borda); border-radius: 14px; padding: 14px; font-weight: 700; display: flex; flex-direction: column; gap: 10px }
+.msg { background: var(--verde-claro); border: 3px solid var(--verde); color: var(--verde); border-radius: 14px; padding: 14px; font-weight: 700; font-size: 1.05em }
+.suave { color: var(--suave) }
+h1 { margin: 0; font-size: 1.45em; line-height: 1.2; text-wrap: balance }
+.sep { height: 2px; background: var(--borda); border: 0; margin: 0 }
+p { margin: 0 }
+
+/* calendário */
+.mes { text-align: center; font-size: 1.35em; font-weight: 700; letter-spacing: .02em }
+.semana, .dias { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 3px }
+.semana div { text-align: center; font-weight: 700; color: var(--suave); font-size: .85em }
+.dia { min-height: 62px; border-radius: 10px; border: 1px solid var(--linha); background: var(--papel); display: flex; flex-direction: column;
+  align-items: center; justify-content: center; font-weight: 700; font-size: 1.05em; padding: 2px; font-variant-numeric: tabular-nums }
+.dia.tem { background: var(--azul-claro) }
+.dia.hoje { border: 4px solid var(--tinta) }
+.dia.sel { background: var(--azul); color: #fff }
+.dia .qtd { font-size: .7em; display: flex; align-items: center; gap: 3px }
+.dia .qtd::before { content: ""; width: 9px; height: 9px; border-radius: 50%; background: var(--laranja) }
+.dia.sel .qtd::before { background: #fff }
+.vazio { min-height: 62px }
+
+/* lista */
+.proximo { background: var(--azul); color: #fff; border-radius: 18px; padding: 18px; display: flex; flex-direction: column; gap: 4px; border: 0; text-align: left; width: 100% }
+.proximo .rot { font-weight: 700; font-size: .95em }
+.proximo .h { font-size: 2.5em; font-weight: 700; line-height: 1 }
+.proximo .t { font-size: 1.3em; font-weight: 700 }
+.proximo .f { font-size: 1.1em; font-weight: 700; color: var(--amarelo) }
+.item { display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; background: var(--papel); border: 3px solid var(--azul); border-radius: 16px; padding: 14px }
+.item .h { font-size: 1.9em; font-weight: 700; min-width: 4.2ch; font-variant-numeric: tabular-nums }
+.item .c { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; align-items: flex-start }
+.item .t { font-size: 1.15em; font-weight: 700; overflow-wrap: anywhere }
+.etq { border: 2px solid currentColor; border-radius: 8px; padding: 2px 10px; font-weight: 700; font-size: .85em }
+.st-PENDENTE { color: var(--azul); border-color: var(--azul) }
+.st-FEITO { color: var(--verde); border-color: var(--verde) }
+.st-NAO_RESPONDIDO { color: var(--vermelho); border-color: var(--vermelho) }
+.item.st-FEITO, .item.st-NAO_RESPONDIDO { color: inherit }
+
+/* formulário */
+label.rot { font-weight: 700 }
+input[type=text], input[type=tel], textarea { width: 100%; border: 3px solid var(--borda); border-radius: 12px; padding: 12px; font-size: 1.15em; background: var(--papel) }
+textarea { min-height: 3.2em; resize: vertical }
+.mm { display: grid; grid-template-columns: 72px 1fr 72px; gap: 10px; align-items: center }
+.mm .b { min-height: 72px; font-size: 1.7em; padding: 0 }
+.mm .v { text-align: center; font-size: 1.6em; font-weight: 700; font-variant-numeric: tabular-nums }
+.tirar { display: flex; align-items: center; gap: 10px }
+.tirar span { flex: 1; font-size: 1.25em; font-weight: 700 }
+.tirar .b { width: auto; min-width: 120px; flex: none }
+.salvar { position: sticky; bottom: calc(96px + env(safe-area-inset-bottom, 0px)); z-index: 10 }
+
+/* janelas */
+.fundo-modal { position: fixed; inset: 0; z-index: 40; background: rgba(0,0,0,.55); display: flex; align-items: center; justify-content: center;
+  padding: max(12px, env(safe-area-inset-top, 0px)) max(12px, env(safe-area-inset-right, 0px)) max(12px, env(safe-area-inset-bottom, 0px)) max(12px, env(safe-area-inset-left, 0px)) }
+.modal { background: var(--papel); border-radius: 20px; width: 100%; max-width: 520px; max-height: 100%; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 14px }
+.modal h2 { margin: 0; font-size: 1.35em; line-height: 1.2 }
+
+/* alarme */
+.alarme { position: fixed; inset: 0; z-index: 50; background: var(--fundo); overflow-y: auto;
+  padding-block: max(20px, env(safe-area-inset-top, 0px)) max(20px, env(safe-area-inset-bottom, 0px));
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)) }
+.alarme .in { max-width: 560px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px }
+.alarme .topo-al { font-size: 1.8em; font-weight: 700; color: var(--vermelho); line-height: 1.1 }
+.alarme .topo-al.antes { color: var(--azul) }
+.alarme .tit { font-size: 1.6em; font-weight: 700; line-height: 1.15 }
+.alarme .hr { font-size: 3.2em; font-weight: 700; line-height: 1 }
+@media (prefers-reduced-motion: no-preference) {
+  .alarme .topo-al { animation: pisca 1s steps(2, start) infinite }
+  @keyframes pisca { to { visibility: hidden } }
+}
+.rodape-nota { font-size: .8em; color: var(--suave) }
+</style>
+
+<header class="topo"><div class="in">
+  <div class="marca">🔔 Lembra Aí</div>
+  <button class="btn-ajustes" data-a="ajustes" id="btn-ajustes">⚙ Ajustes</button>
+</div></header>
+<main id="app" aria-live="polite"></main>
+<nav class="abas" aria-label="Abas"><div class="in">
+  <button class="b" id="aba-lista" data-a="aba-lista">📅 MEUS COMPROMISSOS</button>
+  <button class="b contorno" id="aba-agendar" data-a="aba-agendar">+ AGENDAR</button>
+</div></nav>
+<div id="modal"></div>
+<div id="alarme"></div>
+
+<script>
+'use strict';
+/* ===================== datas e textos ===================== */
+const MESES = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+const SEM = ['domingo','segunda-feira','terça-feira','quarta-feira','quinta-feira','sexta-feira','sábado'];
+const SEMC = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+const pad = n => String(n).padStart(2, '0');
+const chave = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const ler = k => { const [y, m, d] = k.split('-').map(Number); return new Date(y, m - 1, d); };
+const soma = (k, n) => { const d = ler(k); d.setDate(d.getDate() + n); return chave(d); };
+const BASE = '2000-01-01';
+const dias = (a, b) => Math.round((ler(b) - ler(a)) / 864e5);
+const idx = k => dias(BASE, k);
+const deIdx = i => soma(BASE, i);
+const hoje = () => chave(new Date());
+const agoraAbs = () => { const d = new Date(); return idx(chave(d)) * 1440 + d.getHours() * 60 + d.getMinutes(); };
+const abs = (k, m) => idx(k) * 1440 + m;
+const diaDe = t => deIdx(Math.floor(t / 1440));
+const minDe = t => ((t % 1440) + 1440) % 1440;
+const sem = k => ler(k).getDay();
+const cap = s => s ? s[0].toUpperCase() + s.slice(1) : s;
+const hora = m => { const h = Math.floor(m / 60), mm = m % 60; return mm ? `${h}h${pad(mm)}` : `${h}h`; };
+const dataCompleta = k => { const d = ler(k); return `${SEM[d.getDay()]}, ${d.getDate()} de ${MESES[d.getMonth()]} de ${d.getFullYear()}`; };
+const dataSemAno = k => { const d = ler(k); return `${SEM[d.getDay()]}, ${d.getDate()} de ${MESES[d.getMonth()]}`; };
+const dataSemSemana = k => { const d = ler(k); return `${d.getDate()} de ${MESES[d.getMonth()]} de ${d.getFullYear()}`; };
+const semCurta = k => SEM[sem(k)].split('-')[0];
+const juntar = l => l.length < 2 ? (l[0] || '') : l.slice(0, -1).join(', ') + ' e ' + l[l.length - 1];
+const plural = (n, a, b) => `${n} ${n === 1 ? a : b}`;
+function duracao(t) {
+  const d = Math.floor(t / 1440), h = Math.floor((t % 1440) / 60), m = t % 60, p = [];
+  if (d) p.push(plural(d, 'dia', 'dias'));
+  if (h) p.push(plural(h, 'hora', 'horas'));
+  if (m && !d) p.push(plural(m, 'minuto', 'minutos'));
+  return p.length ? juntar(p) : 'menos de 1 minuto';
+}
+const falta = t => t <= 0 ? 'É agora' : (duracao(t).startsWith('1 ') ? 'Falta ' : 'Faltam ') + duracao(t);
+const intervaloTxt = m => m % 60 === 0 ? `de ${m / 60} em ${m / 60} ${m === 60 ? 'hora' : 'horas'}` : m < 60 ? `de ${m} em ${m} minutos` : `de ${hora(m)} em ${hora(m)}`;
+const antesTxt = m => duracao(m) + ' antes';
+const vezesTxt = n => n === 1 ? '1 vez' : `${n} vezes`;
+function quando(k, h) {
+  const n = dias(h, k);
+  if (n === 0) return 'hoje';
+  if (n === 1) return 'amanhã';
+  if (n === 2) return 'depois de amanhã';
+  const prep = [0, 6].includes(sem(k)) ? 'no' : 'na';
+  return n <= 6 ? `${prep} ${SEM[sem(k)]}` : `${prep} ${SEM[sem(k)]}, dia ${ler(k).getDate()}`;
+}
+function paraQuando(k, h) {
+  const n = dias(h, k);
+  if (n === 0) return 'hoje'; if (n === 1) return 'amanhã'; if (n === 2) return 'depois de amanhã';
+  return ler(k).getFullYear() === ler(h).getFullYear() ? dataSemAno(k) : dataCompleta(k);
+}
+
+/* ===================== regras dos avisos (iguais às do app Android) ===================== */
+const valida = j => j.inicio >= 0 && j.fim <= 1439 && j.inicio < j.fim;
+const dentro = (j, m) => m >= j.inicio && m <= j.fim;
+const janelaDe = c => c.janela || P.janela;
+
+function horariosDoDia(f, j) {
+  if (!valida(j)) return [];
+  if (f.modo === 'INTERVALO') { const p = Math.max(15, f.intervalo), l = []; for (let t = j.inicio; t <= j.fim; t += p) l.push(t); return l; }
+  if (f.modo === 'VEZES') {
+    const n = Math.min(20, Math.max(1, f.vezes));
+    if (n === 1) return [j.inicio];
+    return [...new Set(Array.from({ length: n }, (_, i) => j.inicio + Math.round(i * (j.fim - j.inicio) / (n - 1))))];
+  }
+  return [...new Set(f.horarios.filter(h => dentro(j, h)))].sort((a, b) => a - b);
+}
+
+function ocorrencias(c, de, ate) {
+  const r = c.rep; let fim = ate;
+  if (r.tipo !== 'NAO' && r.ate && r.ate < fim) fim = r.ate;
+  if (fim < de || c.data > fim) return [];
+  const l = [];
+  const passo = n => { let d = c.data; if (de > d) { const x = dias(d, de); d = soma(d, Math.ceil(x / n) * n); } while (d <= fim) { l.push(d); d = soma(d, n); } };
+  if (r.tipo === 'NAO') { if (c.data >= de && c.data <= fim) l.push(c.data); }
+  else if (r.tipo === 'DIA') passo(1);
+  else if (r.tipo === 'SEMANA') passo(7);
+  else if (r.tipo === 'CADA') passo(Math.max(1, r.cada));
+  else if (r.tipo === 'DIAS') {
+    const ds = r.dias.length ? r.dias : [sem(c.data)];
+    let d = c.data > de ? c.data : de; while (d <= fim) { if (ds.includes(sem(d))) l.push(d); d = soma(d, 1); }
+  } else if (r.tipo === 'MES' || r.tipo === 'ANO') {
+    const o = ler(c.data);
+    for (let k = 0; ; k++) {
+      const meses = r.tipo === 'MES' ? k : k * 12;
+      const y = o.getFullYear() + Math.floor((o.getMonth() + meses) / 12), m = (o.getMonth() + meses) % 12;
+      const ult = new Date(y, m + 1, 0).getDate();
+      const d = chave(new Date(y, m, Math.min(o.getDate(), ult)));
+      if (d > fim) break; if (d >= de) l.push(d);
+    }
+  }
+  return l;
+}
+const acontece = (c, k) => ocorrencias(c, k, k).length > 0;
+
+function especiais(c, oc) {
+  const j = janelaDe(c), mom = abs(oc, c.hora), l = [];
+  [...new Set(c.antes)].filter(m => m > 0).sort((a, b) => b - a).forEach(m => l.push({ t: mom - m, tipo: 'ANTES', id: c.id, oc, min: m }));
+  if (c.naHora) l.push({ t: mom, tipo: 'NA_HORA', id: c.id, oc, min: 0 });
+  return l.filter(a => c.foraOk || dentro(j, minDe(a.t)));
+}
+
+function daOcorrencia(c, oc) {
+  const j = janelaDe(c), mom = abs(oc, c.hora), esp = especiais(c, oc);
+  const doDia = esp.filter(a => diaDe(a.t) === oc && a.t <= mom).map(a => a.t);
+  const corte = doDia.length ? Math.min(...doDia) : mom;
+  const hs = horariosDoDia(c.freq, j), rep = [];
+  for (let k = Math.min(30, Math.max(0, c.diasAntes)); k >= 0; k--) {
+    const d = soma(oc, -k);
+    for (const h of hs) {
+      const t = abs(d, h);
+      if (t >= corte) continue;
+      if (esp.some(a => Math.abs(a.t - t) < 15)) continue;
+      rep.push({ t, tipo: 'REPETIDO', id: c.id, oc, min: 0 });
+    }
+  }
+  return rep.concat(esp).sort((a, b) => a.t - b.t);
+}
+
+function avisosEntre(de, ate) {
+  const l = [], h0 = diaDe(de);
+  for (const c of A) {
+    for (const oc of ocorrencias(c, h0, soma(diaDe(ate), 31))) {
+      if (c.feitos.includes(oc)) continue;
+      for (const a of daOcorrencia(c, oc)) if (a.t > de && a.t <= ate) l.push(a);
+    }
+  }
+  if (P.bomDia && valida(P.janela)) {
+    for (let d = h0; d <= diaDe(ate); d = soma(d, 1)) {
+      const t = abs(d, P.janela.inicio);
+      if (t > de && t <= ate && A.some(c => !c.feitos.includes(d) && acontece(c, d))) l.push({ t, tipo: 'BOM_DIA', id: -1, oc: d, min: 0 });
+    }
+  }
+  return l.sort((a, b) => a.t - b.t);
+}
+
+const doDiaLista = k => A.filter(c => acontece(c, k)).sort((a, b) => a.hora - b.hora || a.titulo.localeCompare(b.titulo));
+function situacao(c, k) {
+  if (c.feitos.includes(k)) return 'FEITO';
+  return abs(k, c.hora) < agoraAbs() ? 'NAO_RESPONDIDO' : 'PENDENTE';
+}
+const SIT = { PENDENTE: 'Pendente', FEITO: 'Feito ✓', NAO_RESPONDIDO: 'Não respondido' };
+
+/* ===================== frases ===================== */
+function lembrete(itens, h) {
+  if (!itens.length) return '';
+  const o = itens.slice().sort((a, b) => a.dia.localeCompare(b.dia) || a.hora - b.hora);
+  if (o.length === 1) return `Lembrete: ${quando(o[0].dia, h)} você tem ${o[0].titulo} às ${hora(o[0].hora)}.`;
+  const g = {}; o.forEach(i => (g[i.dia] = g[i.dia] || []).push(i));
+  const partes = Object.keys(g).map(d => `${cap(quando(d, h))} você tem${g[d].length > 1 ? ':' : ''} ${juntar(g[d].map(i => `${i.titulo} às ${hora(i.hora)}`))}.`);
+  const s = partes.join(' ');
+  return 'Lembrete: ' + s[0].toLowerCase() + s.slice(1);
+}
+const msgAntes = (t, h, m) => `Atenção! ${falta(m)} para ${t} (${hora(h)}).`;
+const msgNaHora = (t, h) => `Hora do seu compromisso: ${t}, às ${hora(h)}.`;
+function bomDia(k) {
+  const l = doDiaLista(k).filter(c => !c.feitos.includes(k));
+  if (!l.length) return 'Bom dia!';
+  return `Bom dia! Hoje você tem ${l.length === 1 ? '1 compromisso' : l.length + ' compromissos'}: ${juntar(l.map(c => `${c.titulo} às ${hora(c.hora)}`))}.`;
+}
+function repeticaoTxt(c) {
+  const r = c.rep; let b;
+  if (r.tipo === 'NAO') return '';
+  if (r.tipo === 'DIA') b = 'Repete todo dia';
+  else if (r.tipo === 'SEMANA') b = 'Repete toda semana';
+  else if (r.tipo === 'MES') b = 'Repete todo mês';
+  else if (r.tipo === 'ANO') b = 'Repete todo ano';
+  else if (r.tipo === 'CADA') b = `Repete a cada ${r.cada} dias`;
+  else {
+    const ds = (r.dias.length ? r.dias : [sem(c.data)]).slice().sort((a, b) => ((a + 6) % 7) - ((b + 6) % 7));
+    b = 'Repete ' + juntar(ds.map(d => { const n = SEM[d].split('-')[0]; return (d === 0 || d === 6 ? 'aos ' : 'às ') + n + 's'; }));
+  }
+  return b + (r.ate ? `, até ${dataSemSemana(r.ate)}.` : ', para sempre.');
+}
+function comoAvisar(c) {
+  const j = janelaDe(c), ini = soma(c.data, -c.diasAntes);
+  const desde = c.diasAntes <= 0 ? 'Vou te avisar no próprio dia' : c.diasAntes <= 6 ? `Vou te avisar desde ${semCurta(ini)}` : `Vou te avisar desde ${ler(ini).getDate()} de ${MESES[ler(ini).getMonth()]}`;
+  const f = c.freq; let fr;
+  if (f.modo === 'INTERVALO') fr = `${intervaloTxt(Math.max(15, f.intervalo))}, das ${hora(j.inicio)} às ${hora(j.fim)}`;
+  else if (f.modo === 'VEZES') fr = `${vezesTxt(f.vezes)} por dia, das ${hora(j.inicio)} às ${hora(j.fim)}`;
+  else { const h = horariosDoDia(f, j); fr = h.length ? 'às ' + juntar(h.map(hora)) : 'sem avisos repetidos'; }
+  const esp = [...new Set(c.antes)].filter(m => m > 0).sort((a, b) => b - a).map(antesTxt).concat(c.naHora ? ['na hora'] : []);
+  const rep = repeticaoTxt(c);
+  return `${desde}, ${fr}${esp.length ? ', e também ' + juntar(esp) + '.' : '.'}${rep ? ' ' + rep : ''}`;
+}
+const resumo = c => `${c.titulo}, ${dataCompleta(c.data)}, às ${hora(c.hora)}. ${comoAvisar(c)}`;
+function previa(c) {
+  const av = daOcorrencia(c, c.data);
+  if (!av.length) return 'Nenhum aviso.';
+  const g = {}; av.forEach(a => (g[diaDe(a.t)] = g[diaDe(a.t)] || []).push(hora(minDe(a.t))));
+  return Object.keys(g).map(d => {
+    const hs = g[d], nome = cap(semCurta(d)) + (c.diasAntes > 6 ? ` (${ler(d).getDate()}/${ler(d).getMonth() + 1})` : '');
+    return `${nome}: ${hs.length > 6 ? hs.slice(0, 3).join(', ') + ' … ' + hs[hs.length - 1] + ` (${hs.length} avisos)` : hs.join(', ')}.`;
+  }).join(' ');
+}
+function comeco(c) {
+  if (c.diasAntes <= 0) return 'Vou avisar só no dia do compromisso.';
+  const d = soma(c.data, -c.diasAntes);
+  return `Vou começar a avisar ${[0, 6].includes(sem(d)) ? 'no' : 'na'} ${dataSemAno(d)}.`;
+}
+function ouvirDia(k) {
+  const l = doDiaLista(k), h = hoje(), cab = cap(k === h ? 'hoje, ' + dataSemAno(k) : dataSemAno(k));
+  if (!l.length) return `${cab}. Nenhum compromisso neste dia.`;
+  return `${cab}. ${l.length === 1 ? 'Você tem 1 compromisso.' : `Você tem ${l.length} compromissos.`} ` + l.map(c => `Às ${hora(c.hora)}, ${c.titulo}.${c.feitos.includes(k) ? ' Já feito.' : ''}`).join(' ');
+}
+function agendaSemana() {
+  let s = 'Minha agenda dos próximos 7 dias (Lembra Aí):\n', algum = false;
+  for (let i = 0; i < 7; i++) {
+    const d = soma(hoje(), i), l = doDiaLista(d); if (!l.length) continue; algum = true;
+    s += `\n${cap(dataSemAno(d))}:\n` + l.map(c => `• ${hora(c.hora)} — ${c.titulo}${c.feitos.includes(d) ? ' (feito)' : ''}${c.obs ? ` (${c.obs})` : ''}${c.end ? ` — ${c.end}` : ''}`).join('\n') + '\n';
+  }
+  return (algum ? s : s + '\nNenhum compromisso marcado.').trim();
+}
+
+/* ===================== dados (ficam só neste navegador) ===================== */
+const GUARDA = 'lembra-ai-v1';
+const PADRAO = { janela: { inicio: 420, fim: 1320 }, diasAntes: 1, freq: { modo: 'INTERVALO', intervalo: 60, vezes: 3, horarios: [420, 720, 1080] },
+  naHora: true, antes: [60], estilo: 'TOCAR_E_VIBRAR', falar: true, letra: 1, bomDia: true };
+let P = JSON.parse(JSON.stringify(PADRAO)), A = [], proxId = 1, temExemplos = false;
+function guardar() { try { localStorage.setItem(GUARDA, JSON.stringify({ P, A, proxId, temExemplos })); } catch (e) {} }
+function carregar() {
+  try { const s = JSON.parse(localStorage.getItem(GUARDA) || 'null'); if (s && s.P) { P = Object.assign({}, PADRAO, s.P); A = s.A || []; proxId = s.proxId || 1; temExemplos = !!s.temExemplos; return true; } } catch (e) {}
+  return false;
+}
+function novoComp(data) {
+  return { id: 0, titulo: '', data, hora: 540, diasAntes: P.diasAntes, janela: null, freq: JSON.parse(JSON.stringify(P.freq)),
+    naHora: P.naHora, antes: P.antes.slice(), foraOk: true, estilo: P.estilo, falar: P.falar,
+    rep: { tipo: 'NAO', dias: [], cada: 2, ate: null }, obs: '', tel: '', end: '', feitos: [], exemplo: false };
+}
+function exemplos() {
+  const h = hoje(), agora = agoraAbs();
+  const a = Object.assign(novoComp(soma(h, 1)), { id: proxId++, titulo: 'Consulta com o doutor João', hora: 630, obs: 'Levar os exames', end: 'Rua das Flores, 120', exemplo: true });
+  const bHora = Math.min(1290, Math.max(minDe(agora) + 120, 900) - (Math.max(minDe(agora) + 120, 900) % 30));
+  const b = Object.assign(novoComp(h), { id: proxId++, titulo: 'Pagar a conta de luz no banco', hora: bHora, diasAntes: 0, exemplo: true });
+  const c = Object.assign(novoComp(soma(h, 3)), { id: proxId++, titulo: 'Missa', hora: 1140, diasAntes: 0, freq: { modo: 'VEZES', intervalo: 60, vezes: 2, horarios: [] },
+    rep: { tipo: 'SEMANA', dias: [], cada: 2, ate: null }, exemplo: true });
+  A = [a, b, c]; temExemplos = true;
+}
+
+/* ===================== estado da tela ===================== */
+const S = { tela: 'lista', dia: hoje(), mes: null, form: null, det: null, msg: null, msgAte: 0, ui: {} };
+S.mes = { y: ler(S.dia).getFullYear(), m: ler(S.dia).getMonth() };
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+
+/* ===================== voz e som ===================== */
+function falar(t, sempre) {
+  if (!sempre && !P.falar) return;
+  try { const s = window.speechSynthesis; if (!s) return; s.cancel(); const u = new SpeechSynthesisUtterance(t); u.lang = 'pt-BR'; u.rate = 0.92; s.speak(u); } catch (e) {}
+}
+let audio = null, toque = null;
+function bipe(vezes) {
+  try {
+    audio = audio || new (window.AudioContext || window.webkitAudioContext)();
+    const t0 = audio.currentTime;
+    for (let i = 0; i < vezes; i++) {
+      const o = audio.createOscillator(), g = audio.createGain();
+      o.type = 'square'; o.frequency.value = i % 2 ? 784 : 1046;
+      g.gain.setValueAtTime(0.0001, t0 + i * 0.35); g.gain.exponentialRampToValueAtTime(0.35, t0 + i * 0.35 + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t0 + i * 0.35 + 0.28);
+      o.connect(g).connect(audio.destination); o.start(t0 + i * 0.35); o.stop(t0 + i * 0.35 + 0.3);
+    }
+  } catch (e) {}
+  try { navigator.vibrate && navigator.vibrate([700, 400, 700]); } catch (e) {}
+}
+
+/* ===================== componentes ===================== */
+const B = (txt, a, cls = '', extra = '') => `<button class="b ${cls}" data-a="${a}" ${extra}>${txt}</button>`;
+const Op = (txt, marcado, a, extra = '') => B(marcado ? '✓ ' + txt : txt, a, marcado ? '' : 'contorno', `${extra} aria-pressed="${marcado}"`);
+const MM = (rot, val, a) => `<div><label class="rot">${rot}</label><div class="mm">${B('−', a + ':-1', '', `aria-label="Diminuir ${rot}"`)}<div class="v">${val}</div>${B('+', a + ':1', '', `aria-label="Aumentar ${rot}"`)}</div></div>`;
+const Bloco = (n, t, corpo) => `<section class="bloco"><h2>${n ? n + ' — ' : ''}${t}</h2>${corpo}</section>`;
+function SelHora(rot, m, a) {
+  const passo = S.ui['passo:' + a] || 5;
+  return `<div class="destaque">${rot}: ${hora(m)}</div>` + MM('Hora', `${Math.floor(m / 60)}h`, a + ':h') + MM('Minutos', pad(m % 60), a + ':m') +
+    `<div class="grade">${Op('De 5 em 5 min', passo === 5, 'passo:' + a + ':5')}${Op('De 1 em 1 min', passo === 1, 'passo:' + a + ':1')}</div>`;
+}
+function mexeHora(m, campo, d, a) {
+  const h = Math.floor(m / 60), mm = m % 60, passo = S.ui['passo:' + a] || 5;
+  return campo === 'h' ? ((h + d + 24) % 24) * 60 + mm : h * 60 + (((mm + d * passo) % 60) + 60) % 60;
+}
+function Calendario(sel, cont, pre) {
+  const { y, m } = S[pre + 'Mes'] || S.mes;
+  const prim = new Date(y, m, 1).getDay(), ult = new Date(y, m + 1, 0).getDate(), h = hoje();
+  let g = '';
+  for (let i = 0; i < prim; i++) g += '<div class="vazio"></div>';
+  for (let d = 1; d <= ult; d++) {
+    const k = chave(new Date(y, m, d)), q = cont[k] || 0;
+    const desc = `${SEM[sem(k)]}, dia ${d}${k === h ? ', hoje' : ''}${q ? `, ${q === 1 ? '1 compromisso' : q + ' compromissos'}` : ''}`;
+    g += `<button class="dia${q ? ' tem' : ''}${k === h ? ' hoje' : ''}${k === sel ? ' sel' : ''}" data-a="${pre}dia:${k}" aria-label="${desc}">${d}${q ? `<span class="qtd">${q}</span>` : ''}</button>`;
+  }
+  return `<div class="mes">${MESES[m].toUpperCase()} DE ${y}</div>
+    <div class="grade">${B('◀ MÊS ANTERIOR', pre + 'mes:-1', 'peq')}${B('PRÓXIMO MÊS ▶', pre + 'mes:1', 'peq')}</div>
+    <div class="grade">${B('HOJE', pre + 'hoje', 'contorno peq')}${B('ESCOLHER MÊS', pre + 'escolhermes', 'contorno peq')}</div>
+    <div class="semana">${SEMC.map(s => `<div>${s}</div>`).join('')}</div><div class="dias">${g}</div>`;
+}
+function contagemMes(y, m) {
+  const de = chave(new Date(y, m, 1)), ate = chave(new Date(y, m + 1, 0)), c = {};
+  A.forEach(x => ocorrencias(x, de, ate).forEach(d => c[d] = (c[d] || 0) + 1));
+  return c;
+}
+
+/* ===================== telas ===================== */
+function telaLista() {
+  const h = hoje(), l = doDiaLista(S.dia), agora = agoraAbs();
+  let s = '';
+  if (S.msg) s += `<div class="msg" role="status">${esc(S.msg)}</div>`;
+  if (temExemplos) s += `<div class="aviso">Os compromissos marcados agora são exemplos, para você ver como fica.${B('APAGAR OS EXEMPLOS', 'apagarexemplos', 'escuro')}</div>`;
+  s += `<div class="aviso">Esta é a versão para o navegador: ela só avisa enquanto esta página estiver aberta. Para avisar com o celular bloqueado, use o app Android.</div>`;
+  s += Calendario(S.dia, contagemMes(S.mes.y, S.mes.m), '');
+  s += `<hr class="sep"><h1>${cap(dataCompleta(S.dia))}${S.dia === h ? ' (hoje)' : ''}</h1>`;
+  if (S.dia === h) {
+    const p = l.find(c => !c.feitos.includes(h) && abs(h, c.hora) >= agora);
+    if (p) s += `<button class="proximo" data-a="det:${p.id}:${h}"><span class="rot">PRÓXIMO COMPROMISSO</span><span class="h">${hora(p.hora)}</span><span class="t">${esc(p.titulo)}</span><span class="f">${falta(abs(h, p.hora) - agora)}</span></button>`;
+  }
+  if (!l.length) s += `<p class="suave">Nenhum compromisso neste dia.</p>`;
+  l.forEach(c => {
+    const st = situacao(c, S.dia);
+    s += `<button class="item st-${st}" data-a="det:${c.id}:${S.dia}" aria-label="${hora(c.hora)}, ${esc(c.titulo)}, ${SIT[st]}. Toque para ver os detalhes."><span class="h">${hora(c.hora)}</span><span class="c"><span class="t">${esc(c.titulo)}${c.exemplo ? ' <span class="suave">(exemplo)</span>' : ''}</span><span class="etq st-${st}">${SIT[st]}</span>${c.rep.tipo !== 'NAO' ? `<span class="suave">🔁 ${esc(repeticaoTxt(c).replace(/\.$/, ''))}</span>` : ''}</span><span aria-hidden="true">▶</span></button>`;
+  });
+  s += B('🔊 OUVIR OS COMPROMISSOS DESTE DIA', 'ouvir', 'verde') + B('+ AGENDAR NESTE DIA', 'agendardia');
+  return s;
+}
+
+function telaDetalhe() {
+  const { id, dia } = S.det, c = A.find(x => x.id === id);
+  if (!c) return B('◀ VOLTAR', 'voltar', 'contorno') + '<p>Este compromisso não existe mais.</p>';
+  const st = situacao(c, dia);
+  let s = B('◀ VOLTAR', 'voltar', 'contorno');
+  s += `<p class="suave"><b>${cap(dataCompleta(dia))}</b></p><div style="font-size:2.8em;font-weight:700;color:var(--azul);line-height:1">${hora(c.hora)}</div>`;
+  s += `<h1>${esc(c.titulo)}</h1><div><span class="etq st-${st}">${SIT[st]}</span></div>`;
+  if (st === 'PENDENTE' && dia === hoje()) s += `<p><b style="color:var(--azul)">${falta(abs(dia, c.hora) - agoraAbs())}</b></p>`;
+  if (c.obs) s += `<div class="destaque">Observação: ${esc(c.obs)}</div>`;
+  if (c.tel) s += `<p>Telefone: <b style="user-select:all">${esc(c.tel)}</b></p>`;
+  if (c.end) s += `<p>Endereço: ${esc(c.end)}</p>`;
+  s += Bloco('', 'Como vou avisar', `<p>${esc(comoAvisar(Object.assign({}, c, { data: dia })))}</p>`);
+  s += st === 'FEITO' ? B('DESFAZER "JÁ FIZ"', 'desfazer', 'contorno') : B('✓ JÁ FIZ', 'feito', 'verde grande');
+  s += B('✏ EDITAR', 'editar');
+  if (c.end) s += `<a class="b verde" style="text-decoration:none;display:flex;align-items:center;justify-content:center" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(c.end)}" target="_blank" rel="noopener">🗺 COMO CHEGAR</a>`;
+  s += B('🗑 APAGAR', 'apagar', 'vermelho');
+  return s;
+}
+
+function telaAgendar() {
+  const c = S.form, h = hoje(), j = janelaDe(c), u = S.ui;
+  let s = `<h1>${c.id ? 'Mudar compromisso' : 'Marcar compromisso'}</h1><p class="suave">Já vem tudo preenchido. Mude só o que quiser e toque em SALVAR.</p>`;
+  const rap = ['Consulta', 'Exame', 'Banco', 'Pagar conta', 'Família', 'Igreja', 'Outro'];
+  s += Bloco('1', 'O que é?', `<label class="rot" for="f-titulo">Nome do compromisso</label>
+    <textarea id="f-titulo" rows="2" placeholder="Ex.: Consulta com o doutor João" data-campo="titulo">${esc(c.titulo)}</textarea>
+    <div class="grade">${rap.map((t, i) => Op(t, c.titulo === t, 'rapido:' + i)).join('')}</div>`);
+
+  const ds = [['HOJE', h], ['AMANHÃ', soma(h, 1)], ['DEPOIS DE AMANHÃ', soma(h, 2)]];
+  s += Bloco('2', 'Que dia?', ds.map(([t, d]) => Op(t, c.data === d, 'data:' + d)).join('') + B('📅 ESCOLHER NO CALENDÁRIO', 'cal:data') +
+    `<div class="destaque">Dia escolhido: ${dataCompleta(c.data)}</div>`);
+
+  const hs = [7, 8, 9, 10, 11, 13, 14, 15, 16, 17];
+  s += Bloco('3', 'Que horas?', `<div class="grade tres">${hs.map(x => Op(x + 'h', c.hora === x * 60 && !u.outraHora, 'hora:' + x)).join('')}</div>` +
+    Op('OUTRO HORÁRIO', !!u.outraHora, 'outrahora') + (u.outraHora ? SelHora('Horário', c.hora, 'fhora') : '') + `<div class="destaque">Horário: ${hora(c.hora)}</div>`);
+
+  const ops = [['Só no dia', 0], ['1 dia antes', 1], ['2 dias antes', 2], ['3 dias antes', 3], ['1 semana antes', 7]];
+  const outroDA = u.outroDA ?? ![0, 1, 2, 3, 7].includes(c.diasAntes);
+  s += Bloco('4', 'A partir de quando avisar?', `<div class="grade">${ops.map(([t, n]) => Op(t, !outroDA && c.diasAntes === n, 'da:' + n)).join('')}${Op('OUTRO', outroDA, 'outroda')}</div>` +
+    (outroDA ? MM('Quantos dias antes', c.diasAntes === 1 ? '1 dia' : c.diasAntes + ' dias', 'mmda') + B('ESCOLHER NO CALENDÁRIO O DIA DE COMEÇAR', 'cal:inicio', 'contorno') : '') +
+    `<div class="destaque">${comeco(c)}</div>`);
+
+  s += Bloco('5', 'Em que horário do dia pode avisar?', `<div class="destaque">Das ${hora(j.inicio)} às ${hora(j.fim)}${c.janela ? ' (só para este compromisso)' : ''}</div>` +
+    (!u.mudarJanela ? B('MUDAR', 'mudarjanela', 'contorno') :
+      SelHora('Começar a avisar às', j.inicio, 'jini') + SelHora('Parar de avisar às', j.fim, 'jfim') +
+      (!valida(j) ? '<p style="color:var(--vermelho)"><b>O começo precisa ser antes do fim.</b></p>' : '') +
+      B(`VOLTAR AO PADRÃO (${hora(P.janela.inicio)} às ${hora(P.janela.fim)})`, 'janelapadrao', 'contorno')));
+
+  s += Bloco('6', 'Quantas vezes avisar por dia?', blocoFreq(c.freq, j, 'f') + `<label class="rot">Prévia dos avisos:</label><div class="destaque">${esc(previa(Object.assign({}, c, { titulo: c.titulo || 'compromisso' })))}</div>`);
+
+  s += Bloco('7', 'Avisos especiais antes do compromisso', `<p class="suave">Estes avisos aparecem em tela cheia, como alarme.</p><label class="rot">Avisar na hora do compromisso?</label>
+    <div class="grade">${Op('SIM', c.naHora, 'nahora:1')}${Op('NÃO', !c.naHora, 'nahora:0')}</div>` + blocoAntes(c.antes, 'f'));
+
+  const es = [['TOCAR_E_VIBRAR', 'Tocar e vibrar'], ['SO_VIBRAR', 'Só vibrar'], ['SO_TOCAR', 'Só tocar']];
+  s += Bloco('8', 'Como avisar?', es.map(([e, t]) => Op(t, c.estilo === e, 'estilo:' + e)).join('') +
+    `<label class="rot">Falar o aviso em voz alta?</label><div class="grade">${Op('SIM', c.falar, 'falar:1')}${Op('NÃO', !c.falar, 'falar:0')}</div>`);
+
+  const rs = [['NAO', 'Não repete'], ['DIA', 'Todo dia'], ['SEMANA', 'Toda semana'], ['MES', 'Todo mês'], ['ANO', 'Todo ano']];
+  const outroR = c.rep.tipo === 'DIAS' || c.rep.tipo === 'CADA';
+  let r = `<div class="grade">${rs.map(([t, x]) => Op(x, c.rep.tipo === t, 'rep:' + t)).join('')}${Op('OUTRO', outroR, 'rep:DIAS')}</div>`;
+  if (outroR) {
+    r += `<hr class="sep"><div class="grade">${Op('Dias da semana', c.rep.tipo === 'DIAS', 'rep:DIAS')}${Op('A cada X dias', c.rep.tipo === 'CADA', 'rep:CADA')}</div>`;
+    if (c.rep.tipo === 'DIAS') {
+      const marc = c.rep.dias.length ? c.rep.dias : [sem(c.data)];
+      r += `<div class="grade quatro">${[1, 2, 3, 4, 5, 6, 0].map(d => Op(SEMC[d], marc.includes(d), 'sdia:' + d)).join('')}</div>`;
+    } else r += MM('Repetir a cada', c.rep.cada + ' dias', 'mmcada');
+  }
+  if (c.rep.tipo !== 'NAO') r += `<hr class="sep"><label class="rot">Até quando?</label>${Op('Para sempre', !c.rep.ate, 'repsempre')}${Op(c.rep.ate ? 'Até ' + dataSemSemana(c.rep.ate) : 'ESCOLHER DATA FINAL', !!c.rep.ate, 'cal:ate')}<div class="destaque">${repeticaoTxt(c)}</div>`;
+  s += Bloco('9', 'Repetir?', r);
+
+  const mais = u.mais ?? !!(c.obs || c.tel || c.end);
+  s += Bloco('10', 'Extras (se quiser)', B(mais ? 'MENOS OPÇÕES ▲' : 'MAIS OPÇÕES ▼', 'mais', 'contorno') + (mais ?
+    `<label class="rot" for="f-obs">Observação (ex.: Levar os exames)</label><textarea id="f-obs" data-campo="obs">${esc(c.obs)}</textarea>
+     <label class="rot" for="f-tel">Telefone</label><input type="tel" id="f-tel" data-campo="tel" value="${esc(c.tel)}">
+     <label class="rot" for="f-end">Endereço</label><input type="text" id="f-end" data-campo="end" value="${esc(c.end)}">` : ''));
+  s += `<div class="salvar">${B('💾 SALVAR', 'salvar', 'verde grande')}</div>`;
+  return s;
+}
+
+function blocoFreq(f, j, p) {
+  const u = S.ui, modos = [['INTERVALO', 'De quanto em quanto tempo'], ['VEZES', 'Quantas vezes no dia'], ['HORARIOS', 'Horários que eu escolho']];
+  let s = modos.map(([m, t]) => Op(t, f.modo === m, `${p}modo:${m}`)).join('') + '<hr class="sep">';
+  if (f.modo === 'INTERVALO') {
+    const ops = [30, 60, 120, 180, 240], outro = u[p + 'outroInt'] ?? !ops.includes(f.intervalo);
+    s += `<div class="grade">${ops.map(n => Op(n === 30 ? 'De 30 em 30 min' : cap(intervaloTxt(n)), !outro && f.intervalo === n, `${p}int:${n}`)).join('')}${Op('OUTRO', outro, p + 'outroint')}</div>`;
+    if (outro) s += MM('Horas', Math.floor(f.intervalo / 60), p + 'mmih') + MM('Minutos', f.intervalo % 60, p + 'mmim') + `<div class="destaque">Avisar ${intervaloTxt(Math.max(15, f.intervalo))} (mínimo 15 minutos)</div>`;
+  } else if (f.modo === 'VEZES') {
+    const ops = [1, 2, 3, 5], outro = u[p + 'outroVz'] ?? !ops.includes(f.vezes);
+    s += `<div class="grade">${ops.map(n => Op(vezesTxt(n), !outro && f.vezes === n, `${p}vz:${n}`)).join('')}${Op('OUTRO', outro, p + 'outrovz')}</div>`;
+    if (outro) s += MM('Quantas vezes por dia', vezesTxt(f.vezes), p + 'mmvz');
+    s += '<p class="suave">Os avisos ficam espalhados igualmente no horário de avisos.</p>';
+  } else {
+    s += f.horarios.length ? f.horarios.slice().sort((a, b) => a - b).map(h => `<div class="tirar"><span>${hora(h)}${dentro(j, h) ? '' : ' <small style="color:var(--vermelho)">fora do horário de avisos: não vai tocar</small>'}</span>${B('TIRAR', `${p}tirarh:${h}`, 'vermelho peq')}</div>`).join('') : '<p class="suave">Nenhum horário ainda.</p>';
+    if (u[p + 'novoH'] == null) s += B('+ ADICIONAR HORÁRIO', p + 'novoh');
+    else s += SelHora('Novo horário', u[p + 'novoH'], p + 'nh') + B('✓ ADICIONAR ESTE HORÁRIO', p + 'addh', 'verde') + B('CANCELAR', p + 'cancelah', 'contorno');
+  }
+  return s;
+}
+
+function blocoAntes(lista, p) {
+  const u = S.ui, o = [...new Set(lista)].sort((a, b) => b - a);
+  let s = '<label class="rot">Avisar antes:</label>' + (o.length ? o.map(m => `<div class="tirar"><span>${cap(antesTxt(m))}</span>${B('TIRAR', `${p}tirara:${m}`, 'vermelho peq')}</div>`).join('') : '<p class="suave">Nenhum aviso antes.</p>');
+  const prontos = [15, 30, 60, 120].filter(m => !lista.includes(m));
+  if (prontos.length) s += `<div class="grade">${prontos.map(m => B('+ ' + antesTxt(m).replace(' minutos', ' min'), `${p}adda:${m}`, 'contorno')).join('')}</div>`;
+  if (!u[p + 'outroA']) s += B('ESCOLHER OUTRO TEMPO', p + 'outroa', 'contorno');
+  else {
+    const t = u[p + 'outroA'];
+    s += MM('Horas antes', Math.floor(t / 60), p + 'mmah') + MM('Minutos antes', t % 60, p + 'mmam') +
+      B(`✓ ADICIONAR: ${antesTxt(t)}`, p + 'addoutroa', 'verde') + B('CANCELAR', p + 'cancelaa', 'contorno');
+  }
+  return s;
+}
+
+function telaAjustes() {
+  let s = B('◀ VOLTAR', 'voltar', 'contorno') + '<h1>Ajustes</h1>';
+  if (S.msg) s += `<div class="msg" role="status">${esc(S.msg)}</div>`;
+  s += Bloco('', 'Testar', '<p>Toque e espere 10 segundos com esta página aberta. O alarme de teste vai aparecer, tocar e falar.</p>' + B('🔔 TESTAR AVISO AGORA', 'testar', 'verde'));
+  s += Bloco('', 'Horário que o app pode avisar', `<div class="destaque">Das ${hora(P.janela.inicio)} às ${hora(P.janela.fim)}</div>` + SelHora('Começar às', P.janela.inicio, 'pjini') + SelHora('Parar às', P.janela.fim, 'pjfim') +
+    (!valida(P.janela) ? '<p style="color:var(--vermelho)"><b>O começo precisa ser antes do fim.</b></p>' : ''));
+  const ops = [['Só no dia', 0], ['1 dia antes', 1], ['2 dias antes', 2], ['3 dias antes', 3], ['1 semana antes', 7]];
+  s += Bloco('', 'Padrões para novos compromissos', `<label class="rot">A partir de quando avisar:</label><div class="grade">${ops.map(([t, n]) => Op(t, P.diasAntes === n, 'pda:' + n)).join('')}</div><hr class="sep">
+    <label class="rot">Quantas vezes avisar por dia:</label>` + blocoFreq(P.freq, P.janela, 'p') + `<hr class="sep"><label class="rot">Avisar na hora do compromisso?</label>
+    <div class="grade">${Op('SIM', P.naHora, 'pnahora:1')}${Op('NÃO', !P.naHora, 'pnahora:0')}</div>` + blocoAntes(P.antes, 'p'));
+  s += Bloco('', 'Tamanho da letra', ['Normal', 'Grande', 'Muito grande'].map((t, i) => Op(t, P.letra === i, 'letra:' + i)).join(''));
+  s += Bloco('', 'Voz', `<label class="rot">Falar os avisos em voz alta?</label><div class="grade">${Op('SIM', P.falar, 'pfalar:1')}${Op('NÃO', !P.falar, 'pfalar:0')}</div>
+    <label class="rot">Bom dia com os compromissos do dia? (no começo do horário de avisos)</label><div class="grade">${Op('SIM', P.bomDia, 'bomdia:1')}${Op('NÃO', !P.bomDia, 'bomdia:0')}</div>`);
+  const txt = agendaSemana();
+  s += Bloco('', 'Enviar minha agenda pelo WhatsApp', `<p class="suave">Os compromissos dos próximos 7 dias, em texto simples, para mandar para um filho.</p>
+    <a class="b verde" style="text-decoration:none;display:flex;align-items:center;justify-content:center" href="https://wa.me/?text=${encodeURIComponent(txt)}" target="_blank" rel="noopener">📲 ABRIR NO WHATSAPP</a>
+    ${B('📋 COPIAR O TEXTO', 'copiar', 'contorno')}<textarea id="txt-agenda" readonly rows="6">${esc(txt)}</textarea>`);
+  s += Bloco('', 'Limpar', B('🗑 APAGAR COMPROMISSOS ANTIGOS', 'antigos', 'vermelho'));
+  s += '<p class="rodape-nota">Nesta versão para navegador, a agenda fica guardada só neste navegador, neste aparelho.</p>';
+  return s;
+}
+
+/* ===================== janelas por cima ===================== */
+function abrirModal(html) { $('#modal').innerHTML = `<div class="fundo-modal" data-a="fecharfundo"><div class="modal" role="dialog" aria-modal="true">${html}</div></div>`; const b = $('#modal .b'); b && b.focus(); }
+function fecharModal() { $('#modal').innerHTML = ''; S.modal = null; }
+function pergunta(tit, txt, sim, nao, aSim, aNao = 'fechar', cor = 'verde') {
+  S.modal = 'pergunta';
+  abrirModal(`<h2>${tit}</h2>${txt ? `<p>${esc(txt)}</p>` : ''}${B(sim, aSim, cor)}${B(nao, aNao, 'contorno')}`);
+}
+function info(txt) { abrirModal(`<p><b>${esc(txt)}</b></p>${B('OK, ENTENDI', 'fechar')}`); }
+function modalCal(alvo, inicial) {
+  S.calAlvo = alvo; S.calMes = S.calMes || { y: ler(inicial).getFullYear(), m: ler(inicial).getMonth() };
+  const tit = { data: 'Escolha o dia do compromisso', inicio: 'Em que dia começo a avisar?', ate: 'Repetir até que dia?', '': '' }[alvo] || '';
+  S.modal = 'cal';
+  abrirModal(`<h2>${tit}</h2>` + Calendario(inicial, {}, 'cal') + B('FECHAR', 'fechar', 'contorno'));
+}
+function modalMes(pre) {
+  const atual = pre === 'cal' ? S.calMes : S.mes;
+  S.escolheAno = S.escolheAno ?? atual.y; S.escolhePre = pre;
+  abrirModal(`<h2>Escolha o mês</h2><div class="mm">${B('◀', 'ano:-1')}<div class="v">${S.escolheAno}</div>${B('▶', 'ano:1')}</div>
+    <div class="grade">${MESES.map((n, i) => Op(cap(n), S.escolheAno === atual.y && i === atual.m, 'escolhemes:' + i)).join('')}</div>${B('FECHAR', 'fechar', 'contorno')}`);
+}
+
+/* ===================== alarme (enquanto a página estiver aberta) ===================== */
+const fila = []; let alarmeAtual = null, alarmeTimer = null, bipeTimer = null;
+function tocarAlarme(i) { fila.push(i); if (!alarmeAtual) proximoAlarme(); }
+function proximoAlarme() {
+  clearTimeout(alarmeTimer); clearInterval(bipeTimer);
+  alarmeAtual = fila.shift() || null;
+  if (!alarmeAtual) { $('#alarme').innerHTML = ''; return; }
+  const i = alarmeAtual, ehAntes = i.topo !== 'HORA DO SEU COMPROMISSO' && i.topo !== 'AVISO DE TESTE';
+  $('#alarme').innerHTML = `<div class="alarme" role="alertdialog" aria-label="${esc(i.topo)}"><div class="in">
+    <div class="topo-al${ehAntes ? ' antes' : ''}">${esc(i.topo)}</div><div class="tit">${esc(i.titulo)}</div><div class="hr">${hora(i.hora)}</div>
+    <p style="font-size:1.15em">${esc(i.msg)}</p>${i.obs ? `<div class="destaque">Observação: ${esc(i.obs)}</div>` : ''}${i.end ? `<p>Endereço: ${esc(i.end)}</p>` : ''}
+    ${B('✓ JÁ FIZ / JÁ ESTOU INDO', 'alfeito', 'verde grande', 'style="min-height:96px"')}${B('⏰ LEMBRAR EM 10 MINUTOS', 'aladiar', 'grande', 'style="min-height:88px"')}
+    ${i.tel ? `<p style="font-size:1.2em">📞 Telefone: <b style="user-select:all">${esc(i.tel)}</b></p>` : ''}</div></div>`;
+  $('#alarme .b').focus();
+  if (i.falar) falar(i.msg, true);
+  const toca = () => { if (i.estilo !== 'SO_VIBRAR') bipe(4); else try { navigator.vibrate && navigator.vibrate([700, 400, 700]); } catch (e) {} };
+  setTimeout(toca, i.falar ? 4500 : 0);
+  bipeTimer = setInterval(toca, 5000);
+  alarmeTimer = setTimeout(() => {
+    if (alarmeAtual !== i) return;
+    if (i.id > 0 && i.tentativa < 3) extras.push(Object.assign({}, i, { quando: agoraAbs() + 10, tentativa: i.tentativa + 1 }));
+    mostrarMsg(`Você não respondeu ao aviso: ${i.titulo} (${hora(i.hora)}).${i.id > 0 && i.tentativa < 3 ? ' Vou avisar de novo em 10 minutos.' : ''}`, false);
+    proximoAlarme();
+  }, 120000);
+}
+const extras = [];
+function infoDe(c, oc, tipo, min, tentativa) {
+  const falt = abs(oc, c.hora) - agoraAbs(), ehAntes = tipo === 'ANTES' || (tipo !== 'NA_HORA' && falt > 0);
+  const m = tipo === 'ANTES' ? min : falt;
+  return { id: c.id, oc, min, tentativa, topo: ehAntes ? 'ATENÇÃO!' : 'HORA DO SEU COMPROMISSO', titulo: c.titulo, hora: c.hora,
+    msg: ehAntes ? msgAntes(c.titulo, c.hora, m) : msgNaHora(c.titulo, c.hora), obs: c.obs, end: c.end, tel: c.tel, estilo: c.estilo, falar: c.falar };
+}
+let ultimo = agoraAbs();
+let lembreteAtual = null;
+function verificar() {
+  const agora = agoraAbs();
+  if (agora < ultimo - 1) ultimo = agora; // relógio voltou
+  if (agora > ultimo) {
+    const av = avisosEntre(ultimo, agora); ultimo = agora;
+    const g = {}; av.forEach(a => (g[a.t] = g[a.t] || []).push(a));
+    Object.keys(g).sort((a, b) => a - b).forEach(t => {
+      const grupo = g[t], comuns = grupo.filter(a => a.tipo === 'REPETIDO' || a.tipo === 'BOM_DIA');
+      if (comuns.length) {
+        const d = diaDe(+t), itens = comuns.filter(a => a.tipo === 'REPETIDO').map(a => { const c = A.find(x => x.id === a.id); return c && { titulo: c.titulo, dia: a.oc, hora: c.hora }; }).filter(Boolean);
+        const bom = comuns.some(a => a.tipo === 'BOM_DIA');
+        const txt = bom ? bomDia(d) + (itens.filter(x => x.dia !== d).length ? ' ' + lembrete(itens.filter(x => x.dia !== d), d) : '') : lembrete(itens, d);
+        const envolvidos = comuns.map(a => A.find(x => x.id === a.id)).filter(Boolean);
+        mostrarLembrete(txt, bom ? P.falar : envolvidos.some(c => c.falar), envolvidos.some(c => c.estilo !== 'SO_VIBRAR') || bom, comuns.length === 1 && !bom ? comuns[0] : null);
+      }
+      grupo.filter(a => a.tipo === 'ANTES' || a.tipo === 'NA_HORA').forEach(a => { const c = A.find(x => x.id === a.id); c && tocarAlarme(infoDe(c, a.oc, a.tipo, a.min, 0)); });
+    });
+  }
+  for (let k = extras.length - 1; k >= 0; k--) {
+    const e = extras[k];
+    if (e.seg) continue;
+    if (e.quando <= agora) {
+      extras.splice(k, 1);
+      if (e.teste) { tocarAlarme(e); continue; }
+      const c = A.find(x => x.id === e.id);
+      if (c && !c.feitos.includes(e.oc)) tocarAlarme(infoDe(c, e.oc, 'EXTRA', e.min, e.tentativa));
+    }
+  }
+}
+function mostrarLembrete(txt, voz, som, aviso) {
+  lembreteAtual = aviso;
+  S.modal = 'lembrete';
+  abrirModal(`<h2>🔔 Lembrete</h2><p style="font-size:1.15em"><b>${esc(txt)}</b></p>${aviso ? B('✓ JÁ FIZ', 'lfeito', 'verde') : ''}${B('OK, ENTENDI', 'fechar')}`);
+  if (som) bipe(3);
+  if (voz) setTimeout(() => falar(txt, true), som ? 1200 : 0);
+}
+function mostrarMsg(t, voz = true) { S.msg = t; S.msgAte = Date.now() + 9000; if (voz) falar(t); render(); }
+
+/* ===================== desenho ===================== */
+function render() {
+  if (S.msg && Date.now() > S.msgAte) S.msg = null;
+  document.documentElement.style.setProperty('--escala', [1, 1.15, 1.3][P.letra] ?? 1.15);
+  const ag = S.tela === 'agendar';
+  $('#aba-lista').className = 'b' + (ag ? ' contorno' : ''); $('#aba-lista').textContent = (ag ? '' : '✓ ') + '📅 MEUS COMPROMISSOS';
+  $('#aba-agendar').className = 'b' + (ag ? '' : ' contorno'); $('#aba-agendar').textContent = (ag ? '✓ ' : '') + '+ AGENDAR';
+  $('#app').innerHTML = S.tela === 'lista' ? telaLista() : S.tela === 'detalhe' ? telaDetalhe() : S.tela === 'agendar' ? telaAgendar() : telaAjustes();
+}
+function ir(t) { S.tela = t; S.ui = {}; render(); window.scrollTo(0, 0); }
+function sairAgendar(destino) {
+  if (S.tela === 'agendar' && S.form && S.form.titulo.trim()) { S.destino = destino; pergunta('Sair sem salvar?', 'O compromisso que você estava marcando ainda não foi salvo.', 'SIM, SAIR', 'NÃO, CONTINUAR MARCANDO', 'sairsim', 'fechar', 'vermelho'); }
+  else { S.form = null; destino(); }
+}
+const mostrarDia = d => { S.dia = d; S.mes = { y: ler(d).getFullYear(), m: ler(d).getMonth() }; };
+
+/* ===================== ações ===================== */
+document.addEventListener('input', e => {
+  const c = e.target.dataset.campo; if (c && S.form) S.form[c] = e.target.value;
+});
+document.addEventListener('click', e => {
+  const el = e.target.closest('[data-a]'); if (!el) return;
+  const a = el.dataset.a;
+  if (a === 'fecharfundo') { if (e.target === el && S.modal !== 'lembrete') fecharModal(); return; }
+  try { audio = audio || new (window.AudioContext || window.webkitAudioContext)(); audio.state === 'suspended' && audio.resume(); } catch (er) {}
+  agir(a);
+});
+
+function agir(a) {
+  const [k, v, w] = a.split(':'), f = S.form, u = S.ui;
+  const salvaP = () => { guardar(); render(); };
+  // navegação
+  if (a === 'aba-lista') return sairAgendar(() => ir('lista'));
+  if (a === 'aba-agendar') { if (S.tela !== 'agendar') { if (!S.form) S.form = novoComp(S.dia >= hoje() ? S.dia : hoje()); ir('agendar'); } return; }
+  if (a === 'ajustes') return sairAgendar(() => ir('ajustes'));
+  if (a === 'voltar') return ir('lista');
+  if (a === 'fechar') { fecharModal(); if (S.calMes && S.modal !== 'cal') S.calMes = null; return; }
+  if (a === 'sairsim') { fecharModal(); S.form = null; return S.destino(); }
+  // calendário principal e o da janela
+  if (k === 'mes' || k === 'calmes') { const o = k === 'mes' ? S.mes : S.calMes, d = new Date(o.y, o.m + +v, 1); o.y = d.getFullYear(); o.m = d.getMonth(); return k === 'mes' ? render() : modalCal(S.calAlvo, calInicial()); }
+  if (k === 'hoje' || k === 'calhoje') { const h = hoje(); return k === 'hoje' ? (mostrarDia(h), render()) : escolherCal(h); }
+  if (k === 'dia') { S.dia = v; return render(); }
+  if (k === 'caldia') return escolherCal(v);
+  if (k === 'escolhermes' || k === 'calescolhermes') { if (k === 'escolhermes' && v === undefined) { S.escolheAno = null; return modalMes(''); } if (k === 'calescolhermes') { S.escolheAno = null; return modalMes('cal'); } }
+  if (k === 'ano') { S.escolheAno += +v; return modalMes(S.escolhePre); }
+  if (k === 'escolhemes') { const o = { y: S.escolheAno, m: +v }; S.escolheAno = null; if (S.escolhePre === 'cal') { S.calMes = o; return modalCal(S.calAlvo, calInicial()); } S.mes = o; fecharModal(); return render(); }
+  // lista e detalhe
+  if (k === 'det') { S.det = { id: +v, dia: w }; return ir('detalhe'); }
+  if (a === 'ouvir') return falar(ouvirDia(S.dia), true);
+  if (a === 'agendardia') { S.form = novoComp(S.dia >= hoje() ? S.dia : hoje()); return ir('agendar'); }
+  if (a === 'apagarexemplos') { A = A.filter(c => !c.exemplo); temExemplos = false; guardar(); return mostrarMsg('Pronto! Apaguei os exemplos.'); }
+  if (a === 'feito' || a === 'desfazer') {
+    const c = A.find(x => x.id === S.det.id); if (!c) return;
+    if (a === 'feito') { c.feitos.push(S.det.dia); guardar(); return mostrarMsg(`Muito bem! Marquei como feito: ${c.titulo}. Não vou mais avisar deste compromisso.`); }
+    c.feitos = c.feitos.filter(d => d !== S.det.dia); guardar(); return mostrarMsg(`Pronto! ${c.titulo} voltou a ficar pendente.`);
+  }
+  if (a === 'editar') { const c = A.find(x => x.id === S.det.id); S.form = JSON.parse(JSON.stringify(c)); return ir('agendar'); }
+  if (a === 'apagar') { const c = A.find(x => x.id === S.det.id); return pergunta('Tem certeza?', `Vou apagar "${c.titulo}"${c.rep.tipo !== 'NAO' ? ' e todas as repetições dele.' : '.'}`, 'SIM, APAGAR', 'NÃO', 'apagarsim', 'fechar', 'vermelho'); }
+  if (a === 'apagarsim') { const c = A.find(x => x.id === S.det.id); A = A.filter(x => x.id !== S.det.id); if (!A.some(x => x.exemplo)) temExemplos = false; guardar(); fecharModal(); S.tela = 'lista'; return mostrarMsg(`Pronto! Apaguei o compromisso ${c.titulo}.`); }
+  // formulário
+  if (f && S.tela === 'agendar') {
+    const rap = ['Consulta', 'Exame', 'Banco', 'Pagar conta', 'Família', 'Igreja', 'Outro'];
+    if (k === 'rapido') { f.titulo = rap[+v] === 'Outro' ? '' : rap[+v]; render(); if (rap[+v] === 'Outro') $('#f-titulo').focus(); return; }
+    if (k === 'data') { f.data = v; return render(); }
+    if (k === 'hora') { f.hora = +v * 60; u.outraHora = false; return render(); }
+    if (a === 'outrahora') { u.outraHora = !u.outraHora; return render(); }
+    if (k === 'fhora') { f.hora = mexeHora(f.hora, v, +w, 'fhora'); return render(); }
+    if (k === 'da') { f.diasAntes = +v; u.outroDA = false; return render(); }
+    if (a === 'outroda') { u.outroDA = true; return render(); }
+    if (k === 'mmda') { f.diasAntes = Math.min(30, Math.max(0, f.diasAntes + +(w ?? v))); return render(); }
+    if (a === 'mudarjanela') { u.mudarJanela = true; return render(); }
+    if (a === 'janelapadrao') { f.janela = null; u.mudarJanela = false; return render(); }
+    if (k === 'jini' || k === 'jfim') { const j = Object.assign({}, janelaDe(f)); if (k === 'jini') j.inicio = mexeHora(j.inicio, v, +w, k); else j.fim = mexeHora(j.fim, v, +w, k); f.janela = j; return render(); }
+    if (k === 'nahora') { f.naHora = v === '1'; return render(); }
+    if (k === 'estilo') { f.estilo = v; return render(); }
+    if (k === 'falar') { f.falar = v === '1'; return render(); }
+    if (k === 'rep') { f.rep.tipo = v; return render(); }
+    if (k === 'sdia') { const marc = f.rep.dias.length ? f.rep.dias.slice() : [sem(f.data)], d = +v; const n = marc.includes(d) ? marc.filter(x => x !== d) : marc.concat(d); f.rep.dias = n.length ? n : [d]; return render(); }
+    if (k === 'mmcada') { f.rep.cada = Math.min(90, Math.max(2, f.rep.cada + +(w ?? v))); return render(); }
+    if (a === 'repsempre') { f.rep.ate = null; return render(); }
+    if (a === 'mais') { u.mais = !(u.mais ?? !!(f.obs || f.tel || f.end)); return render(); }
+    if (k === 'cal') { S.calMes = null; return modalCal(v, v === 'data' ? f.data : v === 'inicio' ? soma(f.data, -f.diasAntes) : (f.rep.ate || soma(f.data, 30))); }
+    if (a === 'salvar') return salvar();
+  }
+  if (a === 'confirmar') { fecharModal(); const n = S.pendente; const ed = !!n.id; if (!n.id) n.id = proxId++; A = A.filter(x => x.id !== n.id).concat(n); guardar(); S.form = null; mostrarDia(n.data); S.tela = 'lista'; S.ui = {}; window.scrollTo(0, 0); return mostrarMsg(`Pronto! Compromisso ${ed ? 'alterado' : 'salvo'} para ${paraQuando(n.data, hoje())} às ${hora(n.hora)}.`); }
+  if (a === 'forasim' || a === 'foranao') { fecharModal(); S.pendente.foraOk = a === 'forasim'; return confirmar(); }
+  // frequência e avisos antes: formulário (f) ou padrões (p)
+  const alvo = k[0] === 'f' && f ? f : k[0] === 'p' ? P : null;
+  if (alvo && freqOuAntes(alvo, k.slice(1), v, w ?? v, k[0])) { if (alvo === P) guardar(); return render(); }
+  // ajustes
+  if (a === 'testar') { extras.push({ teste: true, quando: agoraAbs() + 0, seg: Date.now() + 10000, id: -1, topo: 'AVISO DE TESTE', titulo: 'Teste do Lembra Aí', hora: minDe(agoraAbs()), msg: 'Este é um aviso de teste. Se você está vendo e ouvindo, está tudo funcionando.', obs: '', end: '', tel: '', estilo: 'TOCAR_E_VIBRAR', falar: P.falar, tentativa: 3, oc: hoje(), min: 0 }); return mostrarMsg('Pronto! Em 10 segundos vai tocar o aviso de teste.'); }
+  if (k === 'pjini' || k === 'pjfim') { if (k === 'pjini') P.janela.inicio = mexeHora(P.janela.inicio, v, +w, k); else P.janela.fim = mexeHora(P.janela.fim, v, +w, k); return salvaP(); }
+  if (k === 'pda') { P.diasAntes = +v; return salvaP(); }
+  if (k === 'pnahora') { P.naHora = v === '1'; return salvaP(); }
+  if (k === 'letra') { P.letra = +v; return salvaP(); }
+  if (k === 'pfalar') { P.falar = v === '1'; return salvaP(); }
+  if (k === 'bomdia') { P.bomDia = v === '1'; return salvaP(); }
+  if (k === 'passo') { u['passo:' + v] = +w; return render(); }
+  if (a === 'copiar') { const t = agendaSemana(); const ok = () => mostrarMsg('Pronto! O texto da agenda foi copiado.', false); try { navigator.clipboard.writeText(t).then(ok, () => { $('#txt-agenda').select(); }); } catch (er) { $('#txt-agenda').select(); } return; }
+  if (a === 'antigos') return pergunta('Tem certeza?', 'Vou apagar os compromissos que já passaram e não repetem mais.', 'SIM, APAGAR', 'NÃO', 'antigos2', 'fechar', 'vermelho');
+  if (a === 'antigos2') return pergunta('Última confirmação', 'Apagar mesmo os compromissos antigos? Isso não tem volta.', 'SIM, APAGAR', 'NÃO', 'antigos3', 'fechar', 'vermelho');
+  if (a === 'antigos3') { const h = hoje(), antes = A.length; A = A.filter(c => c.rep.tipo === 'NAO' ? c.data >= h : !(c.rep.ate && c.rep.ate < h)); const n = antes - A.length; guardar(); fecharModal(); return mostrarMsg(n === 0 ? 'Não havia compromissos antigos.' : n === 1 ? 'Pronto! Apaguei 1 compromisso antigo.' : `Pronto! Apaguei ${n} compromissos antigos.`); }
+  // alarme e lembrete
+  if (a === 'alfeito' || a === 'aladiar') {
+    const i = alarmeAtual; if (!i) return;
+    if (a === 'alfeito' && i.id > 0) { const c = A.find(x => x.id === i.id); c && !c.feitos.includes(i.oc) && c.feitos.push(i.oc); guardar(); }
+    if (a === 'aladiar') extras.push(i.teste ? Object.assign({}, i, { quando: agoraAbs() + 10, seg: 0 }) : { id: i.id, oc: i.oc, min: i.min, tentativa: 0, quando: agoraAbs() + 10 });
+    try { speechSynthesis.cancel(); } catch (er) {}
+    proximoAlarme(); render(); return;
+  }
+  if (a === 'lfeito' && lembreteAtual) { const c = A.find(x => x.id === lembreteAtual.id); c && !c.feitos.includes(lembreteAtual.oc) && c.feitos.push(lembreteAtual.oc); guardar(); fecharModal(); return mostrarMsg(`Muito bem! Marquei como feito: ${c ? c.titulo : ''}.`); }
+}
+
+function freqOuAntes(o, k, v, w, p) {
+  const fr = o.freq, u = S.ui;
+  if (k === 'modo') { fr.modo = v; return true; }
+  if (k === 'int') { fr.intervalo = +v; u[p + 'outroInt'] = false; return true; }
+  if (k === 'outroint') { u[p + 'outroInt'] = true; return true; }
+  if (k === 'mmih') { fr.intervalo = Math.min(720, Math.max(15, fr.intervalo + 60 * +w)); return true; }
+  if (k === 'mmim') { const h = Math.floor(fr.intervalo / 60), m = fr.intervalo % 60; fr.intervalo = Math.min(720, Math.max(15, h * 60 + ((m + 5 * +w) % 60 + 60) % 60)); return true; }
+  if (k === 'vz') { fr.vezes = +v; u[p + 'outroVz'] = false; return true; }
+  if (k === 'outrovz') { u[p + 'outroVz'] = true; return true; }
+  if (k === 'mmvz') { fr.vezes = Math.min(20, Math.max(1, fr.vezes + +w)); return true; }
+  if (k === 'tirarh') { fr.horarios = fr.horarios.filter(h => h !== +v); return true; }
+  if (k === 'novoh') { u[p + 'novoH'] = 720; return true; }
+  if (k === 'nh') { u[p + 'novoH'] = mexeHora(u[p + 'novoH'], v, +w, p + 'nh'); return true; }
+  if (k === 'addh') { fr.horarios = [...new Set(fr.horarios.concat(u[p + 'novoH']))].sort((a, b) => a - b); u[p + 'novoH'] = null; return true; }
+  if (k === 'cancelah') { u[p + 'novoH'] = null; return true; }
+  if (k === 'tirara') { o.antes = o.antes.filter(m => m !== +v); return true; }
+  if (k === 'adda') { o.antes = [...new Set(o.antes.concat(+v))]; return true; }
+  if (k === 'outroa') { u[p + 'outroA'] = 45; return true; }
+  if (k === 'mmah') { const t = u[p + 'outroA']; u[p + 'outroA'] = Math.max(5, Math.min(72 * 60 + 55, t + 60 * +w)); return true; }
+  if (k === 'mmam') { const t = u[p + 'outroA'], h = Math.floor(t / 60), m = t % 60; u[p + 'outroA'] = Math.max(5, h * 60 + ((m + 5 * +w) % 60 + 60) % 60); return true; }
+  if (k === 'addoutroa') { o.antes = [...new Set(o.antes.concat(u[p + 'outroA']))]; u[p + 'outroA'] = null; return true; }
+  if (k === 'cancelaa') { u[p + 'outroA'] = null; return true; }
+  return false;
+}
+
+function calInicial() { const f = S.form; if (!f) return hoje(); return S.calAlvo === 'data' ? f.data : S.calAlvo === 'inicio' ? soma(f.data, -f.diasAntes) : (f.rep.ate || soma(f.data, 30)); }
+function escolherCal(d) {
+  const f = S.form; fecharModal(); S.calMes = null;
+  if (S.calAlvo === 'data') f.data = d;
+  else if (S.calAlvo === 'inicio') { const n = dias(d, f.data); if (n < 0) info('O dia de começar a avisar precisa ser antes do compromisso (ou no mesmo dia).'); else if (n > 30) info('Posso começar a avisar no máximo 30 dias antes.'); else { f.diasAntes = n; S.ui.outroDA = true; } }
+  else if (S.calAlvo === 'ate') f.rep.ate = d;
+  render();
+}
+
+function salvar() {
+  const n = JSON.parse(JSON.stringify(S.form)); n.titulo = n.titulo.trim();
+  const j = janelaDe(n);
+  const erro = !n.titulo ? 'Escreva o nome do compromisso (bloco 1).'
+    : !valida(j) ? 'O horário de avisos está errado: o começo precisa ser antes do fim (bloco 5).'
+    : n.rep.tipo === 'NAO' && abs(n.data, n.hora) <= agoraAbs() ? 'Esse dia e horário já passaram. Escolha outro dia (bloco 2) ou outro horário (bloco 3).'
+    : n.rep.ate && n.rep.ate < n.data ? 'A data final da repetição é antes do compromisso (bloco 9).' : null;
+  if (erro) { falar(erro); return info(erro); }
+  S.pendente = n;
+  const fora = especiais(Object.assign({}, n, { foraOk: true }), n.data).some(a => !dentro(j, minDe(a.t)));
+  if (fora) return pergunta('Fora do horário de avisos', 'Este horário é fora do horário de avisos. Quer que eu avise mesmo assim na hora do compromisso?', 'SIM, AVISAR MESMO ASSIM', 'NÃO', 'forasim', 'foranao');
+  n.foraOk = true; confirmar();
+}
+function confirmar() {
+  const n = S.pendente;
+  pergunta('Confira, por favor:', resumo(n), '✓ CONFIRMAR', 'MUDAR ALGUMA COISA', 'confirmar', 'fechar');
+  falar(resumo(n));
+}
+
+/* ===================== início ===================== */
+if (!carregar()) { exemplos(); guardar(); }
+render();
+setInterval(() => {
+  // teste: dispara pelos segundos
+  for (let k = extras.length - 1; k >= 0; k--) if (extras[k].teste && extras[k].seg && Date.now() >= extras[k].seg) { const e = extras.splice(k, 1)[0]; tocarAlarme(e); }
+  verificar();
+  if (S.msg && Date.now() > S.msgAte && !S.modal && S.tela !== 'agendar') render();
+}, 1000);
+setInterval(() => { if (S.tela === 'lista' && !S.modal && !alarmeAtual) render(); }, 30000);
+</script>
+
+</body>
+</html>

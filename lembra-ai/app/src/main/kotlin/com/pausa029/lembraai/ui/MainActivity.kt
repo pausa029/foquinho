@@ -36,6 +36,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.lifecycleScope
 import com.pausa029.lembraai.alarm.Agendador
+import com.pausa029.lembraai.data.Ajustes
+import com.pausa029.lembraai.domain.Compartilhar
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 
@@ -50,7 +52,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         runCatching { Agendador.agendarRenovacao(this) }
         lifecycleScope.launch { Agendador.reagendar(applicationContext) }
-        tratar(intent)
+        if (savedInstanceState == null) tratar(intent)
         setContent {
             val p by vm.prefs.collectAsState()
             LembraTema(p.escalaLetra) { App(vm) }
@@ -63,8 +65,28 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun tratar(i: Intent?) {
-        val d = i?.getLongExtra(EXTRA_DIA, Long.MIN_VALUE) ?: return
+        if (i == null) return
+        // compromisso enviado por outra pessoa (link, lembraai://, ou mensagem compartilhada com o app)
+        val textos = listOfNotNull(i.dataString, i.getStringExtra(Intent.EXTRA_TEXT))
+        val t = textos.firstOrNull { Compartilhar.temCodigo(it) || it.startsWith("lembraai:") || it.contains("/lembra-ai/c") }
+        if (t != null) {
+            vm.receberTexto(t)
+            return
+        }
+        val d = i.getLongExtra(EXTRA_DIA, Long.MIN_VALUE)
         if (d != Long.MIN_VALUE) vm.mostrarDia(LocalDate.ofEpochDay(d))
+    }
+
+    /** Ao abrir o app: tem um compromisso copiado? (só dá para ler a área de transferência com o app em foco) */
+    override fun onWindowFocusChanged(hasFocus: Boolean) {
+        super.onWindowFocusChanged(hasFocus)
+        if (!hasFocus || vm.recebido != null || vm.codigoCopiado != null) return
+        if (!Ajustes.atual(this).boasVindasFeita) return
+        val texto = lerAreaDeTransferencia(this) ?: return
+        val codigo = Compartilhar.extrair(texto) ?: return
+        if (codigo.takeLast(64) == Ajustes.codigoVisto(this)) return
+        Ajustes.marcarCodigoVisto(this, codigo)
+        vm.codigoCopiado = texto
     }
 
     companion object {
@@ -78,6 +100,15 @@ fun App(vm: LembraViewModel) {
     if (!p.boasVindasFeita) {
         Box(Modifier.fillMaxSize().background(Cores.fundo).statusBarsPadding().navigationBarsPadding()) {
             TelaBoasVindas { vm.salvarPrefs(p.copy(boasVindasFeita = true)) }
+        }
+        return
+    }
+
+    AvisosDeRecebimento(vm)
+    vm.recebido?.let { pacote ->
+        Box(Modifier.fillMaxSize().background(Cores.fundo).statusBarsPadding().navigationBarsPadding()) {
+            BackHandler { vm.recusarRecebido() }
+            TelaRecebido(vm, pacote)
         }
         return
     }
@@ -110,6 +141,7 @@ fun App(vm: LembraViewModel) {
                 Tela.Agendar -> TelaAgendar(vm)
                 is Tela.Detalhe -> TelaDetalhe(vm, t.id, t.dia)
                 Tela.Ajustes -> TelaAjustes(vm)
+                is Tela.Enviar -> TelaEnviar(vm, t.id)
             }
         }
         // as duas abas

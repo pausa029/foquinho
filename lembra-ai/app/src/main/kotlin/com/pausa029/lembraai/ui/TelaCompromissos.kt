@@ -61,6 +61,13 @@ fun TelaCompromissos(vm: LembraViewModel) {
             Mensagem(m)
             LaunchedEffect(m) { delay(9_000); if (vm.mensagem == m) vm.mensagem = null }
         }
+        vm.oferecerEnvio?.let { id ->
+            Bloco(null, "Quer enviar para alguém?") {
+                Frase("Mande este compromisso pronto, com os avisos já configurados.", 20.sp)
+                Botao("📤 ENVIAR PARA OUTRA PESSOA", { vm.oferecerEnvio = null; vm.tela = Tela.Enviar(id) }, cor = Cores.verde)
+                BotaoContorno("NÃO, OBRIGADO", { vm.oferecerEnvio = null })
+            }
+        }
         AvisosDePermissao()
 
         Calendario(vm.mes, { vm.mes = it }, vm.dia, CalculoAvisos.contagemDoMes(lista, vm.mes), { vm.dia = it }, hoje)
@@ -189,6 +196,7 @@ fun TelaDetalhe(vm: LembraViewModel, id: Long, dia: LocalDate) {
         Text(Texto.hora(c.hora), fontSize = 56.sp, fontWeight = FontWeight.Bold, color = Cores.azul)
         Text(c.titulo, fontSize = 30.sp, fontWeight = FontWeight.Bold, color = Cores.texto, lineHeight = 36.sp)
         Etiqueta(Mensagens.situacao(s), corDaSituacao(s))
+        if (c.enviadoPor.isNotBlank()) Frase("📩 Enviado por ${c.enviadoPor}", 20.sp, Cores.suave)
         if (s == Situacao.PENDENTE && dia == vm.agora.toLocalDate()) Frase(Mensagens.faltaPara(c, dia, vm.agora), 22.sp, Cores.azul, negrito = true)
 
         if (c.observacao.isNotBlank()) Destaque("Observação: ${c.observacao}")
@@ -205,6 +213,7 @@ fun TelaDetalhe(vm: LembraViewModel, id: Long, dia: LocalDate) {
             Botao("✓ JÁ FIZ", { vm.feito(c, dia) }, cor = Cores.verde, tamanho = 26.sp, altura = 72)
         }
         Botao("✏ EDITAR", { vm.editar(c) })
+        Botao("📤 ENVIAR PARA OUTRA PESSOA", { vm.tela = Tela.Enviar(c.id) })
         if (c.telefone.isNotBlank()) Botao("📞 LIGAR", {
             Permissoes.abrir(ctx, Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + c.telefone.filter { it.isDigit() || it == '+' })))
         }, cor = Cores.verde)

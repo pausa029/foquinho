@@ -10,6 +10,7 @@ import com.pausa029.lembraai.alarm.Agendador
 import com.pausa029.lembraai.data.Agenda
 import com.pausa029.lembraai.data.Ajustes
 import com.pausa029.lembraai.data.Preferencias
+import com.pausa029.lembraai.domain.Compartilhar
 import com.pausa029.lembraai.domain.Compromisso
 import com.pausa029.lembraai.domain.Mensagens
 import kotlinx.coroutines.delay
@@ -26,6 +27,7 @@ sealed interface Tela {
     data object Agendar : Tela
     data class Detalhe(val id: Long, val dia: LocalDate) : Tela
     data object Ajustes : Tela
+    data class Enviar(val id: Long) : Tela
 }
 
 class LembraViewModel(app: Application) : AndroidViewModel(app) {
@@ -42,6 +44,14 @@ class LembraViewModel(app: Application) : AndroidViewModel(app) {
     var formulario by mutableStateOf<Compromisso?>(null)
     var mensagem by mutableStateOf<String?>(null)
     var agora by mutableStateOf(LocalDateTime.now())
+
+    /** Compromisso que chegou por link/QR/código e espera "SALVAR NA MINHA AGENDA". */
+    var recebido by mutableStateOf<Compartilhar.Pacote?>(null)
+    var erroRecebido by mutableStateOf<Compartilhar.Leitura?>(null)
+    /** Texto da área de transferência com um código, esperando a pessoa dizer se quer ver. */
+    var codigoCopiado by mutableStateOf<String?>(null)
+    /** Depois de salvar um compromisso novo: "Quer enviar para alguém?" */
+    var oferecerEnvio by mutableStateOf<Long?>(null)
 
     init {
         viewModelScope.launch {
@@ -78,11 +88,62 @@ class LembraViewModel(app: Application) : AndroidViewModel(app) {
 
     fun salvar(c: Compromisso) {
         viewModelScope.launch {
-            Agenda.salvar(ctx, c)
+            val id = Agenda.salvar(ctx, c)
             val txt = Mensagens.salvo(c, LocalDate.now(), editado = c.id != 0L)
             formulario = null
             mostrarDia(c.data)
+            oferecerEnvio = if (c.id == 0L && c.enviadoPor.isBlank()) id else null
             avisar(txt)
+        }
+    }
+
+    // ---------- receber compromisso ----------
+
+    fun receberTexto(texto: String?) {
+        Compartilhar.extrair(texto)?.let { Ajustes.marcarCodigoVisto(ctx, it) }
+        when (val l = Compartilhar.decodificar(texto)) {
+            is Compartilhar.Leitura.Ok -> {
+                recebido = l.pacote
+                erroRecebido = null
+                val c = l.pacote.compromisso
+                val de = if (l.pacote.enviadoPor.isNotBlank()) "${l.pacote.enviadoPor} enviou um compromisso" else "Você recebeu um compromisso"
+                Voz.falar(ctx, "$de: ${Mensagens.resumo(c, prefs.value.janela)} Para guardar, toque em salvar na minha agenda.")
+            }
+            Compartilhar.Leitura.Nenhum -> erroRecebido = Compartilhar.Leitura.Quebrado
+            else -> erroRecebido = l
+        }
+    }
+
+    fun salvarRecebido(c: Compromisso, existente: Compromisso?) {
+        viewModelScope.launch {
+            val n = c.copy(id = existente?.id ?: 0, feitos = emptySet())
+            Agenda.salvar(ctx, n)
+            Voz.parar()
+            recebido = null
+            formulario = null
+            oferecerEnvio = null
+            mostrarDia(n.data)
+            avisar(Mensagens.salvo(n, LocalDate.now(), editado = existente != null) + " Vou te lembrar.")
+        }
+    }
+
+    fun recusarRecebido() {
+        Voz.parar()
+        recebido = null
+    }
+
+    fun mudarRecebido(c: Compromisso, existente: Compromisso?) {
+        Voz.parar()
+        formulario = c.copy(id = existente?.id ?: 0, feitos = emptySet())
+        recebido = null
+        tela = Tela.Agendar
+    }
+
+    fun apagarDepoisDeEnviar(c: Compromisso) {
+        viewModelScope.launch {
+            Agenda.apagar(ctx, c.id)
+            tela = Tela.Compromissos
+            avisar("Pronto! Enviei e tirei da sua agenda: ${c.titulo}.", falar = false)
         }
     }
 

@@ -44,7 +44,49 @@ Se alguma for negada, aparece um **aviso amarelo** no topo de *MEUS COMPROMISSOS
 - **+ AGENDAR**: tudo já vem preenchido. Escolha o nome, o dia e a hora e toque em **SALVAR**. O app mostra um resumo para conferir, fala a confirmação e volta para o calendário no dia do compromisso.
 - **Tela de alarme**: aparece na hora do compromisso e 1 hora antes (ou nos avisos especiais que você escolher), com **✓ JÁ FIZ / JÁ ESTOU INDO** e **LEMBRAR EM 10 MINUTOS**. Toca por até 2 minutos. Se ninguém responder, avisa de novo em 10 minutos, até 3 vezes.
 
-## 4. Como testar
+## 4. Como mandar um compromisso para outra pessoa
+
+Serve para você marcar tudo no **seu** celular e mandar pronto para outra pessoa (por exemplo, seu pai). Não precisa de internet para guardar, de conta ou de servidor: o compromisso vai dentro do próprio link.
+
+**Antes, uma vez só:** em *⚙ Ajustes → Seu nome*, escreva seu nome (ex.: Luiz). Ele aparece para quem recebe.
+
+### Quem envia
+1. Marque o compromisso normalmente e toque em **SALVAR**.
+2. Na tela seguinte aparece **"Quer enviar para alguém?"**. Toque em **📤 ENVIAR PARA OUTRA PESSOA**.
+   (Ou abra qualquer compromisso e toque em **📤 ENVIAR PARA OUTRA PESSOA**.)
+3. Se o compromisso é só da outra pessoa, marque **SIM, APAGAR DA MINHA AGENDA**.
+4. Toque em **📲 ENVIAR PELO WHATSAPP**, escolha a pessoa e envie.
+   - Outras opções: **ENVIAR DE OUTRO JEITO** (SMS, Telegram…), **MOSTRAR QR CODE** (a pessoa aponta a câmera) e **COPIAR CÓDIGO**.
+
+### Quem recebe
+1. Toque no link da mensagem.
+2. O Lembra Aí abre com tudo preenchido e fala o resumo em voz alta.
+3. Toque em **✓ SALVAR NA MINHA AGENDA**. Pronto: os avisos ficam exatamente como foram configurados.
+
+Se o link abrir uma página no navegador em vez do app, toque em **ABRIR NO LEMBRA AÍ**. Se o app não estiver instalado, a página mostra o botão **BAIXAR O LEMBRA AÍ**.
+
+**Outros jeitos de receber:**
+- Copiar a mensagem inteira e abrir o Lembra Aí: ele pergunta *"Encontrei um compromisso copiado. Quer adicionar na sua agenda?"*.
+- Aba **+ AGENDAR → 📥 RECEBER COMPROMISSO → COLAR CÓDIGO** ou **LER QR CODE**.
+- No WhatsApp, segurar a mensagem → *Compartilhar* → **Lembra Aí**.
+
+**Casos especiais:** se chegar de novo o mesmo compromisso (corrigido), o app pergunta *"Você já tem este compromisso. Quer trocar pelo novo?"*. Se a data já passou, ele pergunta se quer salvar mesmo assim. Código quebrado mostra *"Não consegui ler este compromisso. Peça para enviarem de novo."*
+
+### Como funciona o link
+- `https://foquinho.com.br/lembra-ai/c/#LA1.xxxxx`. Tudo depois do `#` é o compromisso: JSON → Deflate → Base64 (seguro para link). O `#` não é enviado a nenhum servidor.
+- Vai junto: nome, dia, hora, a partir de quando avisar, horário de avisos, frequência, avisos especiais, como avisar, voz, repetição, observação, telefone, endereço e o nome de quem enviou. **Não** vai: feito/pendente, histórico, ajustes do app.
+- Limite de 2.000 caracteres: se a observação for grande demais, ela é cortada e o app avisa quem envia.
+- Também funciona `lembraai://c#LA1.xxxxx`.
+- Tudo que chega pelo link é conferido e limitado (tamanho dos textos, datas, horários, até 20 avisos por dia, intervalo mínimo de 15 minutos, até 30 dias antes). Telefone e endereço só viram botões depois de salvos.
+
+### Abrir o app direto (App Links)
+- O app declara `https://foquinho.com.br/lembra-ai/c/` com `autoVerify`, e o site publica `/.well-known/assetlinks.json` com a impressão digital SHA-256 da chave do APK:
+  `69:F1:2A:EF:4E:20:7D:E0:6A:49:43:32:73:0D:F7:0E:70:0E:7D:77:5D:26:2E:F3:2C:DE:33:EE:F0:E6:94:65`.
+- A página `/c/` e o `assetlinks.json` ficam na pasta `web_site/` do repositório foquinho e só vão ao ar quando chegam na `main`.
+- Se a verificação não acontecer (por exemplo, antes do site ser publicado), o link abre a página `/c/`, que tem o botão **ABRIR NO LEMBRA AÍ**. O fluxo continua funcionando.
+- Endereço fixo do APK mais recente: `https://github.com/pausa029/foquinho/releases/download/lembra-ai-ultimo/LembraAi.apk`.
+
+## 5. Como testar
 
 1. Abra **⚙ Ajustes → TESTAR AVISO AGORA**.
 2. Bloqueie o celular e espere 10 segundos: o alarme de teste deve aparecer em tela cheia, tocar, vibrar e falar.
@@ -52,7 +94,7 @@ Se alguma for negada, aparece um **aviso amarelo** no topo de *MEUS COMPROMISSOS
 
 ### Testes automáticos (feitos)
 
-Cálculo dos avisos, em `core/src/test` (rodam a cada envio no GitHub Actions). **25 de 25 passando.**
+Cálculo dos avisos, em `core/src/test` (rodam a cada envio no GitHub Actions). **32 de 32 passando.**
 
 | Teste | Resultado |
 |---|---|
@@ -74,6 +116,12 @@ Cálculo dos avisos, em `core/src/test` (rodam a cada envio no GitHub Actions). 
 | Bom dia com os compromissos do dia | ✅ |
 | Virada de mês e de ano | ✅ |
 | Frases (datas por extenso, "Falta 1 hora e 20 minutos", resumo ao salvar, agenda para WhatsApp) | ✅ |
+| Link: codificar → decodificar devolve o mesmo compromisso (3 modos de frequência, repetições, extras) | ✅ |
+| Link com acento, emoji e a mensagem inteira do WhatsApp | ✅ |
+| Observação longa é cortada para caber em 2.000 caracteres | ✅ |
+| Código corrompido, vazio ou de versão nova: erro amigável, sem travar | ✅ |
+| Valores fora dos limites chegam corrigidos | ✅ |
+| Alarmes calculados em quem recebe = alarmes em quem enviou | ✅ |
 
 ### Testes manuais (fazer no celular e anotar aqui)
 
@@ -87,8 +135,13 @@ Cálculo dos avisos, em `core/src/test` (rodam a cada envio no GitHub Actions). 
 | Em Não Perturbe | ⬜ a fazer |
 | Adiar 10 minutos | ⬜ a fazer |
 | Mudar a hora do celular | ⬜ a fazer |
+| Enviar pelo WhatsApp e abrir no outro celular com o app instalado | ⬜ a fazer |
+| Abrir o link num celular SEM o app (deve mostrar a página com botão de baixar) | ⬜ a fazer |
+| Ler o QR code | ⬜ a fazer |
+| Copiar a mensagem inteira e abrir o app (detecção automática) | ⬜ a fazer |
+| Atualizar o APK por cima da versão antiga sem perder a agenda | ⬜ a fazer |
 
-## 5. Como funciona por dentro
+## 6. Como funciona por dentro
 
 ```
 core/            regras puras em Kotlin (sem Android), com os testes
@@ -106,7 +159,7 @@ app/
 - O som do alarme sai pelo canal de **alarme** do Android: toca no silencioso e no modo vibrar. Na hora do alarme o volume de alarme vai para o nível escolhido em Ajustes e depois volta ao que era.
 - No dia do compromisso, os lembretes repetidos param no primeiro aviso especial do dia (é o que faz o exemplo da sexta terminar em 9h, 9h30 e 10h30).
 
-## 6. Compilar
+## 7. Compilar
 
 Sem instalar nada: cada envio para a `main` roda o GitHub Actions (`.github/workflows/build.yml`), que testa, compila e publica o APK em **Releases**.
 
@@ -129,7 +182,7 @@ export LEMBRA_KEYSTORE=$PWD/minha-chave.jks LEMBRA_KEYSTORE_SENHA=... LEMBRA_KEY
 
 Guarde essa chave e as senhas em lugar seguro e **nunca** as envie para o repositório. Sem elas não dá para atualizar o app depois.
 
-## 7. Limitações conhecidas
+## 8. Limitações conhecidas
 
 - Notificações não deixam o app escolher o tamanho da letra. O texto grande aparece na tela de alarme e dentro do app.
 - Em alguns celulares a tela cheia só aparece com o celular bloqueado. Com ele desbloqueado, o alarme chega como aviso no topo, com os botões **JÁ FIZ** e **LEMBRAR EM 10 MIN**.
@@ -139,7 +192,7 @@ Guarde essa chave e as senhas em lugar seguro e **nunca** as envie para o reposi
 - Editar um compromisso que repete muda todas as repetições. Não há edição de uma repetição só.
 - O compromisso que repete é apagado inteiro (todas as repetições).
 
-## 8. Melhorias futuras sugeridas (não feitas)
+## 9. Melhorias futuras sugeridas (não feitas)
 
 1. Widget na tela inicial com o próximo compromisso.
 2. Contato de familiar: avisar um filho por SMS/WhatsApp quando um alarme ficar "Não respondido".

@@ -58,6 +58,10 @@ data class Compromisso(
     val endereco: String = "",
     /** Ocorrências marcadas como "Já fiz". */
     val feitos: Set<LocalDate> = emptySet(),
+    /** Identificador usado quando o compromisso é enviado por link (detecta repetido/atualização). */
+    val codigoId: String = "",
+    /** Nome de quem enviou, quando o compromisso chegou por link. */
+    val enviadoPor: String = "",
 )
 
 enum class TipoAviso { REPETIDO, ANTES, NA_HORA, BOM_DIA }

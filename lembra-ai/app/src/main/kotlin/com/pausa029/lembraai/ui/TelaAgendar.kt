@@ -69,6 +69,7 @@ fun TelaAgendar(vm: LembraViewModel) {
     var erro by remember { mutableStateOf<String?>(null) }
     var perguntaForaJanela by remember { mutableStateOf<Compromisso?>(null) }
     var confirmar by remember { mutableStateOf<Compromisso?>(null) }
+    var receber by remember { mutableStateOf(false) }
 
     val ditar = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { r ->
         if (r.resultCode == Activity.RESULT_OK) {
@@ -88,6 +89,7 @@ fun TelaAgendar(vm: LembraViewModel) {
                 fontSize = 30.sp, fontWeight = FontWeight.Bold, color = Cores.texto,
             )
             Frase("Já vem tudo preenchido. Mude só o que quiser e toque em SALVAR.", 20.sp, Cores.suave)
+            if (c.id == 0L) BotaoContorno("📥 RECEBER COMPROMISSO (alguém me mandou)", { receber = true }, cor = Cores.verde)
 
             // 1 — O que é?
             Bloco("1", "O que é?") {
@@ -260,6 +262,7 @@ fun TelaAgendar(vm: LembraViewModel) {
     }
 
     erro?.let { Informacao(it) { erro = null } }
+    if (receber) ReceberCompromisso(vm) { receber = false }
 
     perguntaForaJanela?.let { n ->
         Pergunta(

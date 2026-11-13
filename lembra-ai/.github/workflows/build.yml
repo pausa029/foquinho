@@ -1,0 +1,67 @@
+# Lembra Aí: testa o cálculo dos avisos, compila o APK e publica em Releases.
+# Roda a cada envio na main (ou em "Run workflow" na aba Actions).
+name: Lembra Aí — APK
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "**"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: lembra-ai-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  apk:
+    name: Testar e compilar
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Testes do cálculo dos avisos
+        run: chmod +x gradlew && ./gradlew --no-daemon :core:test
+
+      - name: Compilar o APK
+        env:
+          VERSION_CODE: ${{ github.run_number }}
+        run: ./gradlew --no-daemon :app:assembleDebug
+
+      - name: Guardar relatório dos testes
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lembra-ai-testes
+          path: core/build/reports/tests/test/
+          if-no-files-found: ignore
+
+      - name: Guardar o APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: LembraAi-apk
+          path: app/build/outputs/apk/debug/app-debug.apk
+
+      - name: Publicar em Releases
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="v1.0.${{ github.run_number }}"
+          cp app/build/outputs/apk/debug/app-debug.apk LembraAi.apk
+          gh release create "$TAG" LembraAi.apk \
+            --repo "${{ github.repository }}" \
+            --target "${{ github.sha }}" \
+            --title "Lembra Aí 1.0.${{ github.run_number }}" \
+            --latest=false \
+            --notes "APK do Lembra Aí, pronto para instalar no Android 8 ou mais novo. Baixe o arquivo LembraAi.apk abaixo, abra no celular e toque em Instalar. Se pedir, permita instalar apps desta fonte."

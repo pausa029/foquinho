@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Privacidade · Foquinho</title>
+<link rel="icon" href="icons/favicon-64.png">
+<meta name="theme-color" content="#0F6E56">
+<style>
+:root { --bg: #f4f8f6; --card: #fff; --ink: #14241f; --muted: #51635d; --brand: #0f6e56; --line: #d5e2dc; color-scheme: light; }
+@media (prefers-color-scheme: dark) { :root { --bg: #0e1513; --card: #17211e; --ink: #e8f1ed; --muted: #a3b5ae; --brand: #5fd0ae; --line: #2a3a35; color-scheme: dark; } }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 17px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; padding: 24px max(16px, env(safe-area-inset-left)) 48px max(16px, env(safe-area-inset-right)); }
+main { max-width: 720px; margin: 0 auto; background: var(--card); border: 1px solid var(--line); border-radius: 20px; padding: 28px 24px; }
+h1 { font-size: 1.6em; margin: 0 0 4px; } h2 { font-size: 1.15em; margin: 28px 0 6px; }
+p, li { margin: 0 0 10px; } .muted { color: var(--muted); font-size: .92em; }
+a { color: var(--brand); }
+</style>
+</head>
+<body>
+<main>
+  <p><a href="./">← Voltar para o Foquinho</a></p>
+  <h1>Política de privacidade</h1>
+  <p class="muted">Foquinho · projeto escolar gratuito · atualizada em 13 de novembro de 2026</p>
+
+  <h2>Resumo</h2>
+  <p>O Foquinho funciona sem conta. Sem conta, tudo o que você registra fica só no seu aparelho. A conta é opcional e serve para guardar uma cópia dos seus dados e usar em outro celular. Nada é vendido, e não há anúncios.</p>
+
+  <h2>O que guardamos</h2>
+  <ul>
+    <li><strong>Sem conta:</strong> apelido, matérias, provas, tarefas, plano de estudo, sessões do temporizador e preferências ficam apenas no aparelho.</li>
+    <li><strong>Com conta (e-mail ou Google):</strong> guardamos o seu e-mail e uma cópia desses mesmos dados do app, para você recuperar depois. Ao entrar com Google, recebemos apenas o nome, o e-mail e a foto de perfil informados pelo Google; não acessamos Gmail, contatos, arquivos nem outros dados da sua conta Google.</li>
+  </ul>
+
+  <h2>Onde ficam e quem acessa</h2>
+  <p>A cópia fica no Supabase (servidor de banco de dados), enviada por conexão segura (HTTPS). As regras do banco permitem que cada conta leia e altere somente os próprios dados.</p>
+
+  <h2>O que não fazemos</h2>
+  <ul>
+    <li>Não vendemos nem compartilhamos seus dados com ninguém.</li>
+    <li>Não medimos seu tempo de tela nem bloqueamos outros apps. O tempo de tela só aparece se você mesmo informar.</li>
+    <li>Não usamos seus dados para publicidade.</li>
+  </ul>
+
+  <h2>Seus direitos</h2>
+  <p>Você pode sair da conta, sincronizar ou apagar a conta a qualquer momento no app, em Ajustes → Conta → “Apagar a conta e a cópia na nuvem”. Os dados do aparelho são apagados em Ajustes → Apagar, ou desinstalando o app.</p>
+
+  <h2>Contato</h2>
+  <p>Dúvidas sobre privacidade: abra uma mensagem na <a href="https://github.com/pausa029/foquinho/issues">página do projeto no GitHub</a>.</p>
+</main>
+</body>
+</html>

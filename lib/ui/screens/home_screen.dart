@@ -8,6 +8,7 @@ import '../../logic/streak.dart';
 import '../../logic/suggestions.dart';
 import '../../models/models.dart';
 import '../widgets/common.dart';
+import 'reviews_screen.dart';
 import 'session_screen.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -64,6 +65,8 @@ class HomeScreen extends StatelessWidget {
               ),
             ),
           ),
+
+          const ReviewsCard(),
 
           const SectionTitle('Próxima prova ou trabalho'),
           if (exams.isEmpty)

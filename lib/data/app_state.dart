@@ -244,6 +244,7 @@ class AppState extends ChangeNotifier {
     data.exams.removeWhere((e) => e.subjectId == id);
     data.tasks.removeWhere((t) => t.subjectId == id);
     data.planSessions.removeWhere((p) => p.subjectId == id);
+    data.reviews.removeWhere((r) => r.subjectId == id);
     await save();
   }
 
@@ -508,6 +509,7 @@ class AppState extends ChangeNotifier {
         note: note.trim(),
       );
       data.sessions.add(rec);
+      _reviewAfterStudy(rec.kind, rec.subjectId, rec.topic);
     }
     // Sessão vinda do planejamento: concluída se fez pelo menos 80% do previsto.
     if (a.planId != null && minutes >= 1) {
@@ -525,6 +527,82 @@ class AppState extends ChangeNotifier {
     await stopAlarmSound();
     await save();
     return rec;
+  }
+
+  // ---------- revisão espaçada ----------
+
+  String _todayKey() => dayKey(DateTime.now());
+  String _inDays(int n) {
+    final t = DateTime.now();
+    return dayKey(DateTime(t.year, t.month, t.day + n, 12));
+  }
+
+  /// Depois de um estudo: se o assunto tem revisão vencida, conta como revisão feita;
+  /// se ainda não tem revisão, agenda a 1ª para amanhã.
+  void _reviewAfterStudy(SessionKind kind, String? subjectId, String? topic) {
+    if (kind != SessionKind.estudo || subjectId == null) return;
+    final probe = Review(id: '', subjectId: subjectId, topic: topic, created: '', due: '');
+    final today = _todayKey();
+    for (final r in data.reviews) {
+      if (r.done || r.key != probe.key) continue;
+      if (r.due.compareTo(today) <= 0) _advanceReview(r);
+      return;
+    }
+    if (!data.reviewOn) return;
+    data.reviews.add(Review(id: newId(), subjectId: subjectId, topic: topic, created: today, due: _inDays(kReviewGaps[0])));
+  }
+
+  void _advanceReview(Review r) {
+    if (r.step >= kReviewGaps.length - 1) {
+      r.done = true;
+      r.due = _todayKey();
+    } else {
+      r.step++;
+      r.due = _inDays(kReviewGaps[r.step]);
+    }
+  }
+
+  /// Revisões que vencem hoje ou já venceram.
+  List<Review> get reviewsDue {
+    final today = _todayKey();
+    final l = data.reviews.where((r) => !r.done && r.due.compareTo(today) <= 0).toList()..sort((a, b) => a.due.compareTo(b.due));
+    return l;
+  }
+
+  List<Review> get reviewsUpcoming {
+    final today = _todayKey();
+    final l = data.reviews.where((r) => !r.done && r.due.compareTo(today) > 0).toList()..sort((a, b) => a.due.compareTo(b.due));
+    return l;
+  }
+
+  Future<void> completeReview(String id) async {
+    for (final r in data.reviews) {
+      if (r.id == id && !r.done) _advanceReview(r);
+    }
+    await save();
+  }
+
+  Future<void> postponeReview(String id) async {
+    for (final r in data.reviews) {
+      if (r.id == id && !r.done) r.due = _inDays(1);
+    }
+    await save();
+  }
+
+  Future<void> removeReview(String id) async {
+    data.reviews.removeWhere((r) => r.id == id);
+    await save();
+  }
+
+  Future<void> addReview(String subjectId, String? topic) async {
+    final t = (topic ?? '').trim();
+    data.reviews.add(Review(id: newId(), subjectId: subjectId, topic: t.isEmpty ? null : t, created: _todayKey(), due: _inDays(kReviewGaps[0])));
+    await save();
+  }
+
+  Future<void> setReviewOn(bool v) async {
+    data.reviewOn = v;
+    await save();
   }
 
   // ---------- planejamento de estudos ----------
@@ -576,6 +654,7 @@ class AppState extends ChangeNotifier {
           minutes: p.minutes,
           startedAt: (when.isAfter(n) ? n : when).millisecondsSinceEpoch,
         ));
+        _reviewAfterStudy(SessionKind.estudo, p.subjectId, p.topic);
       }
     }
     await save();

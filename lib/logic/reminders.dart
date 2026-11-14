@@ -193,8 +193,17 @@ List<String> rotatingTip(AppData d, DateTime now, int g, List<Suggestion> study,
   }
 }
 
+/// Revisões pendentes no dia de [when] (inclui as atrasadas).
+List<String> reviewsDueOn(AppData d, DateTime when) {
+  final k = dayKey(when);
+  return [
+    for (final r in d.reviews)
+      if (!r.done && r.due.compareTo(k) <= 0) '${d.subjectName(r.subjectId)}${r.topic == null ? '' : ' · ${r.topic}'}',
+  ];
+}
+
 /// Texto de um tema do rodízio; [idx] = quantas vezes o tema já apareceu.
-List<String> _themeTip(String theme, int idx, List<List<String>> items, List<Suggestion> study) {
+List<String> _themeTip(String theme, int idx, List<List<String>> items, List<Suggestion> study, List<String> reviews) {
   switch (theme) {
     case 'compromisso':
       return items[idx % items.length];
@@ -205,6 +214,7 @@ List<String> _themeTip(String theme, int idx, List<List<String>> items, List<Sug
     case 'estudo':
       return ['Que tal estudar um pouco?', study.isEmpty ? 'Dez minutos de estudo agora já contam.' : '${study[idx % study.length].title}.'];
     default:
+      if (reviews.isNotEmpty) return ['Hora de revisar', 'Revisão de hoje: ${reviews[idx % reviews.length]}. 15 minutos bastam.'];
       return ['Hora de revisar', kReviewTexts[idx % kReviewTexts.length]];
   }
 }
@@ -314,6 +324,14 @@ List<PlannedNotice> planReminderNotices(AppData d, DateTime now, {int days = 7, 
     put(evening, DateTime(dt.year, dt.month, dt.day - 1), '$kind amanhã', name);
     put(morning, DateTime(dt.year, dt.month, dt.day), '$kind hoje', name);
   }
+  // Revisões espaçadas: entram no aviso da manhã do dia em que vencem (atrasadas, hoje).
+  for (final r in d.reviews) {
+    if (r.done) continue;
+    final due = parseDayKey(r.due);
+    if (due == null) continue;
+    final day = due.isBefore(today) ? today : due;
+    put(morning, day, 'Revisão hoje', '${d.subjectName(r.subjectId)}${r.topic == null ? '' : ' · ${r.topic}'}');
+  }
   void digest(Map<String, List<List<String>>> m, int minutes, String manyTitle) {
     m.forEach((k, items) {
       final day = parseDayKey(k);
@@ -377,7 +395,7 @@ List<PlannedNotice> planReminderNotices(AppData d, DateTime now, {int days = 7, 
       used[theme] = idx + 1;
       recent.add(theme);
       k++;
-      final tip = _themeTip(theme, idx, items, studyPool);
+      final tip = _themeTip(theme, idx, items, studyPool, reviewsDueOn(d, when));
       out.add(PlannedNotice(id: 0, when: when, title: tip[0], body: tip[1], rotating: true, ttlMin: p.nudgeEveryMin));
     }
   }

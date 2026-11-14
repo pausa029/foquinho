@@ -8,6 +8,7 @@ import '../../models/models.dart';
 import '../widgets/common.dart';
 import '../widgets/foquinha.dart';
 import 'account_screen.dart';
+import 'reviews_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -41,6 +42,16 @@ class SettingsScreen extends StatelessWidget {
               ),
             ),
           ],
+          const SectionTitle('Estudo'),
+          Card(
+            child: ListTile(
+              leading: const Icon(Icons.event_repeat),
+              title: const Text('Revisões'),
+              subtitle: Text(state.data.reviewOn ? 'Revisão 1, 7 e 30 dias depois de cada estudo' : 'Desligadas'),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const ReviewsScreen())),
+            ),
+          ),
           const SectionTitle('Perfil'),
           Card(
             child: Column(

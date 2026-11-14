@@ -477,6 +477,46 @@ class Session {
   }
 }
 
+// ---------- revisão espaçada ----------
+// Depois de estudar um assunto, o app agenda revisões curtas: 1, 7 e 30 dias depois.
+const List<int> kReviewGaps = [1, 6, 23]; // dias entre uma etapa e outra (1, 7 e 30 dias após o estudo)
+const List<String> kReviewLabels = ['1ª revisão · 1 dia depois', '2ª revisão · 7 dias depois', '3ª revisão · 30 dias depois'];
+
+class Review {
+  String id;
+  String subjectId;
+  String? topic;
+  String created; // dia do estudo (AAAA-MM-DD)
+  int step; // 0, 1 ou 2 = qual revisão vem agora
+  String due; // dia em que a próxima revisão vence
+  bool done;
+
+  Review({required this.id, required this.subjectId, this.topic, required this.created, this.step = 0, required this.due, this.done = false});
+
+  String get key => '$subjectId|${(topic ?? '').trim().toLowerCase()}';
+  String get label => kReviewLabels[step.clamp(0, kReviewLabels.length - 1)];
+
+  Map<String, dynamic> toJson() => {'id': id, 'subjectId': subjectId, 'topic': topic, 'created': created, 'step': step, 'due': due, 'done': done};
+
+  static Review? fromJson(Map<String, dynamic> m) {
+    final id = readStr(m, 'id');
+    final sid = readStr(m, 'subjectId');
+    final due = readStr(m, 'due');
+    if (id.isEmpty || sid.isEmpty || parseDayKey(due) == null) return null;
+    final topic = readStr(m, 'topic');
+    final created = readStr(m, 'created');
+    return Review(
+      id: id,
+      subjectId: sid,
+      topic: topic.isEmpty ? null : topic,
+      created: parseDayKey(created) == null ? due : created,
+      step: readInt(m, 'step', 0, min: 0, max: 2),
+      due: due,
+      done: readBool(m, 'done', false),
+    );
+  }
+}
+
 // ---------- sessão em andamento (temporizador) ----------
 
 enum Phase { foco, intervalo }
@@ -592,6 +632,8 @@ class AppData {
   bool tourDone; // já viu o tutorial da Foquinha
   PlanSettings plan;
   List<PlanSession> planSessions;
+  List<Review> reviews;
+  bool reviewOn; // criar revisões depois de cada estudo
 
   AppData({
     this.profile,
@@ -608,6 +650,8 @@ class AppData {
     this.tourDone = false,
     PlanSettings? plan,
     List<PlanSession>? planSessions,
+    List<Review>? reviews,
+    this.reviewOn = true,
   })  : subjects = subjects ?? <Subject>[],
         exams = exams ?? <Exam>[],
         tasks = tasks ?? <StudyTask>[],
@@ -615,7 +659,8 @@ class AppData {
         sessions = sessions ?? <Session>[],
         screenLog = screenLog ?? <String, int>{},
         plan = plan ?? PlanSettings(),
-        planSessions = planSessions ?? <PlanSession>[];
+        planSessions = planSessions ?? <PlanSession>[],
+        reviews = reviews ?? <Review>[];
 
   Map<String, dynamic> toJson() => {
         'v': 1,
@@ -633,6 +678,8 @@ class AppData {
         'tourDone': tourDone,
         'plan': plan.toJson(),
         'planSessions': planSessions.map((e) => e.toJson()).toList(),
+        'reviews': reviews.map((e) => e.toJson()).toList(),
+        'reviewOn': reviewOn,
       };
 
   static AppData fromJson(Map<String, dynamic> m) {
@@ -674,6 +721,8 @@ class AppData {
       tourDone: readBool(m, 'tourDone', false),
       plan: planRaw is Map ? PlanSettings.fromJson(Map<String, dynamic>.from(planRaw)) : null,
       planSessions: planSessions,
+      reviews: readMapList(m, 'reviews').map(Review.fromJson).whereType<Review>().where((r) => subjectIds.contains(r.subjectId)).toList(),
+      reviewOn: readBool(m, 'reviewOn', true),
     );
   }
 

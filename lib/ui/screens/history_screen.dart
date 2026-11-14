@@ -55,14 +55,13 @@ class _HistoryScreenState extends State<HistoryScreen> {
           Card(
             child: Padding(
               padding: const EdgeInsets.all(16),
-              child: w.sessions == 0 && w.screenDays == 0
-                  ? Text('Sem dados nesta semana. Os resumos usam só sessões registradas e tempo de tela informado.', style: TextStyle(color: cs.onSurfaceVariant))
+              child: w.sessions == 0
+                  ? Text('Sem dados nesta semana. Os resumos usam as sessões registradas no temporizador.', style: TextStyle(color: cs.onSurfaceVariant))
                   : Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         _line(Icons.menu_book, 'Estudo: ${fmtMin(w.studyMin)} em ${w.studyDays} ${w.studyDays == 1 ? 'dia' : 'dias'}'),
                         if (w.moveMin > 0) _line(Icons.directions_run, 'Atividade física (registros antigos): ${fmtMin(w.moveMin)} em ${w.moveDays} ${w.moveDays == 1 ? 'dia' : 'dias'}'),
-                        _line(Icons.phone_android, w.screenDays == 0 ? 'Tempo de tela: sem dados informados' : 'Tempo de tela: média de ${fmtMin(w.screenAvg!)} em ${w.screenDays} ${w.screenDays == 1 ? 'dia informado' : 'dias informados'} (registro manual)'),
                         if (w.bySubject.isNotEmpty) ...[
                           const SizedBox(height: 8),
                           Text(
@@ -138,13 +137,6 @@ class _HistoryScreenState extends State<HistoryScreen> {
                     dense: true,
                     title: Text('${kWeekdayShort[i]} ${fmtDay(w.days[i].day)}${w.days[i].day == todayKey ? ' · hoje' : ''}'),
                     subtitle: Text(_dayLine(w.days[i], todayKey)),
-                    trailing: w.days[i].day.compareTo(todayKey) > 0
-                        ? null
-                        : IconButton(
-                            tooltip: 'Informar tempo de tela de ${fmtDay(w.days[i].day)}',
-                            icon: const Icon(Icons.edit_outlined),
-                            onPressed: () => _logScreen(context, w.days[i].day),
-                          ),
                   ),
               ],
             ),
@@ -182,7 +174,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
           const SizedBox(height: 12),
           OutlinedButton.icon(
             onPressed: () async {
-              final ok = await confirmDialog(context, title: 'Apagar todo o histórico?', text: 'Todas as sessões e os tempos de tela informados serão apagados. Matérias, provas e tarefas continuam. Não tem volta.', yes: 'Apagar histórico', danger: true);
+              final ok = await confirmDialog(context, title: 'Apagar todo o histórico?', text: 'Todas as sessões serão apagadas. Matérias, provas e tarefas continuam. Não tem volta.', yes: 'Apagar histórico', danger: true);
               if (ok) await state.clearHistory();
             },
             icon: const Icon(Icons.delete_outline),
@@ -199,7 +191,6 @@ class _HistoryScreenState extends State<HistoryScreen> {
     final parts = <String>[];
     if (s.studyMin > 0) parts.add('estudo ${fmtMin(s.studyMin)}');
     if (s.moveMin > 0) parts.add('exercício ${fmtMin(s.moveMin)}');
-    parts.add(s.screenMin == null ? 'tela: sem dados' : 'tela ${fmtMin(s.screenMin!)} (manual)');
     return parts.join(' · ');
   }
 
@@ -225,40 +216,5 @@ class _HistoryScreenState extends State<HistoryScreen> {
       padding: const EdgeInsets.symmetric(vertical: 3),
       child: Row(children: [Icon(i, size: 18), const SizedBox(width: 8), Expanded(child: Text(t))]),
     );
-  }
-
-  Future<void> _logScreen(BuildContext context, String day) async {
-    final state = AppScope.of(context);
-    final cur = state.data.screenLog[day];
-    final h = TextEditingController(text: cur == null ? '' : (cur ~/ 60).toString());
-    final m = TextEditingController(text: cur == null ? '' : (cur % 60).toString());
-    final r = await showDialog<int?>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text('Tempo de tela de ${fmtDay(day)}'),
-        content: Row(
-          children: [
-            Expanded(child: TextField(controller: h, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Horas'))),
-            const SizedBox(width: 8),
-            Expanded(child: TextField(controller: m, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Minutos'))),
-          ],
-        ),
-        actions: [
-          if (cur != null) TextButton(onPressed: () => Navigator.pop(ctx, -1), child: const Text('Apagar')),
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancelar')),
-          FilledButton(
-            onPressed: () {
-              final hh = int.tryParse(h.text.trim()) ?? 0;
-              final mm = int.tryParse(m.text.trim()) ?? 0;
-              if (hh < 0 || hh > 24 || mm < 0 || mm > 59 || (h.text.trim().isEmpty && m.text.trim().isEmpty)) return;
-              Navigator.pop(ctx, hh * 60 + mm);
-            },
-            child: const Text('Salvar'),
-          ),
-        ],
-      ),
-    );
-    if (r == null) return;
-    await state.setScreenMinutes(day, r < 0 ? null : r);
   }
 }

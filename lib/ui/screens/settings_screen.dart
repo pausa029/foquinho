@@ -78,22 +78,13 @@ class SettingsScreen extends StatelessWidget {
             ),
           ),
 
-          const SectionTitle('Metas diárias'),
+          const SectionTitle('Meta diária'),
           Card(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               child: Column(
                 children: [
                   _stepRow(context, 'Estudo', fmtMin(p.studyGoalMin), () => saveP((x) => x.studyGoalMin = (x.studyGoalMin - 15).clamp(15, 600).toInt()), () => saveP((x) => x.studyGoalMin = (x.studyGoalMin + 15).clamp(15, 600).toInt())),
-                  SwitchListTile(
-                    contentPadding: EdgeInsets.zero,
-                    title: const Text('Meta de tempo de tela'),
-                    subtitle: const Text('Registro manual: o app não mede o tempo sozinho.'),
-                    value: p.screenGoalMin != null,
-                    onChanged: (v) => saveP((x) => x.screenGoalMin = v ? 240 : null),
-                  ),
-                  if (p.screenGoalMin != null)
-                    _stepRow(context, 'Tempo de tela', fmtMin(p.screenGoalMin!), () => saveP((x) => x.screenGoalMin = (x.screenGoalMin! - 15).clamp(15, 1440).toInt()), () => saveP((x) => x.screenGoalMin = (x.screenGoalMin! + 15).clamp(15, 1440).toInt())),
                 ],
               ),
             ),
@@ -150,7 +141,7 @@ class SettingsScreen extends StatelessWidget {
                     if (p.studyRemindOn) _timeTile(context, 'Todos os dias às', p.studyRemindAt, (v) => saveP((x) => x.studyRemindAt = v)),
                     SwitchListTile(
                       title: const Text('Avisos ao longo do dia'),
-                      subtitle: const Text('Um por vez, alternando: estudar, prova ou tarefa chegando, beber água, alongar e pausa de tela.'),
+                      subtitle: const Text('Um por vez, alternando: estudar, revisar, prova ou tarefa chegando, beber água e alongar.'),
                       value: p.nudgeOn,
                       onChanged: (v) => saveP((x) => x.nudgeOn = v),
                     ),
@@ -178,7 +169,7 @@ class SettingsScreen extends StatelessWidget {
                   ],
                   const Padding(
                     padding: EdgeInsets.fromLTRB(16, 0, 16, 12),
-                    child: InfoNote('Os avisos são agendados no próprio aparelho, sem internet, e renovados cada vez que você abre o app (os do dia a dia valem por 3 dias; provas, tarefas e sessões, por 7). Eles chegam em horário fixo: o Foquinho não mede quanto tempo a tela ficou ligada. Cada aviso some quando chega o próximo, para não acumular. O período "não me incomodar" é respeitado.'),
+                    child: InfoNote('Os avisos são agendados no próprio aparelho, sem internet, e renovados cada vez que você abre o app (os do dia a dia valem por 3 dias; provas, tarefas e sessões, por 7). Eles chegam em horário fixo. Cada aviso some quando chega o próximo, para não acumular. O período "não me incomodar" é respeitado.'),
                   ),
                 ],
               ],
@@ -221,7 +212,7 @@ class SettingsScreen extends StatelessWidget {
             ),
           ),
 
-          const SectionTitle('Tempo de tela e permissões'),
+          const SectionTitle('Permissões'),
           Card(
             child: Padding(
               padding: const EdgeInsets.all(16),
@@ -230,10 +221,7 @@ class SettingsScreen extends StatelessWidget {
                 children: [
                   const Text('O que esta versão faz e não faz', style: TextStyle(fontWeight: FontWeight.w700)),
                   const SizedBox(height: 8),
-                  _bullet(context, Icons.check, 'Registro manual do tempo de tela, identificado como manual.'),
                   _bullet(context, Icons.check, 'Metas, temporizadores, sugestões e histórico funcionam sem nenhuma permissão.'),
-                  _bullet(context, Icons.close, 'Não lê o tempo de tela sozinho. No Android isso exige a permissão especial "Acesso a dados de uso"; no iPhone, as APIs de Tempo de Uso da Apple, que exigem autorização e aprovação especiais. Nenhuma das duas foi implementada.'),
-                  _bullet(context, Icons.close, 'Não bloqueia nem limita outros apps. Para isso, use Bem-estar digital (Android) ou Tempo de Uso (iPhone).'),
                   _bullet(context, state.notificationsSupported ? Icons.check : Icons.close, state.notificationsSupported ? 'Notificações e alarme do temporizador com o app fechado, se você ligar em "Notificações e alarme". É a única permissão que o app pede.' : 'Nesta versão (navegador) não há notificações com o app fechado; elas existem no aplicativo Android.'),
                 ],
               ),
@@ -283,7 +271,7 @@ class SettingsScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 12),
-          Center(child: Text('Foquinho · Menos tela. Mais estudo.', style: TextStyle(color: cs.onSurfaceVariant, fontSize: 12))),
+          Center(child: Text('Foquinho · Estude no seu ritmo.', style: TextStyle(color: cs.onSurfaceVariant, fontSize: 12))),
         ],
       ),
     );
@@ -298,7 +286,7 @@ class SettingsScreen extends StatelessWidget {
     final go = await confirmDialog(
       context,
       title: 'Ligar notificações?',
-      text: 'O Foquinho usa notificações para: tocar o alarme quando o temporizador termina, lembrar a hora de estudar e de se mexer, sugerir pausas de tela e avisar de tarefas e provas. Nada é enviado para a internet. Em seguida o celular vai pedir a sua permissão.',
+      text: 'O Foquinho usa notificações para: tocar o alarme quando o temporizador termina, lembrar a hora de estudar e avisar de tarefas e provas. Nada é enviado para a internet. Em seguida o celular vai pedir a sua permissão.',
       yes: 'Continuar',
     );
     if (!go) return;

@@ -20,7 +20,7 @@ class DayStats {
     required this.bySubject,
   });
 
-  bool get hasData => sessions > 0 || screenMin != null;
+  bool get hasData => sessions > 0;
 }
 
 class WeekStats {

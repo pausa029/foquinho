@@ -811,8 +811,15 @@ class AppState extends ChangeNotifier {
   /// Volta do navegador (foquinho://login-callback?code=...). Nunca lança exceção.
   Future<void> cloudHandleLink(Uri uri) async {
     final c = cloud;
-    if (c == null || uri.scheme != 'foquinho' || uri.host != 'login-callback') return;
-    final params = {...uri.queryParameters, ...Uri.splitQueryString(uri.fragment)};
+    if (c == null) return;
+    final fromApp = uri.scheme == 'foquinho' && uri.host == 'login-callback';
+    // Versão web: o Google volta para a própria página (https://.../web/?code=...).
+    final fromWeb = kIsWeb &&
+        (uri.scheme == 'https' || uri.scheme == 'http') &&
+        _pkceVerifier != null &&
+        (uri.queryParameters.containsKey('code') || uri.queryParameters.containsKey('error'));
+    if (!fromApp && !fromWeb) return;
+    final params = {...uri.queryParameters, ...(uri.fragment.contains('=') ? Uri.splitQueryString(uri.fragment) : const <String, String>{})};
     final code = params['code'];
     final err = params['error_description'] ?? params['error'];
     if (code == null || code.isEmpty) {

@@ -19,7 +19,7 @@ class PlannedNotice {
   /// true = o som repete até a pessoa parar (fim da sessão).
   final bool loop;
 
-  /// true = aviso do rodízio do dia (água, alongar, estudo, pausa de tela...).
+  /// true = aviso do rodízio do dia (água, alongar, estudo, revisão...).
   final bool rotating;
 
   /// Minutos até o aviso sumir sozinho da barra (0 = padrão do canal).
@@ -44,12 +44,12 @@ DateTime _at(DateTime day, int minutes) => DateTime(day.year, day.month, day.day
 const int kTimerIdBase = 100;
 const int kTimerIdCount = 30;
 
-const List<String> kNudgeTexts = [
-  'Se você está no celular há um tempo, levante, alongue o corpo e beba água.',
-  'Pausa de tela: olhe para longe por um minuto e respire fundo.',
-  'Que tal trocar 10 minutos de tela por uma caminhada curta?',
-  'Deixe o celular de lado um pouco. Seu plano de estudo está esperando.',
-  'Hora boa para uma pausa ativa de 5 minutos.',
+const List<String> kReviewTexts = [
+  'Releia por 5 minutos o resumo do que estudou ontem.',
+  'Tente explicar em voz alta, sem olhar, o último assunto que estudou.',
+  'Faça 3 questões rápidas de uma matéria difícil.',
+  'Revise as anotações da última aula antes que esfriem.',
+  'Escreva num papel 3 coisas que lembra do último estudo e confira.',
 ];
 
 /// Alarmes do temporizador em andamento: fim de cada fase e fim da sessão.
@@ -107,7 +107,7 @@ List<PlannedNotice> planTimerNotices(ActiveSession? a, int nowMs) {
   return out;
 }
 
-/// Lembretes dos próximos [days] dias: estudo, movimento, pausas de tela,
+/// Lembretes dos próximos [days] dias: estudo, revisão,
 /// tarefas com prazo e provas. Respeita o período "não me incomodar".
 const List<String> kWaterTexts = [
   'Um copo de água agora ajuda a manter o foco.',
@@ -119,7 +119,7 @@ const List<String> kStretchTexts = [
   'Solte os punhos e as mãos. Olhe para longe por alguns segundos.',
 ];
 
-const kTipThemes = ['agua', 'estudo', 'alongar', 'compromisso', 'tela'];
+const kTipThemes = ['agua', 'estudo', 'alongar', 'compromisso', 'revisar'];
 
 /// Ordem dos temas na rodada [round]. Muda a cada rodada (parece sorteio, mas é
 /// sempre igual para a mesma rodada) e nunca começa pelo tema que fechou a anterior:
@@ -170,7 +170,7 @@ List<List<String>> commitmentTips(AppData d, DateTime day) {
   return items;
 }
 
-/// Rodízio de avisos: água, estudo, alongar, compromisso e pausa de tela.
+/// Rodízio de avisos: água, estudo, alongar, compromisso e revisão.
 /// Devolve [título, texto] para a posição [g], usando só o que foi cadastrado.
 /// Cada tema aparece uma vez por rodada; sem compromissos, esse tema fica de fora.
 List<String> rotatingTip(AppData d, DateTime now, int g, List<Suggestion> study, List<Suggestion> move, {DateTime? day}) {
@@ -189,7 +189,7 @@ List<String> rotatingTip(AppData d, DateTime now, int g, List<Suggestion> study,
     case 'movimento':
       return ['Movimente-se', move.isEmpty ? 'Uma pausa ativa de 5 minutos faz bem.' : '${move[round % move.length].title} (${move[round % move.length].minutes} min).'];
     default:
-      return ['Pausa de tela', kNudgeTexts[round % kNudgeTexts.length]];
+      return ['Hora de revisar', kReviewTexts[round % kReviewTexts.length]];
   }
 }
 
@@ -260,7 +260,7 @@ List<PlannedNotice> planReminderNotices(AppData d, DateTime now, {int days = 7, 
   }
 
   // Rodízio do dia: um aviso a cada N minutos, alternando água, estudo, alongar,
-  // compromisso e pausa de tela. Agendado para poucos dias (é renovado ao abrir o app).
+  // compromisso e revisão. Agendado para poucos dias (é renovado ao abrir o app).
   final rot = <PlannedNotice>[];
   if (p.nudgeOn && winFrom < winTo && p.nudgeEveryMin >= 30) {
     final studyPool = studySuggestions(d, now: now, limit: 6);

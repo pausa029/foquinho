@@ -26,12 +26,21 @@ class _AgendaTabState extends State<AgendaTab> {
   PlanResult? last; // resultado da última geração (para mostrar o que não coube)
   final Set<String> prioritize = <String>{};
 
-  DateTime get rangeFrom => month ? DateTime(anchor.year, anchor.month, 1, 12) : weekStart(anchor);
-  DateTime get rangeTo => month ? DateTime(anchor.year, anchor.month + 1, 0, 12) : addDaysTo(weekStart(anchor), 6);
+  // Semana = 7 dias corridos a partir de hoje (ou do dia escolhido), nunca dias que já passaram.
+  DateTime get _today => dayOnly(DateTime.now());
+  DateTime get _weekFrom => anchor.isBefore(_today) ? _today : anchor;
+  DateTime get rangeFrom => month ? DateTime(anchor.year, anchor.month, 1, 12) : _weekFrom;
+  DateTime get rangeTo => month ? DateTime(anchor.year, anchor.month + 1, 0, 12) : addDaysTo(_weekFrom, 6);
+  bool get _canGoBack => month || _weekFrom.isAfter(_today);
 
   void _shift(int dir) {
     setState(() {
-      anchor = month ? DateTime(anchor.year, anchor.month + dir, 1, 12) : addDaysTo(anchor, 7 * dir);
+      if (month) {
+        anchor = DateTime(anchor.year, anchor.month + dir, 1, 12);
+      } else {
+        final a = addDaysTo(_weekFrom, 7 * dir);
+        anchor = a.isBefore(_today) ? _today : a;
+      }
       selDay = null;
       last = null;
     });
@@ -63,7 +72,7 @@ class _AgendaTabState extends State<AgendaTab> {
 
     if (r.sessions.isEmpty && leaving.isEmpty) {
       setState(() => last = r);
-      showSnack(context, r.slots == 0 ? 'Não há horários livres neste período. Confira a disponibilidade.' : 'Nada novo para encaixar neste período.');
+      showSnack(context, r.slots == 0 ? month ? 'Não há horários livres neste mês. Confira a disponibilidade.' : 'Não há horários livres nos próximos 7 dias. Confira a disponibilidade e o limite por dia.' : 'Nada novo para encaixar neste período.');
       return;
     }
     if (leaving.isNotEmpty) {
@@ -363,7 +372,7 @@ class _AgendaTabState extends State<AgendaTab> {
     final leftovers = last?.leftovers ?? const <PlanLeftover>[];
     final title = month
         ? '${const ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'][anchor.month - 1]} de ${anchor.year}'
-        : '${fmtDay(fromK)} a ${fmtDay(toK)}';
+        : (fromK == dayKey(now) ? 'Próximos 7 dias · ${fmtDay(fromK)} a ${fmtDay(toK)}' : '${fmtDay(fromK)} a ${fmtDay(toK)}');
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
@@ -379,6 +388,7 @@ class _AgendaTabState extends State<AgendaTab> {
                 selected: {month},
                 onSelectionChanged: (s) => setState(() {
                   month = s.first;
+                  if (!month) anchor = _today;
                   selDay = null;
                   last = null;
                 }),
@@ -410,7 +420,7 @@ class _AgendaTabState extends State<AgendaTab> {
         const SizedBox(height: 4),
         Row(
           children: [
-            IconButton(onPressed: () => _shift(-1), icon: const Icon(Icons.chevron_left), tooltip: month ? 'Mês anterior' : 'Semana anterior'),
+            IconButton(onPressed: _canGoBack ? () => _shift(-1) : null, icon: const Icon(Icons.chevron_left), tooltip: month ? 'Mês anterior' : 'Semana anterior'),
             Expanded(child: Text(title, textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.w700))),
             IconButton(onPressed: () => _shift(1), icon: const Icon(Icons.chevron_right), tooltip: month ? 'Próximo mês' : 'Próxima semana'),
           ],

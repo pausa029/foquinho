@@ -27,7 +27,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   final subjects = <String>[]; // nomes
   final hard = <String>{};
   int studyGoal = 60;
-  int? screenGoal;
   bool remindersOn = true;
   String remindFrom = '08:00';
   String remindTo = '21:00';
@@ -47,7 +46,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       nickname: name.isEmpty ? 'Estudante' : name,
       level: level,
       studyGoalMin: studyGoal,
-      screenGoalMin: screenGoal,
       remindersOn: remindersOn,
       remindFrom: remindFrom,
       remindTo: remindTo,
@@ -156,7 +154,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               ],
             ),
             const SizedBox(height: 16),
-            _title('Menos tela. Mais estudo.', 'Como você quer ser chamado? Não pedimos e-mail nem telefone.'),
+            _title('Estude no seu ritmo.', 'Como você quer ser chamado? Não pedimos e-mail nem telefone.'),
             TextField(
               controller: nick,
               maxLength: 20,
@@ -240,16 +238,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           children: [
             _title('Quanto tempo por dia você quer dedicar?', 'Comece pequeno. Você ajusta quando quiser.'),
             _stepRow('Estudo por dia', fmtMin(studyGoal), () => setState(() => studyGoal = (studyGoal - 15).clamp(15, 600).toInt()), () => setState(() => studyGoal = (studyGoal + 15).clamp(15, 600).toInt())),
-            const SizedBox(height: 12),
-            SwitchListTile(
-              contentPadding: EdgeInsets.zero,
-              title: const Text('Meta diária de tempo de tela'),
-              subtitle: const Text('O app não mede o tempo sozinho: você informa o valor que o celular mostra.'),
-              value: screenGoal != null,
-              onChanged: (v) => setState(() => screenGoal = v ? 240 : null),
-            ),
-            if (screenGoal != null)
-              _stepRow('Tempo de tela por dia', fmtMin(screenGoal!), () => setState(() => screenGoal = (screenGoal! - 15).clamp(15, 1440).toInt()), () => setState(() => screenGoal = (screenGoal! + 15).clamp(15, 1440).toInt())),
             const SizedBox(height: 12),
             const InfoNote('Metas são objetivos, não obrigações. Passar delas não gera bronca nem punição.'),
           ],

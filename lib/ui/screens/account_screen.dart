@@ -2,6 +2,7 @@
 // A conta é opcional: sem ela o app funciona igual, só no aparelho.
 
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../data/app_state.dart';
@@ -101,8 +102,11 @@ class _AccountScreenState extends State<AccountScreen> {
 
   Future<void> _google(AppState state) async {
     await _run(() async {
-      final uri = await state.cloudGoogleStart(kAuthRedirect);
-      final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
+      final redirect = kIsWeb ? '${Uri.base.origin}${Uri.base.path}' : kAuthRedirect;
+      final uri = await state.cloudGoogleStart(redirect);
+      final ok = kIsWeb
+          ? await launchUrl(uri, webOnlyWindowName: '_self')
+          : await launchUrl(uri, mode: LaunchMode.externalApplication);
       if (!ok) throw const CloudError('Não consegui abrir o navegador. Tente de novo.');
       if (mounted) setState(() => _info = 'Escolha sua conta Google no navegador. Depois o Foquinho volta sozinho.');
     });

@@ -25,7 +25,6 @@ class HomeScreen extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
     final exams = state.upcomingExams(now);
     final studySugs = studySuggestions(d, now: now, limit: 2);
-    final screenToday = d.screenLog[today];
 
     return Scaffold(
       appBar: AppBar(title: Text('Oi, ${p.nickname}')),
@@ -61,69 +60,6 @@ class HomeScreen extends StatelessWidget {
                     const SizedBox(height: 12),
                     Text('Os minutos aparecem aqui quando você conclui uma sessão no temporizador.', style: TextStyle(color: cs.onSurfaceVariant)),
                   ],
-                ],
-              ),
-            ),
-          ),
-
-          const SectionTitle('Tempo de tela'),
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (screenToday == null) ...[
-                    Text('Sem registro de hoje', style: Theme.of(context).textTheme.titleMedium),
-                    const SizedBox(height: 6),
-                    Text(
-                      p.screenGoalMin != null ? 'Meta: até ${fmtMin(p.screenGoalMin!)} por dia.' : 'Sem meta de tempo de tela definida.',
-                      style: TextStyle(color: cs.onSurfaceVariant),
-                    ),
-                  ] else ...[
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Text(fmtMin(screenToday), style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w700)),
-                        const SizedBox(width: 8),
-                        if (p.screenGoalMin != null)
-                          Padding(
-                            padding: const EdgeInsets.only(bottom: 4),
-                            child: Text('de ${fmtMin(p.screenGoalMin!)}', style: TextStyle(color: cs.onSurfaceVariant)),
-                          ),
-                        const SizedBox(width: 8),
-                        Chip(label: const Text('registro manual'), visualDensity: VisualDensity.compact, padding: EdgeInsets.zero),
-                      ],
-                    ),
-                    if (p.screenGoalMin != null) ...[
-                      const SizedBox(height: 8),
-                      Row(
-                        children: [
-                          Icon(screenToday <= p.screenGoalMin! ? Icons.check_circle_outline : Icons.info_outline, size: 18, color: cs.onSurfaceVariant),
-                          const SizedBox(width: 6),
-                          Expanded(
-                            child: Text(
-                              screenToday <= p.screenGoalMin!
-                                  ? 'Dentro da meta. Faltam ${fmtMin(p.screenGoalMin! - screenToday)}.'
-                                  : 'Passou ${fmtMin(screenToday - p.screenGoalMin!)} da meta. Tudo bem: amanhã é outro dia.',
-                              style: TextStyle(color: cs.onSurfaceVariant),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ],
-                  const SizedBox(height: 10),
-                  const InfoNote('O Foquinho não mede o tempo de tela sozinho. Copie o valor que o celular mostra em Bem-estar digital (Android) ou Tempo de Uso (iPhone).'),
-                  const SizedBox(height: 10),
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: OutlinedButton.icon(
-                      onPressed: () => _logScreen(context, today),
-                      icon: const Icon(Icons.edit_outlined),
-                      label: Text(screenToday == null ? 'Informar tempo de hoje' : 'Atualizar'),
-                    ),
-                  ),
                 ],
               ),
             ),
@@ -205,51 +141,6 @@ class HomeScreen extends StatelessWidget {
         presetTopic: e.title.isEmpty ? null : e.title,
       ),
     ));
-  }
-
-  Future<void> _logScreen(BuildContext context, String day) async {
-    final state = AppScope.of(context);
-    final cur = state.data.screenLog[day];
-    final h = TextEditingController(text: cur == null ? '' : (cur ~/ 60).toString());
-    final m = TextEditingController(text: cur == null ? '' : (cur % 60).toString());
-    final r = await showDialog<int?>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Tempo de tela de hoje'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text('Copie o valor mostrado pelo celular. Fica registrado como manual.'),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(child: TextField(controller: h, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Horas'))),
-                const SizedBox(width: 8),
-                Expanded(child: TextField(controller: m, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Minutos'))),
-              ],
-            ),
-          ],
-        ),
-        actions: [
-          if (cur != null) TextButton(onPressed: () => Navigator.pop(ctx, -1), child: const Text('Apagar registro')),
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancelar')),
-          FilledButton(
-            onPressed: () {
-              final hh = int.tryParse(h.text.trim()) ?? 0;
-              final mm = int.tryParse(m.text.trim()) ?? 0;
-              if (hh < 0 || hh > 24 || mm < 0 || mm > 59 || (h.text.trim().isEmpty && m.text.trim().isEmpty)) {
-                ScaffoldMessenger.of(ctx).showSnackBar(const SnackBar(content: Text('Use horas de 0 a 24 e minutos de 0 a 59.')));
-                return;
-              }
-              Navigator.pop(ctx, hh * 60 + mm);
-            },
-            child: const Text('Salvar'),
-          ),
-        ],
-      ),
-    );
-    if (r == null) return;
-    await state.setScreenMinutes(day, r < 0 ? null : r);
   }
 }
 

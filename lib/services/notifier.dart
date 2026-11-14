@@ -122,7 +122,7 @@ class LocalNotifier implements Notifier {
       android: AndroidNotificationDetails(
         'foquinho_lembretes',
         'Lembretes',
-        channelDescription: 'Lembretes de estudo, movimento, pausas de tela, tarefas e provas.',
+        channelDescription: 'Lembretes de estudo, revisão, tarefas e provas.',
         importance: Importance.high,
         priority: Priority.defaultPriority,
         category: AndroidNotificationCategory.reminder,

@@ -94,7 +94,7 @@ void main() {
     }
     // O rodízio alterna os assuntos e usa a matéria cadastrada.
     final titles = list.map((n) => n.title).toSet();
-    expect(titles.containsAll(['Beba água', 'Alongue o corpo', 'Que tal estudar um pouco?', 'Pausa de tela']), isTrue);
+    expect(titles.containsAll(['Beba água', 'Alongue o corpo', 'Que tal estudar um pouco?', 'Hora de revisar']), isTrue);
     expect(list.any((n) => n.title == 'Que tal estudar um pouco?' && n.body.contains('Matemática')), isTrue);
     // Só os próximos 3 dias.
     expect(list.every((n) => n.when.isBefore(DateTime(2026, 6, 13))), isTrue);

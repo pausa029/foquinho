@@ -1,4 +1,5 @@
 import 'package:app_links/app_links.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
@@ -24,6 +25,11 @@ void main() {
 
 /// Volta do login com Google: o navegador abre foquinho://login-callback.
 void _listenLoginLinks(AppState state) {
+  if (kIsWeb) {
+    // No navegador, o Google volta para esta mesma página com ?code=...
+    state.cloudHandleLink(Uri.base);
+    return;
+  }
   try {
     final links = AppLinks();
     links.getInitialLink().then((u) {

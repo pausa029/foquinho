@@ -1,7 +1,7 @@
 {
  "name": "Foquinho",
  "short_name": "Foquinho",
- "description": "Menos tela. Mais estudo e movimento.",
+ "description": "Estude no seu ritmo.",
  "start_url": "./",
  "scope": "./",
  "display": "standalone",

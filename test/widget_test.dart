@@ -25,7 +25,7 @@ void main() {
     await tester.pumpWidget(FoquinhoApp(state: state));
     await tester.pumpAndSettle();
 
-    expect(find.text('Menos tela. Mais estudo.'), findsOneWidget);
+    expect(find.text('Estude no seu ritmo.'), findsOneWidget);
     expect(find.text('Pular tudo'), findsOneWidget);
 
     await tester.enterText(find.byType(TextField).first, 'Rafa');

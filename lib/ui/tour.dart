@@ -16,7 +16,7 @@ class TourStep {
 
 const kTourSteps = <TourStep>[
   TourStep(0, FoquinhaPose.acenando, 'Oi! Eu sou a Foquinha.',
-      'Vou te mostrar o Foquinho rapidinho. A ideia é trocar um pouco de tela por estudo, no seu ritmo e sem pressão.'),
+      'Vou te mostrar o Foquinho rapidinho. A ideia é te ajudar a estudar com constância, no seu ritmo e sem pressão.'),
   TourStep(0, FoquinhaPose.apontando, 'Início',
       'Aqui ficam a sua sequência de dias, o tempo de hoje e uma sugestão do que fazer agora. Tocou em Começar, o temporizador abre.',
       pointTab: true),

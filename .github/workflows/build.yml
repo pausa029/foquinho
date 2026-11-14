@@ -56,7 +56,7 @@ jobs:
           # Nome do app na versão web (aba do navegador e "Adicionar à tela de início").
           sed -i 's/<title>foquinho<\/title>/<title>Foquinho<\/title>/' web/index.html || true
           sed -i 's/"name": "foquinho"/"name": "Foquinho"/; s/"short_name": "foquinho"/"short_name": "Foquinho"/' web/manifest.json || true
-          sed -i 's/"description": "A new Flutter project."/"description": "Menos tela. Mais estudo e movimento."/' web/manifest.json || true
+          sed -i 's/"description": "A new Flutter project."/"description": "Estude no seu ritmo."/' web/manifest.json || true
 
       - name: Baixar dependências
         run: flutter pub get
@@ -88,13 +88,15 @@ jobs:
 
       - name: Compilar versão web
         continue-on-error: true
-        run: flutter build web --release --base-href "/app/"
+        run: flutter build web --release --base-href "/web/" --pwa-strategy=none
 
       - name: Montar o site (apresentação na raiz, app web em /web/, versão Flutter em /app/)
         run: |
           mkdir -p site/web site/app
           cp -r web_site/. site/
-          if [ -d build/web ]; then cp -r build/web/. site/app/; fi
+          # A versão web é o mesmo app do APK (Flutter). /app/ antigo leva para /web/.
+          if [ -f build/web/main.dart.js ]; then rm -rf site/web && mkdir -p site/web && cp -r build/web/. site/web/; fi
+          printf '<!doctype html><meta charset="utf-8"><meta http-equiv="refresh" content="0;url=../web/"><a href="../web/">Abrir o Foquinho</a>' > site/app/index.html
           touch site/.nojekyll
 
       - name: Guardar o APK para download

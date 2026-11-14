@@ -8,6 +8,7 @@ import '../../logic/streak.dart';
 import '../../logic/suggestions.dart';
 import '../../models/models.dart';
 import '../widgets/common.dart';
+import 'quiz_screen.dart';
 import 'reviews_screen.dart';
 import 'session_screen.dart';
 
@@ -46,6 +47,15 @@ class HomeScreen extends StatelessWidget {
               Expanded(child: _QuickAction(icon: Icons.menu_book, label: 'Estudar agora', color: cs.primary, onTap: () => _startStudy(context))),
               const SizedBox(width: 8),
               Expanded(child: _QuickAction(icon: Icons.calendar_month, label: 'Ver plano', color: cs.secondary, onTap: () => onGoTo(1))),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _QuickAction(
+                  icon: Icons.auto_awesome,
+                  label: 'Quiz com IA',
+                  color: cs.tertiary,
+                  onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const QuizScreen())),
+                ),
+              ),
             ],
           ),
 

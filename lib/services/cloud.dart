@@ -68,6 +68,28 @@ abstract class CloudApi {
 
   /// Troca o código que voltou do navegador por uma sessão.
   Future<CloudSession> exchangeCode(String code, String codeVerifier);
+
+  /// Quiz com IA (função "quiz" do Supabase).
+  Future<List<QuizQuestion>> quiz(CloudSession s, Map<String, dynamic> request);
+}
+
+class QuizQuestion {
+  final String q;
+  final List<String> options;
+  final int answer;
+  final String explain;
+  const QuizQuestion({required this.q, required this.options, required this.answer, required this.explain});
+
+  static QuizQuestion? fromJson(dynamic m) {
+    if (m is! Map) return null;
+    final q = m['q'];
+    final o = m['options'];
+    final a = m['answer'];
+    if (q is! String || o is! List || o.length != 4 || a is! num) return null;
+    final ai = a.toInt();
+    if (ai < 0 || ai > 3) return null;
+    return QuizQuestion(q: q, options: o.map((e) => '$e').toList(), answer: ai, explain: '${m['explain'] ?? ''}');
+  }
 }
 
 /// Par de códigos do PKCE: o "verifier" fica só no aparelho; o "challenge" vai na URL.
@@ -296,6 +318,28 @@ class SupabaseCloud implements CloudApi {
   @override
   Future<void> deleteAccount(CloudSession s) async {
     await _post('/rest/v1/rpc/delete_my_account', const {}, s: s);
+  }
+
+  @override
+  Future<List<QuizQuestion>> quiz(CloudSession s, Map<String, dynamic> request) async {
+    http.Response r;
+    try {
+      r = await _client
+          .post(Uri.parse('$url/functions/v1/quiz'), headers: _headers(s), body: jsonEncode(request))
+          .timeout(const Duration(seconds: 60));
+    } catch (_) {
+      throw _offline;
+    }
+    final j = _json(r);
+    if (r.statusCode == 404) throw const CloudError('O quiz ainda não foi instalado no servidor.', 'not_configured');
+    if (r.statusCode < 200 || r.statusCode >= 300) {
+      final msg = j is Map && j['message'] is String ? j['message'] as String : 'Não foi possível gerar o quiz. Tente de novo.';
+      final code = j is Map && j['error'] is String ? j['error'] as String : 'http_${r.statusCode}';
+      throw CloudError(msg, code);
+    }
+    final list = j is Map && j['questions'] is List ? (j['questions'] as List).map(QuizQuestion.fromJson).whereType<QuizQuestion>().toList() : <QuizQuestion>[];
+    if (list.isEmpty) throw const CloudError('A IA não conseguiu montar as questões. Tente outro assunto.', 'ai');
+    return list;
   }
 
   @override

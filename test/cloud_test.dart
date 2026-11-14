@@ -96,6 +96,13 @@ class FakeCloud implements CloudApi {
     }
     return _s('g@gmail.com');
   }
+
+  Map<String, dynamic>? lastQuiz;
+  @override
+  Future<List<QuizQuestion>> quiz(CloudSession s, Map<String, dynamic> request) async {
+    lastQuiz = request;
+    return const [QuizQuestion(q: '1/2 + 1/2 = ?', options: ['1', '2', '1/4', '0'], answer: 0, explain: 'Metade mais metade é um inteiro.')];
+  }
 }
 
 AppState make(MemStore m, FakeCloud c, MemCloudStore cs) => AppState(read: m.read, write: m.write, clear: m.clear, cloud: c, cloudStore: cs);
@@ -311,5 +318,20 @@ void main() {
     expect(b.needsDataChoice, isFalse);
     expect(b.data.profile!.nickname, 'Ana');
     b.dispose();
+  });
+
+  test('quiz: precisa de conta e manda matéria e assunto', () async {
+    final m = MemStore();
+    final c = FakeCloud();
+    final st = make(m, c, MemCloudStore());
+    await st.load();
+    final subj = await st.addSubject('Matemática');
+    await expectLater(st.makeQuiz(subjectId: subj.id, topic: 'Frações'), throwsA(isA<CloudError>()));
+    await st.cloudSignUp('a@b.com', 'senha-forte-1');
+    if (!st.signedIn) await st.cloudVerifyCode('a@b.com', '123456');
+    final qs = await st.makeQuiz(subjectId: subj.id, topic: 'Frações');
+    expect(qs.single.answer, 0);
+    expect(c.lastQuiz!['subject'], 'Matemática');
+    expect(c.lastQuiz!['topic'], 'Frações');
   });
 }

@@ -605,6 +605,39 @@ class AppState extends ChangeNotifier {
     await save();
   }
 
+  // ---------- quiz com IA ----------
+
+  /// Gera um quiz com IA. Precisa estar com a conta conectada.
+  Future<List<QuizQuestion>> makeQuiz({required String subjectId, String? topic, String? text, int count = 5}) async {
+    final c = cloud;
+    if (c == null || session == null) throw const CloudError('Entre na sua conta para usar o quiz.', 'login');
+    final s = await _freshSession();
+    if (s == null) throw const CloudError('Sua sessão venceu. Entre de novo.', 'login');
+    final level = data.profile?.level;
+    return c.quiz(s, {
+      'subject': data.subjectName(subjectId),
+      'topic': (topic ?? '').trim(),
+      'text': (text ?? '').trim(),
+      'count': count,
+      if (level != null) 'level': _levelName(level),
+    });
+  }
+
+  static String _levelName(SchoolLevel l) {
+    switch (l) {
+      case SchoolLevel.fundamental:
+        return 'ensino fundamental';
+      case SchoolLevel.medio:
+        return 'ensino médio';
+      case SchoolLevel.tecnico:
+        return 'ensino técnico';
+      case SchoolLevel.superior:
+        return 'ensino superior';
+      case SchoolLevel.outro:
+        return 'ensino médio';
+    }
+  }
+
   // ---------- planejamento de estudos ----------
 
   Future<void> savePlanSettings(PlanSettings s) async {

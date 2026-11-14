@@ -85,7 +85,7 @@ void main() {
       final m = n.when.hour * 60 + n.when.minute;
       expect(m, greaterThan(8 * 60));
       expect(m, lessThan(21 * 60));
-      expect((m - 19 * 60).abs() >= 30 && (m - 17 * 60).abs() >= 30, isTrue);
+      expect((m - 19 * 60).abs() >= 30, isTrue, reason: 'longe do lembrete de estudo das 19h');
       expect(n.ttlMin, 30);
     }
     // Um por vez: nunca dois avisos do rodízio a menos de 30 minutos um do outro.

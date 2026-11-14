@@ -193,6 +193,22 @@ List<String> rotatingTip(AppData d, DateTime now, int g, List<Suggestion> study,
   }
 }
 
+/// Texto de um tema do rodízio; [idx] = quantas vezes o tema já apareceu.
+List<String> _themeTip(String theme, int idx, List<List<String>> items, List<Suggestion> study) {
+  switch (theme) {
+    case 'compromisso':
+      return items[idx % items.length];
+    case 'agua':
+      return ['Beba água', kWaterTexts[idx % kWaterTexts.length]];
+    case 'alongar':
+      return ['Alongue o corpo', kStretchTexts[idx % kStretchTexts.length]];
+    case 'estudo':
+      return ['Que tal estudar um pouco?', study.isEmpty ? 'Dez minutos de estudo agora já contam.' : '${study[idx % study.length].title}.'];
+    default:
+      return ['Hora de revisar', kReviewTexts[idx % kReviewTexts.length]];
+  }
+}
+
 /// Compromissos do dia [day] que ainda pedem atenção: tarefas com prazo no dia
 /// (ou atrasadas) que não foram concluídas, e provas ou trabalhos marcados para o dia.
 /// Devolve pares [título, texto] no tom "já fez?".
@@ -259,26 +275,16 @@ List<PlannedNotice> planReminderNotices(AppData d, DateTime now, {int days = 7, 
     }
   }
 
-  // Rodízio do dia: um aviso a cada N minutos, alternando água, estudo, alongar,
-  // compromisso e revisão. Agendado para poucos dias (é renovado ao abrir o app).
-  final rot = <PlannedNotice>[];
+  // Rodízio do dia: horários a cada N minutos. Os temas são escolhidos no fim,
+  // depois de saber quais horários sobram (longe dos outros avisos).
+  final rotSlots = <DateTime>[];
   if (p.nudgeOn && winFrom < winTo && p.nudgeEveryMin >= 30) {
-    final studyPool = studySuggestions(d, now: now, limit: 6);
-    final movePool = moveSuggestions(d, limit: 6);
-    var g = 0;
     for (var i = 0; i < nudgeDays && i < days; i++) {
       final day = DateTime(today.year, today.month, today.day + i);
       for (var m = winFrom + p.nudgeEveryMin; m < winTo; m += p.nudgeEveryMin) {
         final when = _at(day, m);
         if (!when.isAfter(now) || inQuietHours(p, m)) continue;
-        // Um tema por vez, em ordem variada; nunca o mesmo assunto duas vezes seguidas.
-        var tip = rotatingTip(d, now, g, studyPool, movePool, day: day);
-        g++;
-        if (rot.isNotEmpty && rot.last.title == tip[0]) {
-          tip = rotatingTip(d, now, g, studyPool, movePool, day: day);
-          g++;
-        }
-        rot.add(PlannedNotice(id: 0, when: when, title: tip[0], body: tip[1], rotating: true, ttlMin: p.nudgeEveryMin));
+        rotSlots.add(when);
       }
     }
   }
@@ -346,14 +352,34 @@ List<PlannedNotice> planReminderNotices(AppData d, DateTime now, {int days = 7, 
 
   final horizon = now.add(Duration(days: days));
   // Só um aviso por vez: o rodízio cede a vez quando há outro aviso a menos de 30 minutos.
+  // Cada tema só volta depois de passarem os outros: em qualquer sequência de 4 avisos,
+  // os assuntos são diferentes. Entre os temas livres, vai o menos usado.
   final fixed = out.map((n) => n.when).toList();
-  PlannedNotice? prev;
-  for (final n in rot) {
-    if (fixed.any((t) => t.difference(n.when).inMinutes.abs() < 30)) continue;
-    // Se um aviso do meio saiu, não deixa sobrar dois seguidos do mesmo assunto.
-    if (prev != null && prev.title == n.title && dayKey(prev.when) == dayKey(n.when)) continue;
-    out.add(n);
-    prev = n;
+  if (rotSlots.isNotEmpty) {
+    final studyPool = studySuggestions(d, now: now, limit: 6);
+    final recent = <String>[];
+    final used = <String, int>{};
+    var k = 0;
+    for (final when in rotSlots) {
+      if (fixed.any((t) => t.difference(when).inMinutes.abs() < 30)) continue;
+      final items = commitmentTips(d, when);
+      final themes = kTipThemes.where((t) => items.isNotEmpty || t != 'compromisso').toList();
+      final block = themes.length - 1 < 3 ? themes.length - 1 : 3;
+      final last = recent.length > block ? recent.sublist(recent.length - block) : recent;
+      final cands = themes.where((t) => !last.contains(t)).toList();
+      var minU = 1 << 30;
+      for (final t in cands) {
+        if ((used[t] ?? 0) < minU) minU = used[t] ?? 0;
+      }
+      final pool = cands.where((t) => (used[t] ?? 0) == minU).toList();
+      final theme = pool[(k * 7 + when.day) % pool.length];
+      final idx = used[theme] ?? 0;
+      used[theme] = idx + 1;
+      recent.add(theme);
+      k++;
+      final tip = _themeTip(theme, idx, items, studyPool);
+      out.add(PlannedNotice(id: 0, when: when, title: tip[0], body: tip[1], rotating: true, ttlMin: p.nudgeEveryMin));
+    }
   }
   final list = out.where((n) => n.when.isBefore(horizon)).toList()..sort((a, b) => a.when.compareTo(b.when));
   final capped = list.take(max).toList();

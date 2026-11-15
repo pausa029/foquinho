@@ -5,7 +5,7 @@
 // Segredos (Supabase → Edge Functions → Secrets), colados pelo dono do projeto:
 //   GEMINI_API_KEY   chave do Google AI Studio (nunca vai para o app nem para o GitHub)
 //   ALLOWED_EMAILS   e-mails que podem usar, separados por vírgula. Vazio = ninguém.
-//   GEMINI_MODEL     (opcional) padrão: gemini-flash-latest
+//   GEMINI_MODEL     (opcional) modelos em ordem, separados por vírgula
 //   QUIZ_DAILY_MAX   (opcional) quizzes por pessoa por dia; padrão: 30
 
 const cors = {
@@ -76,41 +76,60 @@ Deno.serve(async (req) => {
     "Em 'explain', explique em 1 ou 2 frases simples por que a resposta certa está certa.",
   ].filter(Boolean).join("\n\n");
 
-  const model = Deno.env.get("GEMINI_MODEL") ?? "gemini-flash-latest";
-  const gr = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", "x-goog-api-key": geminiKey },
-    body: JSON.stringify({
-      contents: [{ role: "user", parts: [{ text: prompt }] }],
-      generationConfig: {
-        temperature: 0.7,
-        responseMimeType: "application/json",
-        responseSchema: {
-          type: "OBJECT",
-          properties: {
-            questions: {
-              type: "ARRAY",
-              items: {
-                type: "OBJECT",
-                properties: {
-                  q: { type: "STRING" },
-                  options: { type: "ARRAY", items: { type: "STRING" } },
-                  answer: { type: "INTEGER" },
-                  explain: { type: "STRING" },
-                },
-                required: ["q", "options", "answer", "explain"],
+  // Tenta modelos em ordem: o mais rápido primeiro; se estiver lotado, passa para o próximo.
+  const models = (Deno.env.get("GEMINI_MODEL") ?? "gemini-flash-lite-latest,gemini-2.5-flash-lite,gemini-flash-latest")
+    .split(",").map((m) => m.trim()).filter(Boolean);
+  const payload = JSON.stringify({
+    contents: [{ role: "user", parts: [{ text: prompt }] }],
+    generationConfig: {
+      temperature: 0.7,
+      responseMimeType: "application/json",
+      responseSchema: {
+        type: "OBJECT",
+        properties: {
+          questions: {
+            type: "ARRAY",
+            items: {
+              type: "OBJECT",
+              properties: {
+                q: { type: "STRING" },
+                options: { type: "ARRAY", items: { type: "STRING" } },
+                answer: { type: "INTEGER" },
+                explain: { type: "STRING" },
               },
+              required: ["q", "options", "answer", "explain"],
             },
           },
-          required: ["questions"],
         },
+        required: ["questions"],
       },
-    }),
+    },
   });
-  if (gr.status === 429) return fail(429, "limit", "A IA está ocupada ou o limite grátis do dia acabou. Tente mais tarde.");
-  if (!gr.ok) {
-    console.error("gemini", gr.status, (await gr.text()).slice(0, 500));
-    return fail(502, "ai", "A IA não respondeu agora. Tente de novo em instantes.");
+  let gr: Response | null = null;
+  let busy = false;
+  for (const model of models) {
+    try {
+      const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-goog-api-key": geminiKey },
+        body: payload,
+        signal: AbortSignal.timeout(15000),
+      });
+      if (r.ok) {
+        gr = r;
+        break;
+      }
+      console.error("gemini", model, r.status, (await r.text()).slice(0, 300));
+      if (r.status === 429 || r.status >= 500) busy = true;
+    } catch (e) {
+      console.error("gemini", model, "timeout/erro", String(e));
+      busy = true;
+    }
+  }
+  if (!gr) {
+    return busy
+      ? fail(503, "busy", "A IA está muito ocupada agora. Tente de novo em 1 minuto.")
+      : fail(502, "ai", "A IA não respondeu agora. Tente de novo em instantes.");
   }
   const gj = await gr.json();
   const raw = gj?.candidates?.[0]?.content?.parts?.map((p: { text?: string }) => p.text ?? "").join("") ?? "";

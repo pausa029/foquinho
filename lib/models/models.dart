@@ -3,8 +3,10 @@
 
 import 'dart:math';
 
+import 'grades.dart';
 import 'plan.dart';
 
+export 'grades.dart';
 export 'plan.dart';
 
 String newId() {
@@ -643,6 +645,8 @@ class AppData {
   List<PlanSession> planSessions;
   List<Review> reviews;
   bool reviewOn; // criar revisões depois de cada estudo
+  GradeConfig grading; // como é a nota na escola
+  List<Grade> grades;
   String ambient; // som de fundo do temporizador: nenhum, chuva, ondas, lareira, ruido
   double ambientVolume;
 
@@ -663,6 +667,8 @@ class AppData {
     List<PlanSession>? planSessions,
     List<Review>? reviews,
     this.reviewOn = true,
+    GradeConfig? grading,
+    List<Grade>? grades,
     this.ambient = 'nenhum',
     this.ambientVolume = 0.6,
   })  : subjects = subjects ?? <Subject>[],
@@ -673,7 +679,9 @@ class AppData {
         screenLog = screenLog ?? <String, int>{},
         plan = plan ?? PlanSettings(),
         planSessions = planSessions ?? <PlanSession>[],
-        reviews = reviews ?? <Review>[];
+        reviews = reviews ?? <Review>[],
+        grading = grading ?? GradeConfig(),
+        grades = grades ?? <Grade>[];
 
   Map<String, dynamic> toJson() => {
         'v': 1,
@@ -693,6 +701,8 @@ class AppData {
         'planSessions': planSessions.map((e) => e.toJson()).toList(),
         'reviews': reviews.map((e) => e.toJson()).toList(),
         'reviewOn': reviewOn,
+        'grading': grading.toJson(),
+        'grades': grades.map((g) => g.toJson()).toList(),
         'ambient': ambient,
         'ambientVolume': ambientVolume,
       };
@@ -738,6 +748,8 @@ class AppData {
       planSessions: planSessions,
       reviews: readMapList(m, 'reviews').map(Review.fromJson).whereType<Review>().where((r) => subjectIds.contains(r.subjectId)).toList(),
       reviewOn: readBool(m, 'reviewOn', true),
+      grading: m['grading'] is Map ? GradeConfig.fromJson(Map<String, dynamic>.from(m['grading'] as Map)) : null,
+      grades: readMapList(m, 'grades').map(Grade.fromJson).whereType<Grade>().where((g) => subjectIds.contains(g.subjectId)).toList(),
       ambient: kAmbientSounds.containsKey(readStr(m, 'ambient')) ? readStr(m, 'ambient') : 'nenhum',
       ambientVolume: (m['ambientVolume'] is num ? (m['ambientVolume'] as num).toDouble() : 0.6).clamp(0.05, 1.0).toDouble(),
     );

@@ -8,6 +8,7 @@ import '../../models/models.dart';
 import '../widgets/common.dart';
 import '../widgets/foquinha.dart';
 import 'account_screen.dart';
+import 'grades_screen.dart';
 import 'reviews_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
@@ -43,6 +44,15 @@ class SettingsScreen extends StatelessWidget {
             ),
           ],
           const SectionTitle('Estudo'),
+          Card(
+            child: ListTile(
+              leading: const Icon(Icons.grade_outlined),
+              title: const Text('Notas'),
+              subtitle: const Text('Lance as notas e veja quanto falta para passar'),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const GradesScreen())),
+            ),
+          ),
           Card(
             child: ListTile(
               leading: const Icon(Icons.event_repeat),

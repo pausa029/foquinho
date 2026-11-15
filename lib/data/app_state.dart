@@ -245,6 +245,8 @@ class AppState extends ChangeNotifier {
     data.tasks.removeWhere((t) => t.subjectId == id);
     data.planSessions.removeWhere((p) => p.subjectId == id);
     data.reviews.removeWhere((r) => r.subjectId == id);
+    data.grades.removeWhere((g) => g.subjectId == id);
+    data.grading.bySubject.remove(id);
     await save();
   }
 
@@ -602,6 +604,23 @@ class AppState extends ChangeNotifier {
 
   Future<void> setReviewOn(bool v) async {
     data.reviewOn = v;
+    await save();
+  }
+
+  // ---------- notas ----------
+
+  /// Lança (ou apaga, com null) a nota de uma parte numa unidade.
+  Future<void> setGrade(String subjectId, int unit, String part, double? value) async {
+    data.grades.removeWhere((g) => g.subjectId == subjectId && g.unit == unit && g.part == part);
+    if (value != null) data.grades.add(Grade(subjectId: subjectId, unit: unit, part: part, value: value));
+    await save();
+  }
+
+  Future<void> setGrading(GradeConfig c) async {
+    data.grading = c;
+    // Notas de partes que não existem mais ficam fora da conta, mas não somem
+    // (se a parte voltar, a nota volta). Unidades a mais são descartadas.
+    data.grades.removeWhere((g) => g.unit > c.units);
     await save();
   }
 

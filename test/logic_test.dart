@@ -75,6 +75,25 @@ void main() {
       expect(list.any((s) => s.taskId == 't1'), isTrue);
     });
 
+    test('prova perto sugere os assuntos da matéria parados há mais tempo', () {
+      final d = sample();
+      d.subjects[1].topics.addAll(['Revolução de 30', 'Estado Novo']);
+      d.sessions.add(Session(id: 's1', kind: SessionKind.estudo, title: 'x', subjectId: 'his', topic: 'Estado Novo', minutes: 20, startedAt: DateTime(2026, 6, 9, 10).millisecondsSinceEpoch));
+      final list = studySuggestions(d, now: DateTime(2026, 6, 10), limit: 10);
+      final forExam = list.where((s) => s.subjectId == 'his' && s.title.contains('para a prova')).toList();
+      expect(forExam.length, 2);
+      expect(forExam.first.topic, 'Revolução de 30', reason: 'nunca estudado vem antes do estudado ontem');
+      expect(forExam.first.reason, contains('ainda não estudou'));
+      expect(forExam.last.reason, contains('há 1 dia'));
+    });
+
+    test('revisão vencida vira sugestão', () {
+      final d = sample();
+      d.reviews.add(Review(id: 'r1', subjectId: 'mat', topic: 'Equações', created: '2026-06-08', due: '2026-06-09'));
+      final list = studySuggestions(d, now: DateTime(2026, 6, 10), limit: 10);
+      expect(list.any((s) => s.title.startsWith('Revisão: Matemática · Equações')), isTrue);
+    });
+
     test('sem cadastro, sem sugestões inventadas', () {
       final d = AppData(profile: Profile(nickname: 'X'));
       expect(studySuggestions(d), isEmpty);

@@ -1,4 +1,4 @@
-// Sugestões personalizadas de estudo e movimento.
+// Sugestões personalizadas de estudo.
 // Usa somente o que o estudante cadastrou: matérias, dificuldades, provas,
 // tarefas e esportes. Não inventa dados escolares.
 
@@ -41,6 +41,35 @@ List<Suggestion> studySuggestions(AppData d, {DateTime? now, int limit = 6}) {
     out.add(s);
   }
 
+  // Quando cada assunto foi estudado pela última vez (pelas sessões registradas).
+  final last = <String, DateTime>{};
+  String k(String sid, String? t) => '$sid|${(t ?? '').trim().toLowerCase()}';
+  for (final ss in d.sessions) {
+    if (ss.kind != SessionKind.estudo || ss.subjectId == null) continue;
+    final when = DateTime.fromMillisecondsSinceEpoch(ss.startedAt);
+    for (final key in [k(ss.subjectId!, ss.topic), k(ss.subjectId!, null)]) {
+      final prev = last[key];
+      if (prev == null || when.isAfter(prev)) last[key] = when;
+    }
+  }
+  int? daysSince(String sid, String topic) {
+    final w = last[k(sid, topic)];
+    if (w == null) return null;
+    return DateTime(n.year, n.month, n.day).difference(DateTime(w.year, w.month, w.day)).inDays;
+  }
+  // Assuntos da matéria do que está há mais tempo sem estudar (nunca estudado primeiro).
+  List<String> stalest(Subject s) {
+    final l = [...s.topics];
+    l.sort((a, b) => (daysSince(s.id, b) ?? 99999).compareTo(daysSince(s.id, a) ?? 99999));
+    return l;
+  }
+  String sinceTxt(String sid, String topic) {
+    final ds = daysSince(sid, topic);
+    if (ds == null) return 'Você ainda não estudou este assunto.';
+    if (ds == 0) return 'Você estudou hoje; uma revisão rápida fixa.';
+    return 'Último estudo há ${ds == 1 ? '1 dia' : '$ds dias'}.';
+  }
+
   // 1. Provas e trabalhos próximos.
   final exams = d.exams.where((e) {
     final days = e.daysUntil(n);
@@ -64,15 +93,45 @@ List<Suggestion> studySuggestions(AppData d, {DateTime? now, int limit = 6}) {
       subjectId: subj.id,
       topic: e.title.isEmpty ? null : e.title,
     ));
+    // Prova perto (até 14 dias): sugere também os assuntos da matéria que estão há mais tempo parados.
+    if (!isWork && days != null && days <= 14) {
+      for (final t in stalest(subj).where((t) => t.toLowerCase() != e.title.toLowerCase()).take(2)) {
+        add(Suggestion(
+          kind: SuggestionKind.estudo,
+          title: 'Revise $t (${subj.name}) para a prova',
+          reason: 'Prova de ${subj.name} $whenTxt. ${sinceTxt(subj.id, t)}',
+          minutes: 15,
+          subjectId: subj.id,
+          topic: t,
+        ));
+      }
+    }
+  }
+
+  // Revisões espaçadas que vencem hoje (ou atrasadas).
+  final today = dayKey(n);
+  final dueReviews = d.reviews.where((r) => !r.done && r.due.compareTo(today) <= 0).toList()..sort((a, b) => a.due.compareTo(b.due));
+  for (final r in dueReviews) {
+    final subj = d.subjectById(r.subjectId);
+    if (subj == null) continue;
+    add(Suggestion(
+      kind: SuggestionKind.estudo,
+      title: 'Revisão: ${subj.name}${r.topic == null ? '' : ' · ${r.topic}'}',
+      reason: '${r.label}. Revisar no dia certo segura o conteúdo.',
+      minutes: 15,
+      subjectId: subj.id,
+      topic: r.topic,
+    ));
   }
 
   // 2. Matérias marcadas como difíceis.
   for (final s in d.subjects.where((s) => s.hard)) {
-    final topic = s.topics.isNotEmpty ? s.topics.first : null;
+    final st = stalest(s);
+    final topic = st.isNotEmpty ? st.first : null;
     add(Suggestion(
       kind: SuggestionKind.estudo,
       title: 'Faça algumas questões de ${s.name}${topic != null ? ' sobre $topic' : ''}',
-      reason: 'Você marcou ${s.name} como matéria difícil. Pouco e sempre funciona.',
+      reason: 'Você marcou ${s.name} como matéria difícil.${topic != null ? ' ${sinceTxt(s.id, topic)}' : ' Pouco e sempre funciona.'}',
       minutes: 20,
       subjectId: s.id,
       topic: topic,
@@ -96,18 +155,20 @@ List<Suggestion> studySuggestions(AppData d, {DateTime? now, int limit = 6}) {
     ));
   }
 
-  // 4. Assuntos cadastrados nas outras matérias.
-  for (final s in d.subjects.where((s) => !s.hard)) {
-    for (final topic in s.topics) {
-      add(Suggestion(
-        kind: SuggestionKind.estudo,
-        title: 'Revise $topic (${s.name}) por 15 minutos',
-        reason: 'Assunto que você anotou para ${s.name}.',
-        minutes: 15,
-        subjectId: s.id,
-        topic: topic,
-      ));
-    }
+  // 4. Assuntos cadastrados: o que está há mais tempo sem estudar vem primeiro.
+  final pairs = <(Subject, String)>[
+    for (final s in d.subjects)
+      for (final t in s.topics) (s, t),
+  ]..sort((a, b) => (daysSince(b.$1.id, b.$2) ?? 99999).compareTo(daysSince(a.$1.id, a.$2) ?? 99999));
+  for (final (s, topic) in pairs) {
+    add(Suggestion(
+      kind: SuggestionKind.estudo,
+      title: 'Revise $topic (${s.name}) por 15 minutos',
+      reason: sinceTxt(s.id, topic),
+      minutes: 15,
+      subjectId: s.id,
+      topic: topic,
+    ));
   }
 
   // 5. Matérias sem nada específico.

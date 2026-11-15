@@ -26,7 +26,7 @@ class HomeScreen extends StatelessWidget {
     final st = dayStats(d, today);
     final cs = Theme.of(context).colorScheme;
     final exams = state.upcomingExams(now);
-    final studySugs = studySuggestions(d, now: now, limit: 2);
+    final studySugs = studySuggestions(d, now: now, limit: 3);
 
     return Scaffold(
       appBar: AppBar(title: Text('Oi, ${p.nickname}')),
@@ -217,9 +217,11 @@ class SuggestionCard extends StatelessWidget {
                   const SizedBox(height: 2),
                   Text('${s.reason} · ${s.minutes} min', style: TextStyle(color: cs.onSurfaceVariant, fontSize: 13)),
                   const SizedBox(height: 8),
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: FilledButton.tonal(
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 4,
+                    children: [
+                    FilledButton.tonal(
                       onPressed: () => Navigator.of(context).push(MaterialPageRoute(
                         builder: (_) => SessionScreen(
                           kind: isStudy ? SessionKind.estudo : SessionKind.exercicio,
@@ -232,6 +234,13 @@ class SuggestionCard extends StatelessWidget {
                       )),
                       child: const Text('Começar'),
                     ),
+                    if (isStudy && s.subjectId != null && AppScope.of(context).signedIn)
+                      OutlinedButton.icon(
+                        onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => QuizScreen(subjectId: s.subjectId, topic: s.topic))),
+                        icon: const Icon(Icons.auto_awesome, size: 18),
+                        label: const Text('Quiz'),
+                      ),
+                    ],
                   ),
                 ],
               ),

@@ -734,6 +734,12 @@ class AppState extends ChangeNotifier {
     await save();
   }
 
+  Future<void> setAmbient(String id, {double? volume}) async {
+    if (kAmbientSounds.containsKey(id)) data.ambient = id;
+    if (volume != null) data.ambientVolume = volume.clamp(0.05, 1.0).toDouble();
+    await save();
+  }
+
   // ---------- conta e cópia na nuvem ----------
 
   bool get cloudAvailable => cloud != null;

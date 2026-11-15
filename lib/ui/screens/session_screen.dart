@@ -10,6 +10,7 @@ import 'package:flutter/services.dart';
 import '../../data/app_state.dart';
 import '../../logic/stats.dart';
 import '../../models/models.dart';
+import '../../services/ambient.dart';
 import '../widgets/common.dart';
 
 class SessionScreen extends StatefulWidget {
@@ -73,14 +74,29 @@ class _SessionScreenState extends State<SessionScreen> {
       if (state.data.soundOn) {
         HapticFeedback.heavyImpact();
         HapticFeedback.vibrate();
+        Ambient.instance.bell();
       }
     }
+    final a = state.active;
+    final done = a != null && (state.finished || _forceRecord);
+    if (done && _wasDone == false && state.data.soundOn && state.finished) Ambient.instance.bell();
+    _wasDone = done;
+    // Som de fundo só durante o foco (no intervalo e na pausa ele para).
+    final play = a != null && !a.paused && !done && a.phase == Phase.foco;
+    Ambient.instance.keepPlaying = play;
+    if (play || _ambientWasOn) Ambient.instance.ensure(state.data.ambient, on: play, volume: state.data.ambientVolume);
+    _ambientWasOn = play;
     setState(() {});
   }
+
+  bool? _wasDone; // null no primeiro segundo: não toca sino ao abrir uma sessão já terminada
+  bool _ambientWasOn = false;
 
   @override
   void dispose() {
     _timer?.cancel();
+    Ambient.instance.keepPlaying = false;
+    Ambient.instance.stop();
     title.dispose();
     note.dispose();
     super.dispose();
@@ -185,6 +201,10 @@ class _SessionScreenState extends State<SessionScreen> {
               ),
             ],
           ),
+        ],
+        if (isStudy) ...[
+          const SizedBox(height: 16),
+          _soundPicker(context, state, preview: true),
         ],
         const SizedBox(height: 20),
         FilledButton.icon(
@@ -320,6 +340,10 @@ class _SessionScreenState extends State<SessionScreen> {
           icon: const Icon(Icons.close),
           label: const Text('Cancelar sem registrar'),
         ),
+        if (isStudy) ...[
+          const SizedBox(height: 8),
+          _soundPicker(context, state),
+        ],
         const SizedBox(height: 8),
         const InfoNote('Pode deixar o celular de lado. O tempo continua contando mesmo fora desta tela.'),
       ],
@@ -327,6 +351,65 @@ class _SessionScreenState extends State<SessionScreen> {
   }
 
   bool _forceRecord = false;
+
+  // ---------- som de fundo ----------
+
+  Widget _soundPicker(BuildContext context, AppState state, {bool preview = false}) {
+    final d = state.data;
+    final cs = Theme.of(context).colorScheme;
+    const icons = {
+      'nenhum': Icons.volume_off_outlined,
+      'chuva': Icons.water_drop_outlined,
+      'ondas': Icons.waves,
+      'lareira': Icons.local_fire_department_outlined,
+      'ruido': Icons.graphic_eq,
+    };
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Som de fundo (opcional)', style: Theme.of(context).textTheme.titleSmall),
+        const SizedBox(height: 6),
+        Wrap(
+          spacing: 8,
+          runSpacing: 6,
+          children: [
+            for (final e in kAmbientSounds.entries)
+              ChoiceChip(
+                avatar: Icon(icons[e.key], size: 18),
+                label: Text(e.value),
+                selected: d.ambient == e.key,
+                onSelected: (_) async {
+                  await state.setAmbient(e.key);
+                  if (preview) Ambient.instance.preview(e.key, d.ambientVolume);
+                },
+              ),
+          ],
+        ),
+        if (d.ambient != 'nenhum')
+          Row(
+            children: [
+              Icon(Icons.volume_down, color: cs.onSurfaceVariant),
+              Expanded(
+                child: Slider(
+                  value: d.ambientVolume,
+                  min: 0.05,
+                  max: 1,
+                  label: 'Volume',
+                  onChanged: (v) => setState(() => d.ambientVolume = v),
+                  onChangeEnd: (v) async {
+                    await state.setAmbient(d.ambient, volume: v);
+                    if (preview) Ambient.instance.preview(d.ambient, v);
+                  },
+                ),
+              ),
+              Icon(Icons.volume_up, color: cs.onSurfaceVariant),
+            ],
+          ),
+        if (d.ambient != 'nenhum')
+          Text('Toca durante o foco e para no intervalo. No fim de cada fase toca um sino.', style: TextStyle(color: cs.onSurfaceVariant, fontSize: 12)),
+      ],
+    );
+  }
 
   // ---------- registro ----------
 

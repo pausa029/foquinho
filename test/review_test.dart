@@ -92,4 +92,14 @@ void main() {
     expect(list.any((n) => n.title == 'Revisão hoje' && n.body.contains('Frações') && n.when.day == 10), isTrue);
     expect(list.any((n) => n.title == 'Hora de revisar' && n.body.contains('Frações')), isTrue);
   });
+
+  test('som de fundo: salva a escolha e ignora valor estranho', () {
+    final d = AppData(ambient: 'chuva', ambientVolume: 0.3);
+    final back = AppData.fromJson(d.toJson());
+    expect(back.ambient, 'chuva');
+    expect(back.ambientVolume, closeTo(0.3, 0.001));
+    final bad = AppData.fromJson({...d.toJson(), 'ambient': 'xyz', 'ambientVolume': 9});
+    expect(bad.ambient, 'nenhum');
+    expect(bad.ambientVolume, 1.0);
+  });
 }

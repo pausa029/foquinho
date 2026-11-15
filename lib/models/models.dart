@@ -477,6 +477,15 @@ class Session {
   }
 }
 
+// ---------- som de fundo ----------
+const Map<String, String> kAmbientSounds = {
+  'nenhum': 'Sem som',
+  'chuva': 'Chuva',
+  'ondas': 'Ondas do mar',
+  'lareira': 'Lareira',
+  'ruido': 'Ruído suave',
+};
+
 // ---------- revisão espaçada ----------
 // Depois de estudar um assunto, o app agenda revisões curtas: 1, 7 e 30 dias depois.
 const List<int> kReviewGaps = [1, 6, 23]; // dias entre uma etapa e outra (1, 7 e 30 dias após o estudo)
@@ -634,6 +643,8 @@ class AppData {
   List<PlanSession> planSessions;
   List<Review> reviews;
   bool reviewOn; // criar revisões depois de cada estudo
+  String ambient; // som de fundo do temporizador: nenhum, chuva, ondas, lareira, ruido
+  double ambientVolume;
 
   AppData({
     this.profile,
@@ -652,6 +663,8 @@ class AppData {
     List<PlanSession>? planSessions,
     List<Review>? reviews,
     this.reviewOn = true,
+    this.ambient = 'nenhum',
+    this.ambientVolume = 0.6,
   })  : subjects = subjects ?? <Subject>[],
         exams = exams ?? <Exam>[],
         tasks = tasks ?? <StudyTask>[],
@@ -680,6 +693,8 @@ class AppData {
         'planSessions': planSessions.map((e) => e.toJson()).toList(),
         'reviews': reviews.map((e) => e.toJson()).toList(),
         'reviewOn': reviewOn,
+        'ambient': ambient,
+        'ambientVolume': ambientVolume,
       };
 
   static AppData fromJson(Map<String, dynamic> m) {
@@ -723,6 +738,8 @@ class AppData {
       planSessions: planSessions,
       reviews: readMapList(m, 'reviews').map(Review.fromJson).whereType<Review>().where((r) => subjectIds.contains(r.subjectId)).toList(),
       reviewOn: readBool(m, 'reviewOn', true),
+      ambient: kAmbientSounds.containsKey(readStr(m, 'ambient')) ? readStr(m, 'ambient') : 'nenhum',
+      ambientVolume: (m['ambientVolume'] is num ? (m['ambientVolume'] as num).toDouble() : 0.6).clamp(0.05, 1.0).toDouble(),
     );
   }
 

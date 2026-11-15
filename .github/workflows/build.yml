@@ -81,6 +81,13 @@ jobs:
         run: |
           set -o pipefail
           flutter build apk --release 2>&1 | tee build.txt || { bash tool/annotate.sh build.txt 'Error:|error:|FAILURE|What went wrong|lib/.*\.dart:[0-9]+' 'Erros da compilação'; exit 1; }
+          cp build/app/outputs/flutter-apk/app-release.apk Foquinho-universal.apk
+
+      - name: Compilar APK leve (só celulares 64 bits, quase todos hoje)
+        continue-on-error: true
+        run: |
+          flutter build apk --release --target-platform android-arm64
+          cp build/app/outputs/flutter-apk/app-release.apk Foquinho.apk
 
       - name: Compilar AAB (assinado com chave de teste)
         continue-on-error: true
@@ -103,7 +110,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: foquinho-apk
-          path: build/app/outputs/flutter-apk/app-release.apk
+          path: Foquinho*.apk
           if-no-files-found: error
 
       - name: Publicar o APK em Releases (link público, sem precisar de login)
@@ -111,11 +118,12 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          cp build/app/outputs/flutter-apk/app-release.apk Foquinho.apk
+          [ -f Foquinho.apk ] || cp Foquinho-universal.apk Foquinho.apk
+          ls -la Foquinho*.apk
           gh release delete latest --yes --cleanup-tag 2>/dev/null || true
-          gh release create latest Foquinho.apk \
+          gh release create latest Foquinho.apk Foquinho-universal.apk \
             --title "Foquinho — APK (última versão)" \
-            --notes "APK gerado automaticamente pelo GitHub Actions (commit ${{ github.sha }}). Para instalar: baixe no Android, abra o arquivo e permita a instalação."
+            --notes "APK gerado automaticamente pelo GitHub Actions (commit ${{ github.sha }}). Para instalar: baixe no Android, abra o arquivo e permita a instalação. Foquinho.apk = versão leve (celulares 64 bits). Se der erro de instalação, use Foquinho-universal.apk."
 
       - name: Guardar o AAB para download
         uses: actions/upload-artifact@v4

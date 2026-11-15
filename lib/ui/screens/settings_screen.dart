@@ -9,6 +9,8 @@ import '../widgets/common.dart';
 import '../widgets/foquinha.dart';
 import 'account_screen.dart';
 import 'grades_screen.dart';
+import 'mistakes_screen.dart';
+import 'report_screen.dart';
 import 'reviews_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
@@ -44,6 +46,24 @@ class SettingsScreen extends StatelessWidget {
             ),
           ],
           const SectionTitle('Estudo'),
+          Card(
+            child: ListTile(
+              leading: const Icon(Icons.bookmark_border),
+              title: const Text('Caderno de erros'),
+              subtitle: Text(state.mistakesDue.isEmpty ? 'Questões que você errou, para refazer' : '${state.mistakesDue.length} para refazer hoje'),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const MistakesScreen())),
+            ),
+          ),
+          Card(
+            child: ListTile(
+              leading: const Icon(Icons.bar_chart),
+              title: const Text('Relatório por matéria'),
+              subtitle: const Text('Semana, mês e o que está ficando para trás'),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const ReportScreen())),
+            ),
+          ),
           Card(
             child: ListTile(
               leading: const Icon(Icons.grade_outlined),

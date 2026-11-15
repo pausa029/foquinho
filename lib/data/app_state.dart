@@ -246,6 +246,7 @@ class AppState extends ChangeNotifier {
     data.planSessions.removeWhere((p) => p.subjectId == id);
     data.reviews.removeWhere((r) => r.subjectId == id);
     data.grades.removeWhere((g) => g.subjectId == id);
+    data.mistakes.removeWhere((e) => e.subjectId == id);
     data.grading.bySubject.remove(id);
     await save();
   }
@@ -621,6 +622,79 @@ class AppState extends ChangeNotifier {
     // Notas de partes que não existem mais ficam fora da conta, mas não somem
     // (se a parte voltar, a nota volta). Unidades a mais são descartadas.
     data.grades.removeWhere((g) => g.unit > c.units);
+    await save();
+  }
+
+  // ---------- caderno de erros ----------
+
+  List<Mistake> get mistakesDue {
+    final today = _todayKey();
+    return data.mistakes.where((e) => !e.learned && e.due.compareTo(today) <= 0).toList()..sort((a, b) => a.due.compareTo(b.due));
+  }
+
+  /// Guarda as questões erradas de um quiz (sem repetir a mesma pergunta).
+  Future<int> addQuizMistakes(String subjectId, String? topic, List<QuizQuestion> wrong) async {
+    var n = 0;
+    for (final q in wrong) {
+      final exists = data.mistakes.any((e) => e.subjectId == subjectId && e.question.trim().toLowerCase() == q.q.trim().toLowerCase());
+      if (exists) continue;
+      data.mistakes.add(Mistake(
+        id: newId(),
+        subjectId: subjectId,
+        topic: (topic ?? '').trim().isEmpty ? null : topic!.trim(),
+        question: q.q,
+        options: q.options,
+        answer: q.answer,
+        answerText: q.explain,
+        created: _todayKey(),
+        due: _inDays(kMistakeGaps[0]),
+      ));
+      n++;
+    }
+    await save();
+    return n;
+  }
+
+  Future<void> addMistake({required String subjectId, String? topic, required String question, required String answerText}) async {
+    data.mistakes.add(Mistake(
+      id: newId(),
+      subjectId: subjectId,
+      topic: (topic ?? '').trim().isEmpty ? null : topic!.trim(),
+      question: question.trim(),
+      answerText: answerText.trim(),
+      created: _todayKey(),
+      due: _inDays(kMistakeGaps[0]),
+    ));
+    await save();
+  }
+
+  /// Resultado ao refazer: acertou volta mais tarde (1, 3, 7 dias); 3 acertos seguidos = aprendeu.
+  /// Errou: volta amanhã e zera a sequência.
+  Future<void> answerMistake(String id, bool right) async {
+    for (final e in data.mistakes) {
+      if (e.id != id) continue;
+      if (right) {
+        e.streak++;
+        if (e.streak >= kMistakeGaps.length) {
+          e.learned = true;
+        } else {
+          e.due = _inDays(kMistakeGaps[e.streak]);
+        }
+      } else {
+        e.streak = 0;
+        e.due = _inDays(1);
+      }
+    }
+    await save();
+  }
+
+  Future<void> removeMistake(String id) async {
+    data.mistakes.removeWhere((e) => e.id == id);
+    await save();
+  }
+
+  Future<void> setSaveQuizMistakes(bool v) async {
+    data.saveQuizMistakes = v;
     await save();
   }
 

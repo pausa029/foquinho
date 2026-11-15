@@ -332,6 +332,16 @@ List<PlannedNotice> planReminderNotices(AppData d, DateTime now, {int days = 7, 
     final day = due.isBefore(today) ? today : due;
     put(morning, day, 'Revisão hoje', '${d.subjectName(r.subjectId)}${r.topic == null ? '' : ' · ${r.topic}'}');
   }
+  // Caderno de erros: um aviso de manhã com quantas questões refazer.
+  final mByDay = <DateTime, int>{};
+  for (final e in d.mistakes) {
+    if (e.learned) continue;
+    final due = parseDayKey(e.due);
+    if (due == null) continue;
+    final day = due.isBefore(today) ? today : DateTime(due.year, due.month, due.day);
+    mByDay[day] = (mByDay[day] ?? 0) + 1;
+  }
+  mByDay.forEach((day, n) => put(morning, day, 'Caderno de erros', '$n ${n == 1 ? 'questão' : 'questões'} para refazer'));
   void digest(Map<String, List<List<String>>> m, int minutes, String manyTitle) {
     m.forEach((k, items) {
       final day = parseDayKey(k);

@@ -4,9 +4,11 @@
 import 'dart:math';
 
 import 'grades.dart';
+import 'mistakes.dart';
 import 'plan.dart';
 
 export 'grades.dart';
+export 'mistakes.dart';
 export 'plan.dart';
 
 String newId() {
@@ -647,6 +649,8 @@ class AppData {
   bool reviewOn; // criar revisões depois de cada estudo
   GradeConfig grading; // como é a nota na escola
   List<Grade> grades;
+  List<Mistake> mistakes; // caderno de erros
+  bool saveQuizMistakes;
   String ambient; // som de fundo do temporizador: nenhum, chuva, ondas, lareira, ruido
   double ambientVolume;
 
@@ -669,6 +673,8 @@ class AppData {
     this.reviewOn = true,
     GradeConfig? grading,
     List<Grade>? grades,
+    List<Mistake>? mistakes,
+    this.saveQuizMistakes = true,
     this.ambient = 'nenhum',
     this.ambientVolume = 0.6,
   })  : subjects = subjects ?? <Subject>[],
@@ -681,7 +687,8 @@ class AppData {
         planSessions = planSessions ?? <PlanSession>[],
         reviews = reviews ?? <Review>[],
         grading = grading ?? GradeConfig(),
-        grades = grades ?? <Grade>[];
+        grades = grades ?? <Grade>[],
+        mistakes = mistakes ?? <Mistake>[];
 
   Map<String, dynamic> toJson() => {
         'v': 1,
@@ -703,6 +710,8 @@ class AppData {
         'reviewOn': reviewOn,
         'grading': grading.toJson(),
         'grades': grades.map((g) => g.toJson()).toList(),
+        'mistakes': mistakes.map((e) => e.toJson()).toList(),
+        'saveQuizMistakes': saveQuizMistakes,
         'ambient': ambient,
         'ambientVolume': ambientVolume,
       };
@@ -750,6 +759,8 @@ class AppData {
       reviewOn: readBool(m, 'reviewOn', true),
       grading: m['grading'] is Map ? GradeConfig.fromJson(Map<String, dynamic>.from(m['grading'] as Map)) : null,
       grades: readMapList(m, 'grades').map(Grade.fromJson).whereType<Grade>().where((g) => subjectIds.contains(g.subjectId)).toList(),
+      mistakes: readMapList(m, 'mistakes').map(Mistake.fromJson).whereType<Mistake>().where((e) => subjectIds.contains(e.subjectId)).toList(),
+      saveQuizMistakes: readBool(m, 'saveQuizMistakes', true),
       ambient: kAmbientSounds.containsKey(readStr(m, 'ambient')) ? readStr(m, 'ambient') : 'nenhum',
       ambientVolume: (m['ambientVolume'] is num ? (m['ambientVolume'] as num).toDouble() : 0.6).clamp(0.05, 1.0).toDouble(),
     );

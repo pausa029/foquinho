@@ -74,6 +74,7 @@ class _QuizScreenState extends State<QuizScreen> {
         index = 0;
         picked = null;
         answers.clear();
+        savedMistakes = 0;
       });
     } on CloudError catch (e) {
       if (mounted) setState(() => error = e.message);
@@ -281,11 +282,14 @@ class _QuizScreenState extends State<QuizScreen> {
           ),
           const SizedBox(height: 12),
           FilledButton(
-            onPressed: () => setState(() {
-              answers.add(picked!);
-              picked = null;
-              index++;
-            }),
+            onPressed: () async {
+              setState(() {
+                answers.add(picked!);
+                picked = null;
+                index++;
+              });
+              if (index >= qs.length) await _saveMistakes(qs);
+            },
             child: Text(index + 1 < qs.length ? 'Próxima' : 'Ver resultado'),
           ),
         ],
@@ -320,6 +324,17 @@ class _QuizScreenState extends State<QuizScreen> {
     );
   }
 
+  int savedMistakes = 0;
+
+  Future<void> _saveMistakes(List<QuizQuestion> qs) async {
+    final state = AppScope.of(context);
+    if (!state.data.saveQuizMistakes || subjectId == null) return;
+    final wrong = [for (var i = 0; i < qs.length; i++) if (answers[i] != qs[i].answer) qs[i]];
+    if (wrong.isEmpty) return;
+    final n = await state.addQuizMistakes(subjectId!, topic.text, wrong);
+    if (mounted) setState(() => savedMistakes = n);
+  }
+
   Widget _result(BuildContext context, List<QuizQuestion> qs) {
     final state = AppScope.of(context);
     final cs = Theme.of(context).colorScheme;
@@ -337,6 +352,11 @@ class _QuizScreenState extends State<QuizScreen> {
         Text(pct >= 80 ? 'Mandou bem! Você domina esse assunto.' : (pct >= 50 ? 'Bom caminho. Revise as que errou.' : 'Vale estudar de novo esse assunto.'),
             style: TextStyle(color: cs.onSurfaceVariant)),
         if (wrong.isNotEmpty) ...[
+          if (savedMistakes > 0)
+            Padding(
+              padding: const EdgeInsets.only(top: 12),
+              child: InfoNote('$savedMistakes ${savedMistakes == 1 ? 'questão foi' : 'questões foram'} para o Caderno de erros. Elas voltam amanhã para você refazer.', icon: Icons.bookmark_added_outlined),
+            ),
           const SectionTitle('Para revisar'),
           for (final q in wrong)
             Card(

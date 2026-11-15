@@ -6,6 +6,8 @@ import '../../data/app_state.dart';
 import '../../logic/stats.dart';
 import '../../models/models.dart';
 import '../widgets/common.dart';
+import 'mistakes_screen.dart';
+import 'report_screen.dart';
 
 class HistoryScreen extends StatefulWidget {
   const HistoryScreen({super.key});
@@ -51,6 +53,25 @@ class _HistoryScreenState extends State<HistoryScreen> {
             ],
           ),
 
+          Row(
+            children: [
+              Expanded(
+                child: FilledButton.tonalIcon(
+                  onPressed: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const ReportScreen())),
+                  icon: const Icon(Icons.bar_chart),
+                  label: const Text('Por matéria'),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: FilledButton.tonalIcon(
+                  onPressed: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const MistakesScreen())),
+                  icon: const Icon(Icons.bookmark_border),
+                  label: Text(AppScope.of(context).mistakesDue.isEmpty ? 'Erros' : 'Erros (${AppScope.of(context).mistakesDue.length})'),
+                ),
+              ),
+            ],
+          ),
           const SectionTitle('Resumo da semana'),
           Card(
             child: Padding(

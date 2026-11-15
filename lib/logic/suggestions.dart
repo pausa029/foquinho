@@ -124,6 +124,23 @@ List<Suggestion> studySuggestions(AppData d, {DateTime? now, int limit = 6}) {
     ));
   }
 
+  // Caderno de erros: questões para refazer hoje, agrupadas por matéria.
+  final dueMistakes = <String, int>{};
+  for (final e in d.mistakes) {
+    if (!e.learned && e.due.compareTo(today) <= 0) dueMistakes[e.subjectId] = (dueMistakes[e.subjectId] ?? 0) + 1;
+  }
+  for (final entry in dueMistakes.entries) {
+    final subj = d.subjectById(entry.key);
+    if (subj == null) continue;
+    add(Suggestion(
+      kind: SuggestionKind.estudo,
+      title: 'Refaça ${entry.value} ${entry.value == 1 ? 'questão' : 'questões'} de ${subj.name} do caderno de erros',
+      reason: 'Errar e refazer depois é o que mais ensina.',
+      minutes: 10,
+      subjectId: subj.id,
+    ));
+  }
+
   // 2. Matérias marcadas como difíceis.
   for (final s in d.subjects.where((s) => s.hard)) {
     final st = stalest(s);

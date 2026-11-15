@@ -608,7 +608,8 @@ class AppState extends ChangeNotifier {
   // ---------- quiz com IA ----------
 
   /// Gera um quiz com IA. Precisa estar com a conta conectada.
-  Future<List<QuizQuestion>> makeQuiz({required String subjectId, String? topic, String? text, int count = 5}) async {
+  /// [images]: fotos do caderno/livro já reduzidas, como {'mime': 'image/jpeg', 'data': base64}.
+  Future<QuizResult> makeQuiz({required String subjectId, String? topic, String? text, int count = 5, List<Map<String, String>> images = const []}) async {
     final c = cloud;
     if (c == null || session == null) throw const CloudError('Entre na sua conta para usar o quiz.', 'login');
     final s = await _freshSession();
@@ -619,6 +620,7 @@ class AppState extends ChangeNotifier {
       'topic': (topic ?? '').trim(),
       'text': (text ?? '').trim(),
       'count': count,
+      if (images.isNotEmpty) 'images': images,
       if (level != null) 'level': _levelName(level),
     });
   }

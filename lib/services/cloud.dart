@@ -70,7 +70,13 @@ abstract class CloudApi {
   Future<CloudSession> exchangeCode(String code, String codeVerifier);
 
   /// Quiz com IA (função "quiz" do Supabase).
-  Future<List<QuizQuestion>> quiz(CloudSession s, Map<String, dynamic> request);
+  Future<QuizResult> quiz(CloudSession s, Map<String, dynamic> request);
+}
+
+class QuizResult {
+  final List<QuizQuestion> questions;
+  final String transcript; // o que a IA leu das fotos (vazio sem fotos)
+  const QuizResult(this.questions, [this.transcript = '']);
 }
 
 class QuizQuestion {
@@ -321,12 +327,12 @@ class SupabaseCloud implements CloudApi {
   }
 
   @override
-  Future<List<QuizQuestion>> quiz(CloudSession s, Map<String, dynamic> request) async {
+  Future<QuizResult> quiz(CloudSession s, Map<String, dynamic> request) async {
     http.Response r;
     try {
       r = await _client
           .post(Uri.parse('$url/functions/v1/quiz'), headers: _headers(s), body: jsonEncode(request))
-          .timeout(const Duration(seconds: 60));
+          .timeout(const Duration(seconds: 90));
     } catch (_) {
       throw _offline;
     }
@@ -339,7 +345,8 @@ class SupabaseCloud implements CloudApi {
     }
     final list = j is Map && j['questions'] is List ? (j['questions'] as List).map(QuizQuestion.fromJson).whereType<QuizQuestion>().toList() : <QuizQuestion>[];
     if (list.isEmpty) throw const CloudError('A IA não conseguiu montar as questões. Tente outro assunto.', 'ai');
-    return list;
+    final tr = j is Map && j['transcript'] is String ? j['transcript'] as String : '';
+    return QuizResult(list, tr);
   }
 
   @override

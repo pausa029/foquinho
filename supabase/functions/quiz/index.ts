@@ -64,13 +64,27 @@ Deno.serve(async (req) => {
   const notes = String(body.text ?? "").trim().slice(0, 8000);
   const level = clean(body.level, 60) || "ensino médio";
   const count = Math.min(10, Math.max(3, Number(body.count) || 5));
-  if (!subject && !topic && !notes) return fail(400, "empty", "Diga a matéria e o assunto.");
+  // Fotos do caderno ou do livro (até 3, já reduzidas pelo app).
+  const images = (Array.isArray(body.images) ? body.images : [])
+    .map((x) => x as { mime?: unknown; data?: unknown })
+    .filter((x) => typeof x.data === "string" && (x.data as string).length > 100 && (x.data as string).length < 3_000_000)
+    .slice(0, 3)
+    .map((x) => ({ inline_data: { mime_type: /^image\/(jpeg|png|webp|heic)$/.test(String(x.mime)) ? String(x.mime) : "image/jpeg", data: x.data as string } }));
+  if (!subject && !topic && !notes && images.length === 0) return fail(400, "empty", "Diga a matéria e o assunto.");
 
   const prompt = [
     `Você é um professor brasileiro criando um quiz para um aluno do ${level}.`,
     `Matéria: ${subject || "não informada"}.`,
     `Assunto: ${topic || "o conteúdo abaixo"}.`,
     notes ? `Baseie as questões neste material do aluno (use só o que estiver correto):\n"""\n${notes}\n"""` : "",
+    images.length
+      ? [
+        `${images.length === 1 ? "A imagem é uma foto" : "As imagens são fotos"} do caderno do aluno (o que o professor passou no quadro) ou do livro.`,
+        "Primeiro leia com muita atenção, palavra por palavra. A letra pode ser feia, torta ou ter abreviações: use o contexto da matéria para entender cada palavra, sem inventar conteúdo que não está lá.",
+        "Coloque em 'transcript' o texto que você leu, organizado e corrigido (no máximo 1500 caracteres). Se alguma parte estiver ilegível, escreva [ilegível].",
+        "Depois faça as questões bem parecidas com o que está escrito, usando as mesmas palavras, exemplos e definições do caderno, como uma atividade básica do módulo, para o aluno lembrar do que copiou.",
+      ].join("\n")
+      : "",
     `Crie ${count} questões de múltipla escolha, em português do Brasil, com exatamente 4 alternativas cada e só uma correta.`,
     "Varie a dificuldade (fácil, média e difícil), evite pegadinhas sobre detalhes sem importância e misture a posição da alternativa correta.",
     "Em 'explain', explique em 1 ou 2 frases simples por que a resposta certa está certa.",
@@ -80,13 +94,14 @@ Deno.serve(async (req) => {
   const models = (Deno.env.get("GEMINI_MODEL") ?? "gemini-flash-lite-latest,gemini-2.5-flash-lite,gemini-flash-latest")
     .split(",").map((m) => m.trim()).filter(Boolean);
   const payload = JSON.stringify({
-    contents: [{ role: "user", parts: [{ text: prompt }] }],
+    contents: [{ role: "user", parts: [{ text: prompt }, ...images] }],
     generationConfig: {
       temperature: 0.7,
       responseMimeType: "application/json",
       responseSchema: {
         type: "OBJECT",
         properties: {
+          transcript: { type: "STRING" },
           questions: {
             type: "ARRAY",
             items: {
@@ -107,13 +122,15 @@ Deno.serve(async (req) => {
   });
   let gr: Response | null = null;
   let busy = false;
-  for (const model of models) {
+  // Foto de caderno pede leitura caprichada: começa pelo modelo que lê melhor letra de mão.
+  const order = images.length ? ["gemini-flash-latest", "gemini-flash-lite-latest"] : models;
+  for (const model of order) {
     try {
       const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
         method: "POST",
         headers: { "Content-Type": "application/json", "x-goog-api-key": geminiKey },
         body: payload,
-        signal: AbortSignal.timeout(15000),
+        signal: AbortSignal.timeout(images.length ? 35000 : 15000),
       });
       if (r.ok) {
         gr = r;
@@ -133,7 +150,7 @@ Deno.serve(async (req) => {
   }
   const gj = await gr.json();
   const raw = gj?.candidates?.[0]?.content?.parts?.map((p: { text?: string }) => p.text ?? "").join("") ?? "";
-  let parsed: { questions?: unknown[] } = {};
+  let parsed: { questions?: unknown[]; transcript?: unknown } = {};
   try {
     parsed = JSON.parse(raw);
   } catch {
@@ -147,5 +164,6 @@ Deno.serve(async (req) => {
   if (questions.length === 0) return fail(502, "ai", "A IA não conseguiu montar as questões. Tente outro assunto.");
 
   usage.set(email, { day: today, n: n + 1 });
-  return reply(200, { questions });
+  const transcript = images.length && typeof parsed.transcript === "string" ? parsed.transcript.slice(0, 2000) : "";
+  return reply(200, { questions, transcript });
 });

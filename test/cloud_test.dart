@@ -99,9 +99,9 @@ class FakeCloud implements CloudApi {
 
   Map<String, dynamic>? lastQuiz;
   @override
-  Future<List<QuizQuestion>> quiz(CloudSession s, Map<String, dynamic> request) async {
+  Future<QuizResult> quiz(CloudSession s, Map<String, dynamic> request) async {
     lastQuiz = request;
-    return const [QuizQuestion(q: '1/2 + 1/2 = ?', options: ['1', '2', '1/4', '0'], answer: 0, explain: 'Metade mais metade é um inteiro.')];
+    return QuizResult(const [QuizQuestion(q: '1/2 + 1/2 = ?', options: ['1', '2', '1/4', '0'], answer: 0, explain: 'Metade mais metade é um inteiro.')], request['images'] == null ? '' : 'Frações: parte de um todo');
   }
 }
 
@@ -330,7 +330,11 @@ void main() {
     await st.cloudSignUp('a@b.com', 'senha-forte-1');
     if (!st.signedIn) await st.cloudVerifyCode('a@b.com', '123456');
     final qs = await st.makeQuiz(subjectId: subj.id, topic: 'Frações');
-    expect(qs.single.answer, 0);
+    expect(qs.questions.single.answer, 0);
+    expect(qs.transcript, isEmpty);
+    final withPhoto = await st.makeQuiz(subjectId: subj.id, topic: 'Frações', images: [{'mime': 'image/jpeg', 'data': 'AAAA'}]);
+    expect((c.lastQuiz!['images'] as List).length, 1);
+    expect(withPhoto.transcript, contains('Frações'));
     expect(c.lastQuiz!['subject'], 'Matemática');
     expect(c.lastQuiz!['topic'], 'Frações');
   });

@@ -1,6 +1,10 @@
 // Quiz com IA: escolhe matéria e assunto, a IA monta as questões, o aluno responde.
 
+import 'dart:convert';
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../data/app_state.dart';
 import '../../models/models.dart';
@@ -24,6 +28,9 @@ class _QuizScreenState extends State<QuizScreen> {
   int count = 5;
   bool loading = false;
   String? error;
+
+  final photos = <(Uint8List, String)>[]; // (bytes, tipo)
+  String transcript = '';
 
   List<QuizQuestion>? questions;
   int index = 0;
@@ -52,11 +59,18 @@ class _QuizScreenState extends State<QuizScreen> {
       error = null;
     });
     try {
-      final qs = await state.makeQuiz(subjectId: sid, topic: topic.text, text: notes.text, count: count);
+      final res = await state.makeQuiz(
+        subjectId: sid,
+        topic: topic.text,
+        text: notes.text,
+        count: count,
+        images: [for (final p in photos) {'mime': p.$2, 'data': base64Encode(p.$1)}],
+      );
       if (!mounted) return;
       setState(() {
         subjectId = sid;
-        questions = qs;
+        questions = res.questions;
+        transcript = res.transcript;
         index = 0;
         picked = null;
         answers.clear();
@@ -68,6 +82,76 @@ class _QuizScreenState extends State<QuizScreen> {
     } finally {
       if (mounted) setState(() => loading = false);
     }
+  }
+
+  Future<void> _addPhoto(ImageSource source) async {
+    try {
+      final picker = ImagePicker();
+      // Foto reduzida: lê bem a letra e gasta pouco (internet e IA).
+      final files = <XFile>[];
+      if (source == ImageSource.camera) {
+        final f = await picker.pickImage(source: source, maxWidth: 1600, maxHeight: 1600, imageQuality: 70);
+        if (f != null) files.add(f);
+      } else {
+        files.addAll(await picker.pickMultiImage(maxWidth: 1600, maxHeight: 1600, imageQuality: 70, limit: 3));
+      }
+      for (final f in files) {
+        if (photos.length >= 3) break;
+        final bytes = await f.readAsBytes();
+        final mime = f.mimeType ?? (f.name.toLowerCase().endsWith('.png') ? 'image/png' : 'image/jpeg');
+        photos.add((bytes, mime));
+      }
+      if (mounted) setState(() {});
+    } catch (_) {
+      if (mounted) setState(() => error = 'Não foi possível abrir a câmera ou a galeria.');
+    }
+  }
+
+  Widget _photos(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Fotos do caderno ou do livro (até 3)', style: TextStyle(color: cs.onSurfaceVariant)),
+        const SizedBox(height: 6),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            for (var i = 0; i < photos.length; i++)
+              Stack(
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(10),
+                    child: Image.memory(photos[i].$1, width: 84, height: 84, fit: BoxFit.cover),
+                  ),
+                  Positioned(
+                    right: 0,
+                    top: 0,
+                    child: IconButton.filledTonal(
+                      visualDensity: VisualDensity.compact,
+                      iconSize: 16,
+                      tooltip: 'Tirar esta foto',
+                      onPressed: loading ? null : () => setState(() => photos.removeAt(i)),
+                      icon: const Icon(Icons.close),
+                    ),
+                  ),
+                ],
+              ),
+            if (photos.length < 3) ...[
+              OutlinedButton.icon(onPressed: loading ? null : () => _addPhoto(ImageSource.camera), icon: const Icon(Icons.photo_camera_outlined), label: const Text('Tirar foto')),
+              OutlinedButton.icon(onPressed: loading ? null : () => _addPhoto(ImageSource.gallery), icon: const Icon(Icons.photo_library_outlined), label: const Text('Galeria')),
+            ],
+          ],
+        ),
+        if (photos.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(top: 6),
+            child: Text('Dica: foto de cima, com boa luz e a página inteira. A IA lê até letra feia, mas confira o que ela entendeu no fim.',
+                style: TextStyle(color: cs.onSurfaceVariant, fontSize: 12)),
+          ),
+      ],
+    );
   }
 
   @override
@@ -106,7 +190,7 @@ class _QuizScreenState extends State<QuizScreen> {
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
       children: [
-        const InfoNote('A IA cria questões de múltipla escolha sobre o assunto. Confira com o seu material: a IA pode errar.', icon: Icons.auto_awesome),
+        const InfoNote('A IA cria questões de múltipla escolha sobre o assunto. Mande foto do caderno ou do livro para as questões ficarem parecidas com o que você copiou. A IA pode errar: confira com o seu material.', icon: Icons.auto_awesome),
         const SizedBox(height: 12),
         DropdownButtonFormField<String>(
           value: d.subjects.any((s) => s.id == sid) ? sid : d.subjects.first.id,
@@ -130,7 +214,8 @@ class _QuizScreenState extends State<QuizScreen> {
           maxLength: 8000,
           decoration: const InputDecoration(labelText: 'Resumo ou trecho do caderno (opcional)', hintText: 'Cole aqui para as questões seguirem o seu material'),
         ),
-        const SizedBox(height: 4),
+        _photos(context),
+        const SizedBox(height: 12),
         Row(
           children: [
             const Text('Questões:'),
@@ -151,7 +236,7 @@ class _QuizScreenState extends State<QuizScreen> {
         FilledButton.icon(
           onPressed: loading ? null : _generate,
           icon: loading ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2)) : const Icon(Icons.auto_awesome),
-          label: Text(loading ? 'Criando as questões...' : 'Gerar quiz'),
+          label: Text(loading ? (photos.isEmpty ? 'Criando as questões...' : 'Lendo o caderno e criando as questões...') : 'Gerar quiz'),
         ),
       ],
     );
@@ -268,6 +353,30 @@ class _QuizScreenState extends State<QuizScreen> {
                 ),
               ),
             ),
+        ],
+        if (transcript.isNotEmpty) ...[
+          const SectionTitle('O que a IA leu do caderno'),
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SelectableText(transcript),
+                  const SizedBox(height: 8),
+                  TextButton.icon(
+                    onPressed: () => setState(() {
+                      notes.text = transcript;
+                      photos.clear();
+                      questions = null;
+                    }),
+                    icon: const Icon(Icons.text_snippet_outlined),
+                    label: const Text('Usar este texto no próximo quiz (sem foto)'),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ],
         const SizedBox(height: 16),
         if (pct < 80 && subjectId != null)

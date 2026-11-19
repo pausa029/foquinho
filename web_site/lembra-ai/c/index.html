@@ -80,7 +80,7 @@ function comoAvisar(o, min) {
 }
 
 async function decodificar(codigo) {
-  const m = /LA(\d{1,3})\.([A-Za-z0-9_-]{8,})/.exec(codigo || '');
+  const m = /LA(\d{1,3})\.([A-Za-z0-9_-]{8,8000})/.exec(String(codigo || '').slice(0, 20000));
   if (!m) return { erro: 'quebrado' };
   if (+m[1] > 1) return { erro: 'versao' };
   if (typeof DecompressionStream === 'undefined') return { codigo: m[0] };

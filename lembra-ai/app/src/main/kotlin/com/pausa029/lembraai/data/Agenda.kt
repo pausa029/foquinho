@@ -4,6 +4,7 @@ import android.content.Context
 import com.pausa029.lembraai.alarm.Agendador
 import com.pausa029.lembraai.domain.Compromisso
 import com.pausa029.lembraai.domain.TipoRepeticao
+import com.pausa029.lembraai.domain.Validacao
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import org.json.JSONArray
@@ -97,12 +98,14 @@ object Agenda {
         return JSONObject().put("app", "Lembra Aí").put("versao", 1).put("compromissos", arr).toString(2)
     }
 
-    /** Lê uma cópia. Devolve a quantidade de compromissos ou lança erro se o arquivo não for uma cópia válida. */
+    /** Lê uma cópia. Lança erro se o arquivo não for uma cópia válida; corrige ou descarta o que estiver fora dos limites. */
     fun lerCopia(texto: String): List<CompromissoEntity> {
+        require(texto.length < 5_000_000) { "arquivo grande demais" }
         val raiz = JSONObject(texto)
         require(raiz.optString("app") == "Lembra Aí") { "arquivo não é uma cópia do Lembra Aí" }
         val arr = raiz.getJSONArray("compromissos")
-        return (0 until arr.length()).map { i ->
+        require(arr.length() <= Validacao.MAX_COMPROMISSOS) { "compromissos demais" }
+        return (0 until arr.length()).mapNotNull { i -> runCatching {
             val o = arr.getJSONObject(i)
             CompromissoEntity(
                 titulo = o.getString("titulo"), dataEpoch = o.getLong("dataEpoch"), hora = o.getInt("hora"),
@@ -118,8 +121,8 @@ object Agenda {
                 observacao = o.optString("observacao", ""), telefone = o.optString("telefone", ""),
                 endereco = o.optString("endereco", ""), feitos = o.optString("feitos", ""),
                 codigoId = o.optString("codigoId", ""), enviadoPor = o.optString("enviadoPor", ""),
-            )
-        }
+            ).let { e -> Validacao.sanear(e.paraDominio())?.copy(id = 0)?.paraEntidade() }
+        }.getOrNull() }
     }
 
     suspend fun restaurar(ctx: Context, l: List<CompromissoEntity>) {

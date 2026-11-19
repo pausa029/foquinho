@@ -27,7 +27,7 @@ object Compartilhar {
     private const val MAX_END = 300
     private const val MAX_NOME = 40
 
-    private val REGEX = Regex("""LA(\d{1,3})\.([A-Za-z0-9_-]{8,})""")
+    private val REGEX = Regex("""LA(\d{1,3})\.([A-Za-z0-9_-]{8,8000})""")
 
     data class Pacote(val compromisso: Compromisso, val id: String, val enviadoPor: String)
 
@@ -63,6 +63,7 @@ object Compartilhar {
     /** Procura o código em qualquer texto (link, mensagem inteira do WhatsApp, só o código). */
     fun decodificar(texto: String?): Leitura {
         if (texto.isNullOrBlank()) return Leitura.Nenhum
+        if (texto.length > 20_000) return Leitura.Quebrado
         val m = REGEX.find(texto) ?: return if (Regex("""LA\d{1,3}\.""").containsMatchIn(texto)) Leitura.Quebrado else Leitura.Nenhum
         val versao = m.groupValues[1].toIntOrNull() ?: return Leitura.Quebrado
         if (versao > VERSAO) return Leitura.VersaoNova

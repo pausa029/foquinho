@@ -7,7 +7,6 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../data/app_state.dart';
-import '../../models/models.dart';
 import '../../services/cloud.dart';
 import '../widgets/common.dart';
 import 'account_screen.dart';

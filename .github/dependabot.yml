@@ -1,0 +1,15 @@
+# Avisa (com pull request) quando sair atualização de segurança das peças que o projeto usa.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+  - package-ecosystem: pub
+    directory: /
+    schedule:
+      interval: weekly
+  - package-ecosystem: gradle
+    directory: /lembra-ai
+    schedule:
+      interval: weekly

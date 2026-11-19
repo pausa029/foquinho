@@ -189,7 +189,7 @@ class _TaskCard extends StatelessWidget {
     final d = state.data;
     final cs = Theme.of(context).colorScheme;
     final dl = parseDayKey(task.deadline);
-    final days = dl == null ? null : dl.difference(DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day, 12)).inDays;
+    final days = dl?.difference(DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day, 12)).inDays;
     return Card(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(12, 8, 8, 8),

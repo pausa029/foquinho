@@ -42,6 +42,15 @@ android {
             keyAlias "foquinho"
             keyPassword "foquinho-teste"
         }
+        // Chave privada de publicação: vem dos Secrets do GitHub (nunca do repositório).
+        if (System.getenv("FOQUINHO_KEYSTORE")) {
+            publicacao {
+                storeFile file(System.getenv("FOQUINHO_KEYSTORE"))
+                storePassword System.getenv("FOQUINHO_KEYSTORE_SENHA")
+                keyAlias System.getenv("FOQUINHO_KEY_ALIAS")
+                keyPassword System.getenv("FOQUINHO_KEYSTORE_SENHA")
+            }
+        }
     }
 
     buildTypes {
@@ -49,7 +58,7 @@ android {
             signingConfig = signingConfigs.teste
         }
         release {
-            signingConfig = signingConfigs.teste
+            signingConfig = System.getenv("FOQUINHO_KEYSTORE") ? signingConfigs.publicacao : signingConfigs.teste
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }

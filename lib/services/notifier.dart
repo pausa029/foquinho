@@ -1,7 +1,6 @@
 // Notificações do sistema (Android e iOS), agendadas no próprio aparelho.
 // Não usa servidor nem internet. Na versão web este serviço fica desativado.
 
-import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';

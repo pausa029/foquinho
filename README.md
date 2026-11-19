@@ -117,3 +117,39 @@ Conta Google Play: US$ 25 (uma vez). Contas pessoais novas precisam de teste fec
 ## Privacidade (resumo)
 
 Os dados ficam só no aparelho, no armazenamento privado do app. Não há envio para servidor, anúncios ou rastreadores. Desinstalar o app ou usar *Ajustes → Apagar perfil e todos os dados* remove tudo. O app não pede idade e não coleta dados de ninguém; menores de 18 anos devem combinar o uso com os responsáveis.
+
+## Segurança
+
+### O que já está protegido (automático)
+- **Páginas do site** (`tool/seguranca_site.py`, roda a cada publicação): cada página recebe uma *Content-Security-Policy* que só deixa rodar os scripts da própria página (conferidos por hash SHA-256) e só conversar com o próprio site, o Supabase do Foquinho e as fontes do Google. Um script injetado não roda. Também recebe proteção contra *clickjacking* (a página se esconde se outro site a colocar dentro de um quadro) e *Referrer-Policy*.
+- **Versão web (Flutter)** compilada com `--no-web-resources-cdn`: o motor gráfico vem do próprio site, não de um servidor de fora.
+- **Dados na nuvem**: cada conta só lê e altera a própria linha (regras RLS em `supabase/schema.sql`). A chave que aparece no app e no site é a *publicável*, feita para ficar pública. A chave secreta nunca está no repositório.
+- **Login**: com Google usa PKCE (o código de volta não serve para quem não tem o segredo guardado no aparelho). A página `conta.html` tira o código de acesso da barra de endereço logo que abre.
+- **Quiz com IA** (`supabase/functions/quiz`): só e-mails liberados **e confirmados**, limite diário que conta também as tentativas que falham, pedido de no máximo 12 MB, e no navegador só aceita chamadas do próprio site.
+- **GitHub Actions**: as ações de terceiros estão presas a uma versão exata (hash do commit), cada tarefa tem só a permissão de que precisa, e o Dependabot avisa quando houver atualização (`.github/dependabot.yml`).
+
+### O que só o dono pode ligar (uma vez)
+**Supabase** (supabase.com → projeto Foquinho):
+1. *Authentication → Providers → Email*: **Confirm email** ligado e **Secure password change** ligado.
+2. *Authentication → Policies / Passwords*: senha mínima de **8** caracteres e **Leaked password protection** ligado (bloqueia senhas vazadas).
+3. *Authentication → URL Configuration*: **Site URL** `https://foquinho.com.br` e, em **Redirect URLs**, só `https://foquinho.com.br/conta.html` e `foquinho://login-callback`. Assim ninguém usa o seu login para mandar a pessoa para outro site.
+4. *Authentication → Rate Limits*: deixe os limites padrão (ou mais baixos) para envio de e-mail e login.
+5. *Edge Functions → quiz*: depois de colar o `index.ts` novo, clique em **Deploy** de novo (as proteções novas só valem depois disso).
+6. *Advisors → Security Advisor*: rode e corrija o que aparecer em vermelho.
+
+**GitHub** (Settings do repositório):
+1. *Pages*: **Enforce HTTPS** ligado.
+2. *Branches*: regra para a `main` (exigir pull request; bloquear *force push* e exclusão).
+3. *Code security*: **Secret scanning** e **Push protection** ligados.
+4. Sua conta do GitHub com **verificação em duas etapas** (2FA).
+
+**Domínio** (onde o `foquinho.com.br` foi registrado): ligue o **DNSSEC** e o bloqueio de transferência.
+
+### Chave de assinatura dos APKs (importante)
+Os APKs de teste são assinados com chaves que estão **dentro do repositório** (`android/app/foquinho-teste.jks` e `lembra-ai/app/lembra-teste.jks`). Como o repositório é público, qualquer pessoa consegue assinar um APK falso que o Android aceita como "atualização" do Foquinho ou do Lembra Aí, se alguém for enganado a instalar.
+
+Para fechar isso, os workflows já aceitam uma chave privada guardada nos **Secrets** do GitHub:
+- Foquinho: `FOQUINHO_KEYSTORE_B64` (arquivo `.jks` em base64), `FOQUINHO_KEYSTORE_SENHA`, `FOQUINHO_KEY_ALIAS`.
+- Lembra Aí: `LEMBRA_KEYSTORE_B64`, `LEMBRA_KEYSTORE_SENHA`, `LEMBRA_KEY_ALIAS`.
+
+Ao trocar para a chave privada, quem já instalou precisa **desinstalar e instalar de novo uma vez** (o Android não aceita assinatura diferente), e no Lembra Aí é preciso trocar a impressão digital em `web_site/.well-known/assetlinks.json`. Sem os Secrets, tudo continua como antes, com um aviso no log da compilação.

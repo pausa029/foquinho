@@ -141,7 +141,7 @@ class _SubjectGradesScreenState extends State<SubjectGradesScreen> {
       child: Scaffold(
         appBar: AppBar(
           title: Text(d.subjectName(widget.subjectId)),
-          bottom: TabBar(isScrollable: c.units > 3, tabs: [for (var u = 1; u <= c.units; u++) Tab(text: '${u}ª ${c.unitName}')]),
+          bottom: TabBar(isScrollable: c.units > 3, tabs: [for (var u = 1; u <= c.units; u++) Tab(text: '$uª ${c.unitName}')]),
         ),
         body: TabBarView(
           children: [

@@ -8,23 +8,46 @@
 //   GEMINI_MODEL     (opcional) modelos em ordem, separados por vírgula
 //   QUIZ_DAILY_MAX   (opcional) quizzes por pessoa por dia; padrão: 30
 
-const cors = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, apikey, content-type, x-client-info",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-};
+// Só o site do Foquinho pode chamar pelo navegador (o app Android não manda "Origin").
+const ORIGENS = new Set(["https://foquinho.com.br", "https://www.foquinho.com.br"]);
+function corsPara(origin: string | null): Record<string, string> {
+  return {
+    "Access-Control-Allow-Origin": origin && ORIGENS.has(origin) ? origin : "https://foquinho.com.br",
+    "Access-Control-Allow-Headers": "authorization, apikey, content-type, x-client-info",
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Vary": "Origin",
+  };
+}
+// Até 3 fotos de ~3 MB em base64 + texto: acima disso, recusa sem ler.
+const MAX_CORPO = 12 * 1024 * 1024;
 
 function reply(status: number, body: unknown) {
-  return new Response(JSON.stringify(body), { status, headers: { ...cors, "Content-Type": "application/json" } });
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { "Content-Type": "application/json", "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff" },
+  });
 }
 const fail = (status: number, error: string, message: string) => reply(status, { error, message });
 
 // Contador simples por instância (protege contra cliques repetidos; o limite real é o do Google).
 const usage = new Map<string, { day: string; n: number }>();
 
+// Cada resposta recebe os cabeçalhos de CORS do próprio pedido (nada compartilhado entre pedidos).
 Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
+  const res = await atender(req);
+  const h = new Headers(res.headers);
+  for (const [k, v] of Object.entries(corsPara(req.headers.get("origin")))) h.set(k, v);
+  return new Response(res.body, { status: res.status, headers: h });
+});
+
+async function atender(req: Request): Promise<Response> {
+  const origin = req.headers.get("origin");
+  if (req.method === "OPTIONS") return new Response("ok");
   if (req.method !== "POST") return fail(405, "method", "Use POST.");
+  // Navegador de outro site: recusa (sem "Origin" é o app, que é permitido).
+  if (origin && !ORIGENS.has(origin)) return fail(403, "origin", "Pedido de um site não autorizado.");
+  const tamanho = Number(req.headers.get("content-length") ?? "0");
+  if (tamanho > MAX_CORPO) return fail(413, "grande", "As fotos estão grandes demais. Tente com menos fotos.");
 
   const supaUrl = Deno.env.get("SUPABASE_URL") ?? "";
   const anon = Deno.env.get("SUPABASE_ANON_KEY") ?? req.headers.get("apikey") ?? "";
@@ -38,6 +61,8 @@ Deno.serve(async (req) => {
   if (!ur.ok) return fail(401, "login", "Sua sessão venceu. Entre de novo.");
   const user = await ur.json();
   const email = String(user?.email ?? "").toLowerCase();
+  // E-mail precisa estar confirmado: impede alguém de criar conta com um e-mail liberado que não é dele.
+  if (!user?.email_confirmed_at) return fail(403, "not_allowed", "Confirme o seu e-mail antes de usar o quiz.");
 
   // 2) Só quem está na lista pode usar (por enquanto, só o dono).
   const allowed = (Deno.env.get("ALLOWED_EMAILS") ?? "").toLowerCase().split(",").map((s) => s.trim()).filter(Boolean);
@@ -54,7 +79,11 @@ Deno.serve(async (req) => {
   // 3) Pedido
   let body: Record<string, unknown> = {};
   try {
-    body = await req.json();
+    const texto = await req.text();
+    if (texto.length > MAX_CORPO) return fail(413, "grande", "As fotos estão grandes demais. Tente com menos fotos.");
+    const j = JSON.parse(texto);
+    if (!j || typeof j !== "object" || Array.isArray(j)) return fail(400, "body", "Pedido inválido.");
+    body = j as Record<string, unknown>;
   } catch {
     return fail(400, "body", "Pedido inválido.");
   }
@@ -120,6 +149,8 @@ Deno.serve(async (req) => {
       },
     },
   });
+  // Conta a tentativa antes de chamar a IA: pedidos que falham também gastam a cota do Google.
+  usage.set(email, { day: today, n: n + 1 });
   let gr: Response | null = null;
   let busy = false;
   // Foto de caderno pede leitura caprichada: começa pelo modelo que lê melhor letra de mão.
@@ -163,7 +194,6 @@ Deno.serve(async (req) => {
     .slice(0, count);
   if (questions.length === 0) return fail(502, "ai", "A IA não conseguiu montar as questões. Tente outro assunto.");
 
-  usage.set(email, { day: today, n: n + 1 });
   const transcript = images.length && typeof parsed.transcript === "string" ? parsed.transcript.slice(0, 2000) : "";
   return reply(200, { questions, transcript });
-});
+}

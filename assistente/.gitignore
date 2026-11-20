@@ -1,0 +1,13 @@
+# Credenciais e segredos
+credentials.json
+token.json
+.env
+
+# Memória pessoal (mantém só os modelos)
+memoria/*.md
+!memoria/*.modelo.md
+
+# Python
+.venv/
+__pycache__/
+*.pyc
